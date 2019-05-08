@@ -82,32 +82,6 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
 			return 0;
 		} /*case REMOTE_CHMODE_EVT:*/
 
-		case RFID_EVT:
-		{
-			evt_rfid_t* p = EVT_CAST(msg, evt_rfid_t);
-
-			if(EPC_AUXILIARY_TRACK_START == p->epc)
-			{
-                if(RIGHTRAIL == RailGetRailState() && (GEAR_REVERSE == MotoGetGear()))
-                {
-                    MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
-                    STATE_TRAN(me, &me->forcebrake);
-                    return 0;
-                }
-			}
-			else if(EPC_AUXILIARY_TRACK_END == p->epc)
-			{
-				if(RIGHTRAIL == RailGetRailState() && (GEAR_DRIVE == MotoGetGear() || GEAR_LOW == MotoGetGear()))
-				{
-					MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
-					STATE_TRAN(me, &me->forcebrake);
-					return 0;
-				}
-			}
-
-			break;
-
-		}/* case RFID_EVT: */
 	}
 
 	/*如果未处理该消息，返回msg*/
@@ -287,50 +261,33 @@ Msg const * AutoModeInterJump(car_hsm_t * me, Msg * msg)
 		}
 		case RFID_EVT:
 		{
-			switch(EVT_CAST(msg, evt_rfid_t)->epc)
+			switch(EVT_CAST(msg, evt_rfid_t)->epc.roadFeature)
 			{
-				case EPC_STRAIGHT:
+				case EPC_FEAT_HORIZONTAL_STRAIGHT:
 				{
 					STATE_TRAN(me, &me->straight);
 					return 0;
 				}
 
-				case EPC_PRE_CURVE:
-				{
-					STATE_TRAN(me, &me->pre_curve);
-					return 0;
-				}
-
-				case EPC_CURVING:
+				case EPC_FEAT_HORIZONTAL_CURVE:
 				{
 					STATE_TRAN(me, &me->curving);
 					return 0;
 				}
 
-				case EPC_UPHILL:
+				case EPC_FEAT_UPHILL_GRADUAL:
 				{
 					STATE_TRAN(me, &me->uphill);
 					return 0;
 				}
 
-				case EPC_PRE_DOWNHILL:
-				{
-					STATE_TRAN(me, &me->pre_downhill);
-					return 0;
-				}
-				case EPC_DOWNHILL:
+
+				case EPC_FEAT_DOWNHILL_GRADUAL:
 				{
 					STATE_TRAN(me, &me->downhill);
 					return 0;
 				}
 
-				case EPC_PRE_SEPERATE:
-				{
-					if(ParamInstance()->EnableChangeRail == 1){  //在上位机设置了变轨才进入变轨流程
-						STATE_TRAN(me, &me->pre_seperate);
-					}
-					return 0;
-				}
 			}
 		}/*case RFID_EVT:*/
 	}
@@ -502,34 +459,34 @@ Msg const * InterJumpPreDownhill(car_hsm_t * me, Msg * msg)
 /*
  * 自动模式- 预分轨
  */
-Msg const * InterJumpPreSeperate(car_hsm_t * me, Msg * msg)
-{
-	switch(msg->evt)
-	{
-		case ENTRY_EVT:
-		{
-			g_fbData.FSMstate =pre_seperate;
-
-			MotoSetGoalRPM(ParamInstance()->StateRPM[pre_seperate]);
-			return 0;
-		}
-		case EXIT_EVT:
-		{
-			return 0;
-		}
-
-		case RFID_EVT:
-		{
-			if(EVT_CAST(msg, evt_rfid_t)->epc == EPC_SEPERATE)
-			{
-				STATE_TRAN(me, &me->automode_seperate);
-				return 0;
-			}
-		}
-	}
-
-	return msg;
-}
+//Msg const * InterJumpPreSeperate(car_hsm_t * me, Msg * msg)
+//{
+//	switch(msg->evt)
+//	{
+//		case ENTRY_EVT:
+//		{
+//			g_fbData.FSMstate =pre_seperate;
+//
+//			MotoSetGoalRPM(ParamInstance()->StateRPM[pre_seperate]);
+//			return 0;
+//		}
+//		case EXIT_EVT:
+//		{
+//			return 0;
+//		}
+//
+//		case RFID_EVT:
+//		{
+//			if(EVT_CAST(msg, evt_rfid_t)->epc == EPC_SEPERATE)
+//			{
+//				STATE_TRAN(me, &me->automode_seperate);
+//				return 0;
+//			}
+//		}
+//	}
+//
+//	return msg;
+//}
 
 /*
  * 自动模式- 分轨
@@ -627,76 +584,76 @@ Msg const * SeperateSeperating(car_hsm_t * me, Msg * msg)
 	return msg;
 }
 
-Msg const * SeperateSeperateOk(car_hsm_t * me, Msg * msg)
-{
-	switch(msg->evt)
-	{
-		case ENTRY_EVT:
-		{
-			TimeoutSet(seperate_wait_enter_station);
-			return 0;
-		}
+//Msg const * SeperateSeperateOk(car_hsm_t * me, Msg * msg)
+//{
+//	switch(msg->evt)
+//	{
+//		case ENTRY_EVT:
+//		{
+//			TimeoutSet(seperate_wait_enter_station);
+//			return 0;
+//		}
+//
+//		case TIMER_EVT:
+//		{
+//			if(seperate_wait_enter_station == EVT_CAST(msg, evt_timeout_t)->type)
+//			{
+//				MotoSetErrorCode(ERROR_WAIT_ENTER_STATION);
+//				STATE_TRAN(me, &me->forcebrake);
+//				return 0;
+//			}
+//			break;
+//		}
+//		case RFID_EVT:
+//		{
+//			if(EPC_ENTER_STATION == EVT_CAST(msg, evt_rfid_t)->epc)
+//			{
+//
+//				STATE_TRAN(me,&me->automode_enterstation);
+//				return 0;
+//			}
+//			break;
+//		}
+//
+//	}
+//
+//	return msg;
+//}
 
-		case TIMER_EVT:
-		{
-			if(seperate_wait_enter_station == EVT_CAST(msg, evt_timeout_t)->type)
-			{
-				MotoSetErrorCode(ERROR_WAIT_ENTER_STATION);
-				STATE_TRAN(me, &me->forcebrake);
-				return 0;
-			}
-			break;
-		}
-		case RFID_EVT:
-		{
-			if(EPC_ENTER_STATION == EVT_CAST(msg, evt_rfid_t)->epc)
-			{
-
-				STATE_TRAN(me,&me->automode_enterstation);
-				return 0;
-			}
-			break;
-		}
-
-	}
-
-	return msg;
-}
-
-Msg const * AutomodeEnterStation(car_hsm_t * me, Msg * msg)
-{
-	switch(msg->evt)
-	{
-		case ENTRY_EVT:
-		{
-			g_fbData.FSMstate =enter_station;
-
-			MotoSetGoalRPM(ParamInstance()->StateRPM[enter_station]);
-			TimeoutSet(seperate_wait_stop_station);
-			return 0;
-		}
-		case TIMER_EVT:
-		{
-			if(seperate_wait_stop_station == EVT_CAST(msg, evt_timeout_t)->type)
-			{
-				MotoSetErrorCode(ERROR_WAIT_STOP_STATION);
-				STATE_TRAN(me, &me->forcebrake);
-				return 0;
-			}
-			break;
-		}
-		case RFID_EVT:
-		{
-			if(EPC_STOP_STATION == EVT_CAST(msg, evt_rfid_t)->epc)
-			{
-				STATE_TRAN(me, &me->automode_stopstation);
-				return 0;
-			}
-		}
-	}
-
-	return msg;
-}
+//Msg const * AutomodeEnterStation(car_hsm_t * me, Msg * msg)
+//{
+//	switch(msg->evt)
+//	{
+//		case ENTRY_EVT:
+//		{
+//			g_fbData.FSMstate =enter_station;
+//
+//			MotoSetGoalRPM(ParamInstance()->StateRPM[enter_station]);
+//			TimeoutSet(seperate_wait_stop_station);
+//			return 0;
+//		}
+//		case TIMER_EVT:
+//		{
+//			if(seperate_wait_stop_station == EVT_CAST(msg, evt_timeout_t)->type)
+//			{
+//				MotoSetErrorCode(ERROR_WAIT_STOP_STATION);
+//				STATE_TRAN(me, &me->forcebrake);
+//				return 0;
+//			}
+//			break;
+//		}
+//		case RFID_EVT:
+//		{
+//			if(EPC_STOP_STATION == EVT_CAST(msg, evt_rfid_t)->epc)
+//			{
+//				STATE_TRAN(me, &me->automode_stopstation);
+//				return 0;
+//			}
+//		}
+//	}
+//
+//	return msg;
+//}
 
 Msg const * AutomodeStopStation(car_hsm_t * me, Msg * msg)
 {
@@ -715,113 +672,113 @@ Msg const * AutomodeStopStation(car_hsm_t * me, Msg * msg)
 	return msg;
 }
 
-Msg const * AutomodeStopStationLeave(car_hsm_t * me, Msg * msg)
-{
-	switch(msg->evt)
-	{
-		case ENTRY_EVT:
-		{
-			MotoSetGoalRPM(ParamInstance()->StateRPM[stop_station]);
-			TimeoutSet(seperate_wait_leave_station);
-			return 0;
-		}
-		case TIMER_EVT:
-		{
-			if(seperate_wait_leave_station == EVT_CAST(msg, evt_timeout_t)->type)
-			{
-				MotoSetErrorCode(ERROR_WAIT_LEAVE_STATION);
-				STATE_TRAN(me, &me->forcebrake);
-				return 0;
-			}
-			break;
-		}
+//Msg const * AutomodeStopStationLeave(car_hsm_t * me, Msg * msg)
+//{
+//	switch(msg->evt)
+//	{
+//		case ENTRY_EVT:
+//		{
+//			MotoSetGoalRPM(ParamInstance()->StateRPM[stop_station]);
+//			TimeoutSet(seperate_wait_leave_station);
+//			return 0;
+//		}
+//		case TIMER_EVT:
+//		{
+//			if(seperate_wait_leave_station == EVT_CAST(msg, evt_timeout_t)->type)
+//			{
+//				MotoSetErrorCode(ERROR_WAIT_LEAVE_STATION);
+//				STATE_TRAN(me, &me->forcebrake);
+//				return 0;
+//			}
+//			break;
+//		}
+//
+//		case RFID_EVT:
+//		{
+//			if(EPC_LEAVE_STATION == EVT_CAST(msg, evt_rfid_t)->epc)
+//			{
+//				STATE_TRAN(me, &me->automode_leavestation);
+//				return 0;
+//			}
+//			break;
+//		}
+//
+//	}
+//
+//	return msg;
+//}
 
-		case RFID_EVT:
-		{
-			if(EPC_LEAVE_STATION == EVT_CAST(msg, evt_rfid_t)->epc)
-			{
-				STATE_TRAN(me, &me->automode_leavestation);
-				return 0;
-			}
-			break;
-		}
+//Msg const * AutomodeLeaveStation(car_hsm_t * me, Msg * msg)
+//{
+//	switch(msg->evt)
+//	{
+//		case ENTRY_EVT:
+//		{
+//			g_fbData.FSMstate = leave_station;
+//
+//			MotoSetGoalRPM(ParamInstance()->StateRPM[leave_station]);
+//			TimeoutSet(seperate_wait_pre_merge);
+//			return 0;
+//		}
+//		case TIMER_EVT:
+//		{
+//			if(seperate_wait_pre_merge == EVT_CAST(msg, evt_timeout_t)->type)
+//			{
+//				MotoSetErrorCode(ERROR_WAIT_PRE_MERGE);
+//				STATE_TRAN(me, &me->forcebrake);
+//				return 0;
+//			}
+//			break;
+//		}
+//		case RFID_EVT:
+//		{
+//			if(EPC_PRE_MERGE == EVT_CAST(msg, evt_rfid_t)->epc)
+//			{
+//				STATE_TRAN(me, &me->automode_premerge);
+//				return 0;
+//			}
+//			break;
+//		}
+//	}
+//
+//	return msg;
+//}
 
-	}
-
-	return msg;
-}
-
-Msg const * AutomodeLeaveStation(car_hsm_t * me, Msg * msg)
-{
-	switch(msg->evt)
-	{
-		case ENTRY_EVT:
-		{
-			g_fbData.FSMstate = leave_station;
-
-			MotoSetGoalRPM(ParamInstance()->StateRPM[leave_station]);
-			TimeoutSet(seperate_wait_pre_merge);
-			return 0;
-		}
-		case TIMER_EVT:
-		{
-			if(seperate_wait_pre_merge == EVT_CAST(msg, evt_timeout_t)->type)
-			{
-				MotoSetErrorCode(ERROR_WAIT_PRE_MERGE);
-				STATE_TRAN(me, &me->forcebrake);
-				return 0;
-			}
-			break;
-		}
-		case RFID_EVT:
-		{
-			if(EPC_PRE_MERGE == EVT_CAST(msg, evt_rfid_t)->epc)
-			{
-				STATE_TRAN(me, &me->automode_premerge);
-				return 0;
-			}
-			break;
-		}
-	}
-
-	return msg;
-}
-
-Msg const * AutomodePreMerge(car_hsm_t * me, Msg * msg)
-{
-	switch(msg->evt)
-	{
-		case ENTRY_EVT:
-		{
-			g_fbData.FSMstate = pre_merge;
-
-			MotoSetGoalRPM(ParamInstance()->StateRPM[pre_merge]);
-			TimeoutSet(seperate_wait_merge);
-			return 0;
-		}
-		case TIMER_EVT:
-		{
-			if(seperate_wait_merge == EVT_CAST(msg, evt_timeout_t)->type)
-			{
-				MotoSetErrorCode(ERROR_WAIT_MERGE);
-				STATE_TRAN(me, &me->forcebrake);
-				return 0;
-			}
-			break;
-		}
-		case RFID_EVT:
-		{
-			if(EPC_MERGE == EVT_CAST(msg, evt_rfid_t)->epc)
-			{
-				STATE_TRAN(me, &me->automode_merge);
-				return 0;
-			}
-			break;
-		}
-	}
-
-	return msg;
-}
+//Msg const * AutomodePreMerge(car_hsm_t * me, Msg * msg)
+//{
+//	switch(msg->evt)
+//	{
+//		case ENTRY_EVT:
+//		{
+//			g_fbData.FSMstate = pre_merge;
+//
+//			MotoSetGoalRPM(ParamInstance()->StateRPM[pre_merge]);
+//			TimeoutSet(seperate_wait_merge);
+//			return 0;
+//		}
+//		case TIMER_EVT:
+//		{
+//			if(seperate_wait_merge == EVT_CAST(msg, evt_timeout_t)->type)
+//			{
+//				MotoSetErrorCode(ERROR_WAIT_MERGE);
+//				STATE_TRAN(me, &me->forcebrake);
+//				return 0;
+//			}
+//			break;
+//		}
+//		case RFID_EVT:
+//		{
+//			if(EPC_MERGE == EVT_CAST(msg, evt_rfid_t)->epc)
+//			{
+//				STATE_TRAN(me, &me->automode_merge);
+//				return 0;
+//			}
+//			break;
+//		}
+//	}
+//
+//	return msg;
+//}
 
 Msg const * AutomodeMerge(car_hsm_t * me, Msg * msg)
 {
@@ -948,24 +905,24 @@ void CarHsmCtor(car_hsm_t * me)
 		StateCtor(&me->automode_interjump, "automode.interjump",&me->automode, (EvtHndlr) AutoModeInterJump);
 			StateCtor(&me->cruising, "interjump.cruising", &me->automode_interjump, (EvtHndlr) InterJumpCruising);
 			StateCtor(&me->straight, "interjump.straight", &me->automode_interjump, (EvtHndlr) InterJumpStraight);
-			StateCtor(&me->pre_curve, "interjump.pre_curve", &me->automode_interjump, (EvtHndlr) InterJumpPreCurve);
+//			StateCtor(&me->pre_curve, "interjump.pre_curve", &me->automode_interjump, (EvtHndlr) InterJumpPreCurve);
 			StateCtor(&me->curving, "interjump.curving", &me->automode_interjump, (EvtHndlr) InterJumpCurving);
 			StateCtor(&me->uphill, "interjump.uphill", &me->automode_interjump, (EvtHndlr) InterJumpUphill);
 			StateCtor(&me->downhill, "interjump.downhill", &me->automode_interjump, (EvtHndlr) InterJumpDownhill);
-			StateCtor(&me->pre_downhill, "interjump.pre_downhill", &me->automode_interjump, (EvtHndlr) InterJumpPreDownhill);
-			StateCtor(&me->pre_seperate, "interjump.pre_seperate", &me->automode_interjump, (EvtHndlr) InterJumpPreSeperate);
-		StateCtor(&me->automode_seperate, "automode_seperate",&me->automode, (EvtHndlr) AutomodeSeperate);
-			StateCtor(&me->seperate_waitphoton, "seperate_waitphoton",&me->automode_seperate, (EvtHndlr) SeperateWaitPhoton);
-			StateCtor(&me->seperate_seperating, "seperate_seperating",&me->automode_seperate, (EvtHndlr) SeperateSeperating);
-			StateCtor(&me->seperate_seperateok, "seperate_seperateok",&me->automode_seperate, (EvtHndlr) SeperateSeperateOk);
-		StateCtor(&me->automode_enterstation, "automode_enterstation",&me->automode, (EvtHndlr) AutomodeEnterStation);
-		StateCtor(&me->automode_stopstation, "automode_stopstation",&me->automode, (EvtHndlr) AutomodeStopStation);
-		StateCtor(&me->autemode_stopstationleave, "autemode_stopstationleave",&me->automode, (EvtHndlr) AutomodeStopStationLeave);
-		StateCtor(&me->automode_leavestation, "automode_leavestation",&me->automode, (EvtHndlr) AutomodeLeaveStation);
-		StateCtor(&me->automode_premerge, "automode_premerge",&me->automode, (EvtHndlr) AutomodePreMerge);
-		StateCtor(&me->automode_merge, "automode_merge",&me->automode, (EvtHndlr) AutomodeMerge);
-			StateCtor(&me->merge_waitphoton, "merge_waitphoton",&me->automode_merge, (EvtHndlr) MergeWaitPhoton);
-			StateCtor(&me->merge_merging, "merge_merging",&me->automode_merge, (EvtHndlr) MergeMerging);
+//			StateCtor(&me->pre_downhill, "interjump.pre_downhill", &me->automode_interjump, (EvtHndlr) InterJumpPreDownhill);
+//			StateCtor(&me->pre_seperate, "interjump.pre_seperate", &me->automode_interjump, (EvtHndlr) InterJumpPreSeperate);
+//		StateCtor(&me->automode_seperate, "automode_seperate",&me->automode, (EvtHndlr) AutomodeSeperate);
+//			StateCtor(&me->seperate_waitphoton, "seperate_waitphoton",&me->automode_seperate, (EvtHndlr) SeperateWaitPhoton);
+//			StateCtor(&me->seperate_seperating, "seperate_seperating",&me->automode_seperate, (EvtHndlr) SeperateSeperating);
+//			StateCtor(&me->seperate_seperateok, "seperate_seperateok",&me->automode_seperate, (EvtHndlr) SeperateSeperateOk);
+//		StateCtor(&me->automode_enterstation, "automode_enterstation",&me->automode, (EvtHndlr) AutomodeEnterStation);
+//		StateCtor(&me->automode_stopstation, "automode_stopstation",&me->automode, (EvtHndlr) AutomodeStopStation);
+//		StateCtor(&me->autemode_stopstationleave, "autemode_stopstationleave",&me->automode, (EvtHndlr) AutomodeStopStationLeave);
+//		StateCtor(&me->automode_leavestation, "automode_leavestation",&me->automode, (EvtHndlr) AutomodeLeaveStation);
+//		StateCtor(&me->automode_premerge, "automode_premerge",&me->automode, (EvtHndlr) AutomodePreMerge);
+//		StateCtor(&me->automode_merge, "automode_merge",&me->automode, (EvtHndlr) AutomodeMerge);
+//			StateCtor(&me->merge_waitphoton, "merge_waitphoton",&me->automode_merge, (EvtHndlr) MergeWaitPhoton);
+//			StateCtor(&me->merge_merging, "merge_merging",&me->automode_merge, (EvtHndlr) MergeMerging);
 
 	StateCtor(&me->forcebrake, "forcebrake", &((Hsm *)me)->top, (EvtHndlr)TopForceBrake);
 }

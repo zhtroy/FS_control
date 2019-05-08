@@ -23,6 +23,7 @@
 #include <ti/sysbios/knl/Clock.h>
 #include "task_moto.h"
 #include "logLib.h"
+#include "Sensor/RFID/EPCdef.h"
 
 
 extern Void taskRFID(UArg a0, UArg a1);
@@ -235,7 +236,7 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 			case rfid:
 			{
 				EVT_SETTYPE(&hsmEvt, RFID_EVT);
-				EVT_CAST(&hsmEvt, evt_rfid_t)->epc = pMsg->data[0];
+				EVT_CAST(&hsmEvt, evt_rfid_t)->epc = *((epc_t*) pMsg->data);
 				break;
 			}/* case rfid: */
 
