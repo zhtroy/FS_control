@@ -287,7 +287,7 @@ static void MotoRecvTask(void)
     			/*
                  * 计算后轮转速
                  */
-    			rearRpm = (g_fbData.motorDataF.RPMH << 8) + g_fbData.motorDataF.RPML;
+    			rearRpm = (g_fbData.motorDataR.RPMH << 8) + g_fbData.motorDataR.RPML;
 
     			break;
     		case MOTO_R_CANID3:
