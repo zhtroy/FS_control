@@ -23,7 +23,7 @@
 #include <ti/sysbios/knl/Clock.h>
 #include "common.h"
 #include <xdc/runtime/Types.h>
-
+#include "Sensor/RFID/EPCdef.h"
 
 
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
@@ -79,17 +79,24 @@ int32_t GetMs()
 static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint32_t len )
 {
 	p_msg_t msg;
+	epc_t epc;
+	static epc_t lastepc = {0};
 
 	switch(type)
 	{
-		case 0x97:  //循环查询EPC的返回  回传EPC第一个byte
-			//Log_info2("RFID[%d] EPC:\t%2X ", deviceNum,data[2]);
-			//填充回传数据
-			//logMsg("RFID[%d] EPC:\t%2X\r\n", deviceNum,data[2],0,0,0,0);
+		case 0x97:
+			Clock_setTimeout(clock_rfid_heart,3000);
+			Clock_start(clock_rfid_heart);
 
-			//memcpy(fbData.rfid, &(data[2]),12);  //epc 从第2字节开始，长度12字节
-			g_fbData.rfid = data[2];
-			//g_fbData.rfidReadTime = GetMs();
+			//epc 从第2字节开始，长度12字节
+			EPCfromByteArray(&epc, &data[2]);
+			/*筛除重复的EPC */
+			if(EPCequal(&lastepc, &epc))
+			{
+				break;
+			}
+			lastepc = epc;
+
 			/*记录圈数*/
 			if(data[2] != lastrfid && data[2] == 0x06)
 			{
@@ -100,11 +107,10 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 
 			msg = Message_getEmpty();
 			msg->type = rfid;
-			msg->data[0] = data[2];
-			msg->dataLen = 1;
+			memcpy(msg->data, &epc, sizeof(epc_t));
+			msg->dataLen = sizeof(epc_t);
 			Message_post(msg);
-			Clock_setTimeout(clock_rfid_heart,3000);
-			Clock_start(clock_rfid_heart);
+
 			break;
        case 0x40:
             Clock_setTimeout(clock_rfid_heart,3000);

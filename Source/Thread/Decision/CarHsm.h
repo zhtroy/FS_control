@@ -11,6 +11,7 @@
 #include "hsm.h"
 #include "stdint.h"
 #include "utils/Timeout.h"
+#include "Sensor/RFID/EPCdef.h"
 
 typedef struct {
 	Hsm super;
@@ -212,7 +213,7 @@ typedef struct{
 	/*
 	 * 读到的EPC ID 暂时只用1个字节
 	 */
-	uint8_t epc;
+	epc_t epc;
 }evt_rfid_t;
 
 /*
