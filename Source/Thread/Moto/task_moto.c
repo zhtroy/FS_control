@@ -40,6 +40,7 @@ static float MotoPidCalc(int16_t expRpm,int16_t realRpm,float kp,float ki, float
 static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi);
 static uint8_t frontValid = 0;
 static uint8_t rearValid = 0;
+static uint16_t recvCircle = 0;
 /********************************************************************************/
 /*          静态全局变量                                                              */
 /********************************************************************************/
@@ -209,6 +210,8 @@ static void MotoRecvTask(void)
     static float hisThrottle = 0;
     uint16_t frontRpm = 0;
     uint16_t rearRpm = 0;
+    uint16_t frontCircle = 0;
+    uint16_t rearCircle = 0;
     uint16_t calcRpm = 0;
     uint32_t canID;
     uint32_t maxThrottle = 0;
@@ -250,6 +253,7 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataF.DistanceH  = (uint8_t)canRecvData.Data[5];
     			g_fbData.motorDataF.ErrCodeL   = (uint8_t)canRecvData.Data[6];
     			g_fbData.motorDataF.ErrCodeH   = (uint8_t)canRecvData.Data[7];
+    			frontCircle = (g_fbData.motorDataF.DistanceH << 8) + g_fbData.motorDataF.DistanceL;
     			/* 收到心跳，重启定时器 */
 				Clock_setTimeout(clockMotoFrontHeart,MOTO_CONNECT_TIMEOUT);
 				Clock_start(clockMotoFrontHeart);
@@ -295,7 +299,7 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataR.DistanceH      = (uint8_t)canRecvData.Data[5];
     			g_fbData.motorDataR.ErrCodeL       = (uint8_t)canRecvData.Data[6];
     			g_fbData.motorDataR.ErrCodeH       = (uint8_t)canRecvData.Data[7];
-
+    			rearCircle = (g_fbData.motorDataR.DistanceH << 8) + g_fbData.motorDataR.DistanceL;
     			/* 收到心跳，重启定时器 */
     			Clock_setTimeout(clockMotoRearHeart,MOTO_CONNECT_TIMEOUT);
     			Clock_start(clockMotoRearHeart);
@@ -337,6 +341,7 @@ static void MotoRecvTask(void)
 		         */
 		        recvRpm = (frontRpm + rearRpm)/2;
 		        maxThrottle = MAX_THROTTLE_SIZE/2;
+		        recvCircle = (rearCircle + frontCircle)/2;
 
 		        /*
                  * 前后轮转速差过大，视为异常，进入急停模式
@@ -355,11 +360,13 @@ static void MotoRecvTask(void)
 		    else if(frontValid == 1)
 		    {
 		        recvRpm = frontRpm;
+		        recvCircle = frontCircle;
 		        maxThrottle = MAX_THROTTLE_SIZE;
 		    }
 		    else if(rearValid == 1)
 		    {
 		        recvRpm = rearRpm;
+		        recvCircle = rearCircle;
 		        maxThrottle = MAX_THROTTLE_SIZE;
 		    }
 		    else;
@@ -469,10 +476,10 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
     uint16_t da;
     uint16_t dsa;
     uint16_t vf;
-    uint16_t di;
+    uint32_t di;
     uint16_t vgs;
     uint16_t vg;
-    uint16_t dis;
+    uint32_t dis;
     int32_t vt;
     static float disSum = 0;
     static uint8_t disLess = 0;
@@ -513,12 +520,8 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
      * vgs: 设定的目标速度
      * vt: 临时速度变量
      */
-#if 0
     vf = V2VGetFrontCarSpeed();
     di = V2VGetCarDistance();
-#endif
-    vf = 300;
-    di = 15;
     vgs = MotoGetGoalRPM();
 
     if(di < ds)
@@ -805,4 +808,17 @@ uint8_t MotoGetPidOn()
 	return m_motoCtrl.PidOn;
 }
 
+uint16_t MotoGetCircles()
+{
+    return recvCircle;
+}
 
+uint16_t MotoGetRpm()
+{
+    return g_fbData.recvRPM;
+}
+
+uint8_t MotoGetCarMode()
+{
+    return g_fbData.mode;
+}

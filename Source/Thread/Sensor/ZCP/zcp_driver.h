@@ -50,6 +50,11 @@
 
 #define ZCP_MBOX_DEPTH (16)
 
+/*
+ * TYPE字段
+ */
+#define V2V_CAR_STATUS_TYPE (0x80)
+
 typedef enum  {
     STS_HEAD,
     STS_TYPE,

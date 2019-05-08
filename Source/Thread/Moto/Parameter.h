@@ -22,6 +22,7 @@ typedef struct parameter_tag{
 
     float KSP;
     float KSI;
+    uint16_t REAR_CAR_ADDR;
 
 
 }parameter_t;

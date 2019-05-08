@@ -24,6 +24,7 @@
 #include "common.h"
 #include <xdc/runtime/Types.h>
 #include "Sensor/RFID/EPCdef.h"
+#include <ti/sysbios/knl/Mailbox.h>
 
 
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
@@ -34,6 +35,7 @@ static uint8_t timeout_flag = 0;
 static uint32_t circleNum = 0;
 static uint8_t lastrfid;
 static uint8_t rfidOnline = 0;
+static Mailbox_Handle RFIDV2vMbox;
 
 static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 {
@@ -80,6 +82,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 {
 	p_msg_t msg;
 	epc_t epc;
+	int32_t timeMs;
 	static epc_t lastepc = {0};
 
 	switch(type)
@@ -111,6 +114,12 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			msg->dataLen = sizeof(epc_t);
 			Message_post(msg);
 
+			/*
+			 * 发送RFID至V2V模块
+			 */
+			userGetMS(&timeMs);
+			epc.timeStamp = timeMs;
+			Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
 			break;
        case 0x40:
             Clock_setTimeout(clock_rfid_heart,3000);
@@ -124,6 +133,11 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
             break;
 
 	}
+}
+
+Mailbox_Handle RFIDGetV2vMailbox()
+{
+    return RFIDV2vMbox;
 }
 
 /****************************************************************************/
@@ -140,6 +154,8 @@ Void taskRFID(UArg a0, UArg a1)
 	RFIDStartLoopCheckEpc(RFID_DEVICENUM);
     InitTimer();
     Clock_start(clock_rfid_heart);
+
+    RFIDV2vMbox = Mailbox_create (sizeof (epc_t),4, NULL, NULL);
 
 	while(1)
 	{

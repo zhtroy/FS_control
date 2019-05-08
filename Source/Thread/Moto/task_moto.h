@@ -250,5 +250,7 @@ extern void MotoSetGoalRPM(uint16_t rpm);
 extern uint16_t MotoGetGoalRPM();
 extern void MotoSetPidOn(uint8_t mode);
 extern uint8_t MotoGetPidOn();
-
+uint16_t MotoGetCircles();
+uint16_t MotoGetRpm();
+uint8_t MotoGetCarMode();
 #endif

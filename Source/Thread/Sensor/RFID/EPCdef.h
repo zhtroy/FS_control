@@ -59,7 +59,9 @@ typedef struct epc_tag
 	uint8_t roadFeature;
 	//距起始位置距离
 	uint32_t distance;
+	uint32_t timeStamp;
 }epc_t;
+
 
 extern void EPCfromByteArray(epc_t * epc, uint8_t array[]);
 extern uint8_t EPCequal(epc_t * a, epc_t * b);
