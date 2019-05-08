@@ -9,6 +9,7 @@
 
 void EPCfromByteArray(epc_t * epc, uint8_t array[])
 {
+	uint8_t reserved;
 	//干道编号
 	uint8_t mainNo;
 	//1级支道编号
@@ -30,6 +31,7 @@ void EPCfromByteArray(epc_t * epc, uint8_t array[])
 	//距起始位置距离
 	uint32_t distance;
 
+	reserved = array[0];
 	mainNo = array[1];
 	firstNo = array[2];
 	firstNo = firstNo <<2;
@@ -52,6 +54,7 @@ void EPCfromByteArray(epc_t * epc, uint8_t array[])
 	distance = distance << 5;
 	distance += array[11] >> 3;
 
+	epc->reserved = reserved;
 	epc->areaNo = areaNo;
 	epc->areaType = areaType;
 	epc->distance = distance;

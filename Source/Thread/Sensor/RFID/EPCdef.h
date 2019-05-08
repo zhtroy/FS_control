@@ -39,6 +39,7 @@
 #pragma pack(1)
 typedef struct epc_tag
 {
+	uint8_t reserved;
 	//干道编号
 	uint8_t mainNo;
 	//1级支道编号

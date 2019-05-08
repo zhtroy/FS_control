@@ -59,7 +59,10 @@ enum CarEvents
 	REMOTE_SET_KP_EVT,
 	REMOTE_SET_KI_EVT,
 	REMOTE_SET_KU_EVT,
+	REMOTE_SET_KSP_EVT,
+	REMOTE_SET_KSI_EVT,
 	REMOTE_SET_ENABLE_CHANGERAIL_EVT,
+	REMOTE_SET_BACKCAR_ADDR,
 	REMOTE_AUTO_START_EVT,
 	REMOTE_HEARTBEAT_EVT,
 
@@ -204,6 +207,16 @@ typedef struct {
 	Msg super;
 	uint8_t value;
 }evt_remote_set_u8_param_t;
+
+/*
+ * 遥控 (remote)
+ *
+ *	设置u16类型的参数
+ */
+typedef struct {
+	Msg super;
+	uint16_t value;
+}evt_remote_set_u16_param_t;
 
 /*
  * rfid 读取到标签

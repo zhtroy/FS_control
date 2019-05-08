@@ -38,6 +38,6 @@
 
 #define TEST_ZIGBEE_CONTROL_HSM
 
-#define TEST_ZCP
+//#define TEST_ZCP
 
 #endif /* TEST_CONFIG_H_ */

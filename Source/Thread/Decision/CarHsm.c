@@ -168,6 +168,24 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 			return 0;
 		}
 
+		case REMOTE_SET_KSP_EVT:
+		{
+			ParamInstance()->KSP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			return 0;
+		}
+
+		case REMOTE_SET_KSI_EVT:
+		{
+			ParamInstance()->KSI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			return 0;
+		}
+
+		case REMOTE_SET_BACKCAR_ADDR:
+		{
+			ParamInstance()->REAR_CAR_ADDR = EVT_CAST(msg, evt_remote_set_u16_param_t)->value;
+			return 0;
+		}
+
 		case REMOTE_SET_ENABLE_CHANGERAIL_EVT:
 		{
 			ParamInstance()->EnableChangeRail = EVT_CAST(msg, evt_remote_set_u8_param_t) ->value;

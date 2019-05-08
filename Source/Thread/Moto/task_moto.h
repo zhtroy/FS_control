@@ -116,7 +116,7 @@ typedef struct
 typedef struct{
 	motorData_t motorDataF;
 	motorData_t motorDataR;
-	uint8_t rfid;
+	uint32_t rfid;
 	uint8_t mode;
 	uint8_t brake;
 	uint8_t railstate;

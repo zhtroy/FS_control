@@ -186,6 +186,16 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KU_EVT);
 								break;
 							}
+							case 'v':
+							{
+								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSP_EVT);
+								break;
+							}
+							case 'w':
+							{
+								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSI_EVT);
+								break;
+							}
 						}
 
 						EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value = \
@@ -220,6 +230,18 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 					case 'S': /*在automode下开始启动*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_AUTO_START_EVT);
+						break;
+					}
+
+					case 'A': /*设置后车zigbee地址*/
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_BACKCAR_ADDR);
+						EVT_CAST(&hsmEvt, evt_remote_set_u16_param_t)->value = \
+								(pMsg->data[5]-'0') \
+								+(pMsg->data[4]-'0') * 10 \
+								+(pMsg->data[3]-'0') * 100 \
+								+(pMsg->data[2]-'0') * 1000 \
+								+(pMsg->data[1]-'0') * 10000;
 						break;
 					}
 

@@ -93,6 +93,12 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 
 			//epc 从第2字节开始，长度12字节
 			EPCfromByteArray(&epc, &data[2]);
+
+			/*筛除保留字段不为0的epc*/
+			if(epc.reserved != 0x00)
+			{
+				break;
+			}
 			/*筛除重复的EPC */
 			if(EPCequal(&lastepc, &epc))
 			{
@@ -100,6 +106,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			}
 			lastepc = epc;
 
+			g_fbData.rfid = epc.distance;
 			/*记录圈数*/
 			if(data[2] != lastrfid && data[2] == 0x06)
 			{
