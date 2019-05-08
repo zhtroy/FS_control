@@ -8,10 +8,11 @@
 #ifndef V2V_COMMUNICATION_H_
 #define V2V_COMMUNICATION_H_
 /*
- * 轮子周长
+ * 轮子周长,轨道总长
  * 单位(10cm)
  */
 #define WHEEL_PERIMETER (11.78)
+#define TOTAL_DISTANCE (2775)
 
 #define V2V_CAR_FATAL (1)
 #define V2V_CAR_OK (0)

@@ -72,6 +72,10 @@ void V2VSendTask(UArg arg0, UArg arg1)
 
 
             carSts.distance += circleDiff * WHEEL_PERIMETER;
+            if(carSts.distance > TOTAL_DISTANCE)
+            {
+                carSts.distance = carSts.distance - TOTAL_DISTANCE;
+            }
         }
 
         carSts.rpm = MotoGetRpm();
@@ -128,13 +132,20 @@ void V2VRecvTask(UArg arg0, UArg arg1)
             circleDiff = rMotoCircle - sMotoCircle;
         }
         dis = carSts.distance + circleDiff* WHEEL_PERIMETER;
+        if(dis > TOTAL_DISTANCE)
+        {
+            dis = dis - TOTAL_DISTANCE;
+        }
 
         /*
          * 计算距离差
          */
         if(dis > recvCarSts.distance)
         {
-            fbCarSts.distance = (2^32-1) - dis + recvCarSts.distance;
+            /*
+             * 环形线路计算
+             */
+            fbCarSts.distance = TOTAL_DISTANCE - dis + recvCarSts.distance;
         }
         else
         {

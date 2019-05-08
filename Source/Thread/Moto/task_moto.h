@@ -215,11 +215,16 @@ typedef struct{
  */
 #define BREAK_OFFSET (100)
 
-#define MIN_SAFE_DISTANCE (5)
-#define MAX_SAFE_DISTANCE (20)
-
-#define MIN_AWAY_DISTANCE (5)
-#define MAX_AWAY_DISTANCE (20)
+/*
+ * 安全距离范围定义,单位(10cm)
+ */
+#define MIN_SAFE_DISTANCE (50)
+#define MAX_SAFE_DISTANCE (200)
+/*
+ * 远离距离范围定义,单位(10cm)
+ */
+#define MIN_AWAY_DISTANCE (50)
+#define MAX_AWAY_DISTANCE (200)
 
 #if CAR_VERSION == 20
 #define MAX_BRAKE_SIZE (200)
