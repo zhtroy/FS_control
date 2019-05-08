@@ -183,13 +183,14 @@ typedef struct{
 /*刹车控制器异常*/
 #define ERROR_BRAKE_ERROR	(17)
 
-
+/*前后轮转速异常*/
+#define ERROR_RPM_ABNORMAL   (17)
 
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
-#define ADJ_THROTTLE_UPSCALE (20)
-#define ADJ_THROTTLE_DWSCALE (-20)
+#define ADJ_THROTTLE_UPSCALE (50)
+#define ADJ_THROTTLE_DWSCALE (-50)
 
 #if CAR_VERSION == 20
 //#define MAX_THROTTLE_SIZE (55)
@@ -198,13 +199,27 @@ typedef struct{
 #define MAX_THROTTLE_SIZE (100)
 
 #elif CAR_VERSION == 22
-#define MAX_THROTTLE_SIZE (110)
+#define MAX_THROTTLE_SIZE (140)
 
 #endif
 
 #define MIN_THROTTLE_SIZE (-355)
 
-#define BREAK_THRESHOLD (0)
+/*
+ * 前后轮最大转速差
+ */
+#define MAX_DIFF_RPM (400)
+
+/*
+ * 刹车偏移量，由刹车部件导致，一部分行程可能无刹车效果
+ */
+#define BREAK_OFFSET (100)
+
+#define MIN_SAFE_DISTANCE (5)
+#define MAX_SAFE_DISTANCE (20)
+
+#define MIN_AWAY_DISTANCE (5)
+#define MAX_AWAY_DISTANCE (20)
 
 #if CAR_VERSION == 20
 #define MAX_BRAKE_SIZE (200)
