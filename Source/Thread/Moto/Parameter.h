@@ -20,6 +20,10 @@ typedef struct parameter_tag{
     uint8_t EnableChangeRail;
     uint16_t StateRPM[car_state_None];
 
+    float KSP;
+    float KSI;
+    uint16_t REAR_CAR_ADDR;
+
 
 }parameter_t;
 

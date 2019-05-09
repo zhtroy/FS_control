@@ -11,6 +11,8 @@
 #define MODBUS_ACK_CRC_ERR      (2)
 #define MODBUS_ACK_FRAME_ERR    (3)
 #define MODBUS_ACK_TIMEOUT		(4)
+#define MODBUS_ACK_LOOPERR      (5)
+#define MODBUS_ACK_SENDERR      (6)
 
 #define LEFTRAIL    (1)
 #define RIGHTRAIL   (2)
@@ -22,7 +24,7 @@
 #define KM 3.285714												//速比
 #define DELTA 1.0												//减速度差阈值
 #define AMAX 10.0												//最大减速度10m/s2
-#define BRAKETIME 10											//刹车计算时间
+#define BRAKETIME (20)											//刹车计算时间
 #define MAXSTEP 100												//刹车行程总步数
 
 #define STEP_EXIT (5)

@@ -84,4 +84,8 @@ testBrakeServoInit();
 #ifdef TEST_ZIGBEE_CONTROL_HSM
     testZigbeeControlHSM_init();
 #endif
+
+#ifdef TEST_ZCP
+    testZCPInit();
+#endif
 }

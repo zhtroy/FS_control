@@ -116,7 +116,7 @@ typedef struct
 typedef struct{
 	motorData_t motorDataF;
 	motorData_t motorDataR;
-	uint8_t rfid;
+	uint32_t rfid;
 	uint8_t mode;
 	uint8_t brake;
 	uint8_t railstate;
@@ -183,7 +183,8 @@ typedef struct{
 /*刹车控制器异常*/
 #define ERROR_BRAKE_ERROR	(17)
 
-
+/*前后轮转速异常*/
+#define ERROR_RPM_ABNORMAL   (17)
 
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
@@ -204,14 +205,33 @@ typedef struct{
 
 #define MIN_THROTTLE_SIZE (-355)
 
-#define BREAK_THRESHOLD (-100)
+/*
+ * 前后轮最大转速差
+ */
+#define MAX_DIFF_RPM (400)
+
+/*
+ * 刹车偏移量，由刹车部件导致，一部分行程可能无刹车效果
+ */
+#define BREAK_OFFSET (0)
+
+/*
+ * 安全距离范围定义,单位(10cm)
+ */
+#define MIN_SAFE_DISTANCE (50)
+#define MAX_SAFE_DISTANCE (200)
+/*
+ * 远离距离范围定义,单位(10cm)
+ */
+#define MIN_AWAY_DISTANCE (50)
+#define MAX_AWAY_DISTANCE (200)
 
 #if CAR_VERSION == 20
 #define MAX_BRAKE_SIZE (200)
 #elif CAR_VERSION == 21
 #define MAX_BRAKE_SIZE (250)
 #elif CAR_VERSION == 22
-#define MAX_BRAKE_SIZE (200)
+#define MAX_BRAKE_SIZE (255)
 #endif
 
 
@@ -235,5 +255,7 @@ extern void MotoSetGoalRPM(uint16_t rpm);
 extern uint16_t MotoGetGoalRPM();
 extern void MotoSetPidOn(uint8_t mode);
 extern uint8_t MotoGetPidOn();
-
+uint16_t MotoGetCircles();
+uint16_t MotoGetRpm();
+uint8_t MotoGetCarMode();
 #endif

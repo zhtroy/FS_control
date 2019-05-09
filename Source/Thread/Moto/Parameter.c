@@ -12,7 +12,11 @@ static parameter_t m_param = {
 		.KP = 0,
 		.KU = 0,
 		.EnableChangeRail = 0,
-		.StateRPM = {0}
+		.StateRPM = {0},
+		.KSP = 0,
+		.KSI = 0,
+		.REAR_CAR_ADDR = 0
+
 };
 
 parameter_t * ParamInstance()

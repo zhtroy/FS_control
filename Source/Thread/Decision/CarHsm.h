@@ -11,6 +11,7 @@
 #include "hsm.h"
 #include "stdint.h"
 #include "utils/Timeout.h"
+#include "Sensor/RFID/EPCdef.h"
 
 typedef struct {
 	Hsm super;
@@ -58,7 +59,10 @@ enum CarEvents
 	REMOTE_SET_KP_EVT,
 	REMOTE_SET_KI_EVT,
 	REMOTE_SET_KU_EVT,
+	REMOTE_SET_KSP_EVT,
+	REMOTE_SET_KSI_EVT,
 	REMOTE_SET_ENABLE_CHANGERAIL_EVT,
+	REMOTE_SET_BACKCAR_ADDR,
 	REMOTE_AUTO_START_EVT,
 	REMOTE_HEARTBEAT_EVT,
 
@@ -205,6 +209,16 @@ typedef struct {
 }evt_remote_set_u8_param_t;
 
 /*
+ * 遥控 (remote)
+ *
+ *	设置u16类型的参数
+ */
+typedef struct {
+	Msg super;
+	uint16_t value;
+}evt_remote_set_u16_param_t;
+
+/*
  * rfid 读取到标签
  */
 typedef struct{
@@ -212,7 +226,7 @@ typedef struct{
 	/*
 	 * 读到的EPC ID 暂时只用1个字节
 	 */
-	uint8_t epc;
+	epc_t epc;
 }evt_rfid_t;
 
 /*

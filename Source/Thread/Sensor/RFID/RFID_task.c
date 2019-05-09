@@ -23,7 +23,8 @@
 #include <ti/sysbios/knl/Clock.h>
 #include "common.h"
 #include <xdc/runtime/Types.h>
-
+#include "Sensor/RFID/EPCdef.h"
+#include <ti/sysbios/knl/Mailbox.h>
 
 
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
@@ -34,6 +35,7 @@ static uint8_t timeout_flag = 0;
 static uint32_t circleNum = 0;
 static uint8_t lastrfid;
 static uint8_t rfidOnline = 0;
+static Mailbox_Handle RFIDV2vMbox;
 
 static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 {
@@ -79,17 +81,32 @@ int32_t GetMs()
 static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint32_t len )
 {
 	p_msg_t msg;
+	epc_t epc;
+	int32_t timeMs;
+	static epc_t lastepc = {0};
 
 	switch(type)
 	{
-		case 0x97:  //循环查询EPC的返回  回传EPC第一个byte
-			//Log_info2("RFID[%d] EPC:\t%2X ", deviceNum,data[2]);
-			//填充回传数据
-			//logMsg("RFID[%d] EPC:\t%2X\r\n", deviceNum,data[2],0,0,0,0);
+		case 0x97:
+			Clock_setTimeout(clock_rfid_heart,3000);
+			Clock_start(clock_rfid_heart);
 
-			//memcpy(fbData.rfid, &(data[2]),12);  //epc 从第2字节开始，长度12字节
-			g_fbData.rfid = data[2];
-			//g_fbData.rfidReadTime = GetMs();
+			//epc 从第2字节开始，长度12字节
+			EPCfromByteArray(&epc, &data[2]);
+
+			/*筛除保留字段不为0的epc*/
+			if(epc.reserved != 0x00)
+			{
+				break;
+			}
+			/*筛除重复的EPC */
+			if(EPCequal(&lastepc, &epc))
+			{
+				break;
+			}
+			lastepc = epc;
+
+			g_fbData.rfid = epc.distance;
 			/*记录圈数*/
 			if(data[2] != lastrfid && data[2] == 0x06)
 			{
@@ -100,11 +117,16 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 
 			msg = Message_getEmpty();
 			msg->type = rfid;
-			msg->data[0] = data[2];
-			msg->dataLen = 1;
+			memcpy(msg->data, &epc, sizeof(epc_t));
+			msg->dataLen = sizeof(epc_t);
 			Message_post(msg);
-			Clock_setTimeout(clock_rfid_heart,3000);
-			Clock_start(clock_rfid_heart);
+
+			/*
+			 * 发送RFID至V2V模块
+			 */
+			userGetMS(&timeMs);
+			epc.timeStamp = timeMs;
+			Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
 			break;
        case 0x40:
             Clock_setTimeout(clock_rfid_heart,3000);
@@ -118,6 +140,11 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
             break;
 
 	}
+}
+
+Mailbox_Handle RFIDGetV2vMailbox()
+{
+    return RFIDV2vMbox;
 }
 
 /****************************************************************************/
@@ -134,6 +161,8 @@ Void taskRFID(UArg a0, UArg a1)
 	RFIDStartLoopCheckEpc(RFID_DEVICENUM);
     InitTimer();
     Clock_start(clock_rfid_heart);
+
+    RFIDV2vMbox = Mailbox_create (sizeof (epc_t),4, NULL, NULL);
 
 	while(1)
 	{

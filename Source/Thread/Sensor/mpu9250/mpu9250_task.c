@@ -14,7 +14,7 @@
 #include "mpu9250_task.h"
 
 /* 宏定义 */
-#define DEFAULT_MPU_HZ  (20)
+#define DEFAULT_MPU_HZ  (10)
 #define COMPASS_READ_MS (100)
 #define MPU_Q30  (1073741824.0f)
 #define PITCH_ERROR  (0)
@@ -36,7 +36,7 @@ static mpu9250DataCorrect_t compassDataCor = {
 };
 
 static uint8_t selfTestMode = 1;	/* 默认不进行自检 */
-static uint8_t compassCorrect = 0;	/* 磁力计默认不校准 */
+static uint8_t compassCorrect = 1;	/* 磁力计默认不校准 */
 static uint8_t correctTrigger = 0;	/* 磁力计校准触发 */
 
 /* These next two functions converts the orientation matrix (see

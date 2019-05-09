@@ -37,9 +37,10 @@ static Clock_Handle clockMotoRearHeart;
 static Clock_Handle clockMotoFrontHeart;
 
 static float MotoPidCalc(int16_t expRpm,int16_t realRpm,float kp,float ki, float ku,uint8_t clear);
-
+static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi);
 static uint8_t frontValid = 0;
 static uint8_t rearValid = 0;
+static uint16_t recvCircle = 0;
 /********************************************************************************/
 /*          静态全局变量                                                              */
 /********************************************************************************/
@@ -203,22 +204,21 @@ static void MotoSendTask(void)
 
 static void MotoRecvTask(void)
 {
-	//pid
-    uint16_t recvRpm;
-    uint16_t recvThrottle;
-    float adjThrottle;
-    float adjbrake;
-    //uint8_t mode;
+    uint16_t recvRpm = 0;
+    float adjThrottle = 0;
+    float adjbrake = 0;
     static float hisThrottle = 0;
-    uint16_t lastRpm;
-    uint8_t lastH;
-    uint8_t lastL;
-    uint8_t data_error = 0;
+    uint16_t frontRpm = 0;
+    uint16_t rearRpm = 0;
+    uint16_t frontCircle = 0;
+    uint16_t rearCircle = 0;
     uint16_t calcRpm = 0;
     uint32_t canID;
     uint32_t maxThrottle = 0;
-
     canDataObj_t canRecvData;
+    uint16_t vg = 0;
+    p_msg_t msg;
+
 	g_fbData.motorDataF.MotoId = MOTO_FRONT;
 	g_fbData.motorDataR.MotoId = MOTO_REAR;
 	
@@ -239,6 +239,10 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataF.RPMH       = (uint8_t)canRecvData.Data[5];
     			g_fbData.motorDataF.MotoTemp   = (uint8_t)canRecvData.Data[6] - 40;
     			g_fbData.motorDataF.DriverTemp = (uint8_t)canRecvData.Data[7] - 40;
+    			/*
+    			 * 计算前轮转速
+    			 */
+    			frontRpm = (g_fbData.motorDataF.RPMH << 8) + g_fbData.motorDataF.RPML;
     			break;
     		case MOTO_F_CANID3:
     			g_fbData.motorDataF.VoltL      = (uint8_t)canRecvData.Data[0];
@@ -249,6 +253,7 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataF.DistanceH  = (uint8_t)canRecvData.Data[5];
     			g_fbData.motorDataF.ErrCodeL   = (uint8_t)canRecvData.Data[6];
     			g_fbData.motorDataF.ErrCodeH   = (uint8_t)canRecvData.Data[7];
+    			frontCircle = (g_fbData.motorDataF.DistanceH << 8) + g_fbData.motorDataF.DistanceL;
     			/* 收到心跳，重启定时器 */
 				Clock_setTimeout(clockMotoFrontHeart,MOTO_CONNECT_TIMEOUT);
 				Clock_start(clockMotoFrontHeart);
@@ -279,6 +284,11 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataR.MotoTemp       = (uint8_t)canRecvData.Data[6] - 40;
     			g_fbData.motorDataR.DriverTemp     = (uint8_t)canRecvData.Data[7] - 40;
 
+    			/*
+                 * 计算后轮转速
+                 */
+    			rearRpm = (g_fbData.motorDataR.RPMH << 8) + g_fbData.motorDataR.RPML;
+
     			break;
     		case MOTO_R_CANID3:
     			g_fbData.motorDataR.VoltL          = (uint8_t)canRecvData.Data[0];
@@ -289,7 +299,7 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataR.DistanceH      = (uint8_t)canRecvData.Data[5];
     			g_fbData.motorDataR.ErrCodeL       = (uint8_t)canRecvData.Data[6];
     			g_fbData.motorDataR.ErrCodeH       = (uint8_t)canRecvData.Data[7];
-
+    			rearCircle = (g_fbData.motorDataR.DistanceH << 8) + g_fbData.motorDataR.DistanceL;
     			/* 收到心跳，重启定时器 */
     			Clock_setTimeout(clockMotoRearHeart,MOTO_CONNECT_TIMEOUT);
     			Clock_start(clockMotoRearHeart);
@@ -313,23 +323,50 @@ static void MotoRecvTask(void)
     			break;
 		}/* switch */
 
+		/*
+		 * PID计算条件：
+		 * 若前轮有效，以收到前轮速度反馈时刻计算PID。否则，以后轮为准
+		 */
 		if((frontValid == 1 && canID == MOTO_F_CANID2) ||
 		        (frontValid == 0 && rearValid == 1 && canID == MOTO_R_CANID2))
 		{
+		    /*
+		     * 获取车辆转速: 增加了只有一个轮子正常的处理
+		     */
 		    if(frontValid == 1 && rearValid == 1)
 		    {
-		        recvRpm = ((g_fbData.motorDataF.RPMH << 8) + g_fbData.motorDataF.RPML
-		                   + (g_fbData.motorDataR.RPMH << 8) + g_fbData.motorDataR.RPML)/2;
+		        /*
+		         * 两轮驱动器均正常时，采用平均速度
+		         * 限定最大油门
+		         */
+		        recvRpm = (frontRpm + rearRpm)/2;
 		        maxThrottle = MAX_THROTTLE_SIZE/2;
+		        recvCircle = (rearCircle + frontCircle)/2;
+
+		        /*
+                 * 前后轮转速差过大，视为异常，进入急停模式
+                 */
+		        if(abs((int32_t)frontRpm - (int32_t)rearRpm) > MAX_DIFF_RPM)
+		        {
+
+                    msg = Message_getEmpty();
+                    msg->type = error;
+                    msg->data[0] = ERROR_RPM_ABNORMAL;
+                    msg->dataLen = 1;
+                    Message_post(msg);
+		        }
+
 		    }
 		    else if(frontValid == 1)
 		    {
-		        recvRpm = (g_fbData.motorDataF.RPMH << 8) + g_fbData.motorDataF.RPML;
+		        recvRpm = frontRpm;
+		        recvCircle = frontCircle;
 		        maxThrottle = MAX_THROTTLE_SIZE;
 		    }
 		    else if(rearValid == 1)
 		    {
-		        recvRpm = (g_fbData.motorDataR.RPMH << 8) + g_fbData.motorDataR.RPML;
+		        recvRpm = rearRpm;
+		        recvCircle = rearCircle;
 		        maxThrottle = MAX_THROTTLE_SIZE;
 		    }
 		    else;
@@ -337,92 +374,205 @@ static void MotoRecvTask(void)
 		    g_fbData.recvRPM = recvRpm;
             g_fbData.calcRPM = calcRpm;
 
-
             /*
-            if(g_fbData.motorDataF.RPML != 0 || g_fbData.motorDataF.RPMH != 0)
-            {
-                *(volatile uint16_t *)(SOC_EMIFA_CS2_ADDR + (0x5<<1)) = 0x5A;
-                *(volatile uint16_t *)(SOC_EMIFA_CS2_ADDR + (0x5<<1)) = 0x00;
-            }
-            */
-
+             * PID运算
+             *  a)根据加速曲线，拟合目标速度(goalRPM)，输出计算速度(calcRPM)
+             *  b)根据calcRPM，进行PID调节
+             */
             if( MotoGetPidOn()  )
             {
-                //recvRpm = (g_fbData.motorDataF.RPMH << 8) + g_fbData.motorDataF.RPML;
-                //recvThrottle = (g_fbData.motorDataF.ThrottleH << 8) + g_fbData.motorDataF.ThrottleL;
+                vg = MotoGoalSpeedGen(recvRpm, ParamInstance()->KSP, ParamInstance()->KSI);
 
-                if ( abs((int)calcRpm - (int)(MotoGetGoalRPM())) < DELTA_RPM ){
-                    calcRpm = MotoGetGoalRPM();
+                /*
+                 * 拟合加速曲线（当前为固定加速度曲线）
+                 */
+                if ( abs((int)calcRpm - (int)(vg)) < DELTA_RPM )
+                {
+                    calcRpm = vg;
                 }
-                else{
-                    if(calcRpm<MotoGetGoalRPM() )
+                else
+                {
+                    if(calcRpm < vg)
                     {
                         calcRpm+=DELTA_RPM;
                     }
-
-                    else if(calcRpm>MotoGetGoalRPM() )
+                    else if(calcRpm > vg)
                     {
                         calcRpm-=DELTA_RPM;
                     }
                 }
+                /*
+                 * 限定最大速度
+                 */
+                calcRpm = (calcRpm > RPM_LIMIT) ? RPM_LIMIT : calcRpm;
 
-                calcRpm = calcRpm > RPM_LIMIT ? RPM_LIMIT : calcRpm;
-
-
-
+                /*
+                 * PID计算调节量
+                 */
                 adjThrottle = MotoPidCalc(calcRpm,recvRpm,ParamInstance()->KP,
                                         ParamInstance()->KI,ParamInstance()->KU, 0);
 
-                if(hisThrottle < 0 && adjThrottle >0)
+                hisThrottle += adjThrottle;
+
+                if(hisThrottle < 0)
                 {
-                    hisThrottle += 5.0*adjThrottle;
+                    /*
+                     * 刹车模式:
+                     *  a)关闭油门
+                     *  b)增加刹车偏移量
+                     *  c)设定刹车
+                     */
+                    MotoSetThrottle(0);
+
+                    adjbrake = BREAK_OFFSET - hisThrottle;
+                    if(adjbrake > MAX_BRAKE_SIZE)
+                    {
+                        hisThrottle = BREAK_OFFSET - MAX_BRAKE_SIZE;
+                        adjbrake = MAX_BRAKE_SIZE;
+                    }
+
+                    BrakeSetBrake( round(adjbrake));
+
                 }
                 else
                 {
-                    hisThrottle += adjThrottle;
-                }
-
-                if(hisThrottle > maxThrottle)
-                    hisThrottle = maxThrottle;
-                else if(hisThrottle < MIN_THROTTLE_SIZE)
-                    hisThrottle = MIN_THROTTLE_SIZE;
-                else;
-
-                if(hisThrottle < 0)   //刹车状态
-                {
-
-                    MotoSetThrottle(0);
-
-                    if(hisThrottle < BREAK_THRESHOLD)
-                        adjbrake = - BRAKE_THRO_RATIO* (hisThrottle - BREAK_THRESHOLD);
-                    else
-                        adjbrake = 0;
-
-                    if(adjbrake > MAX_BRAKE_SIZE)
-                        BrakeSetBrake(MAX_BRAKE_SIZE);
-                    else
-                        BrakeSetBrake( round(adjbrake));
-
-                }
-                else  //油门
-                {
-                    MotoSetThrottle(round(hisThrottle));
+                    /*
+                     * 油门模式:
+                     *  a)放开刹车
+                     *  b)设置油门
+                     */
                     BrakeSetBrake(0);
+
+                    if(hisThrottle > maxThrottle)
+                    {
+                        hisThrottle = maxThrottle;
+                    }
+                    MotoSetThrottle(round(hisThrottle));
                 }
             }
             else
             {
+                /*
+                 * 退出PID模式时，清除PID相关计算历史值
+                 */
                 calcRpm=0;
                 hisThrottle = 0;
                 MotoPidCalc(0,0,0,0,0,1);
             }
 
+            /*
+             * Post信用量到MotoSendTask
+             */
             Semaphore_post(pidSem);
 		}/*if(canID == ....)*/
 
 	}
 }
 //TODO: 发送机车状态到4G
+
+static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
+{
+    uint16_t ds;
+    uint16_t da;
+    uint16_t dsa;
+    uint16_t vf;
+    uint32_t di;
+    uint16_t vgs;
+    uint16_t vg;
+    int32_t dis;
+    int32_t vt;
+    static float disSum = 0;
+    static uint8_t disLess = 0;
+    float vd;
+    const float KS = 0.01;
+    const float KA = 0.01;
+    /*
+     * 根据车速计算安全距离
+     * ds: 安全距离
+     * ks: 比例系数-安全距离
+     * ka: 比例系数-远离距离
+     * vc: 车辆速度
+     * da: 远离距离（超出安全距离之后的远离量）
+     * dsa: 安全距离+远离距离
+     */
+    ds = MIN_SAFE_DISTANCE + KS*vc;
+    if(ds > MAX_SAFE_DISTANCE)
+    {
+        ds = MAX_SAFE_DISTANCE;
+    }
+
+    da = MIN_AWAY_DISTANCE + KA*vc;
+    if(da > MAX_AWAY_DISTANCE)
+    {
+        da = MAX_AWAY_DISTANCE;
+    }
+
+    dsa = ds+da;
+
+    /*
+     * 根据安全距离调整车辆目标速度
+     * di: 车辆距离
+     * dis: 车辆距离-安全距离
+     * ksp: 距离PID比例系数(p)
+     * ksi: 距离PID积分系数(i)
+     * vf: 前车速度
+     * vg: 目标速度
+     * vgs: 设定的目标速度
+     * vt: 临时速度变量
+     */
+    vf = V2VGetFrontCarSpeed();
+    di = V2VGetCarDistance();
+    vgs = MotoGetGoalRPM();
+
+    if(di < ds)
+    {
+        dis = (int) di - (int) ds;
+
+        disSum += ksi * dis;
+        vd = ksp*dis + disSum;
+
+        vt = vf+vd;
+
+        if(vt < 0)
+            vg = 0;
+        else
+            vg = vt;
+
+        if(vg > vgs)
+        {
+            vg = vgs;
+        }
+
+        disLess = 1;
+    }
+    else if(di < dsa)
+    {
+        /*
+         * (ds < di < dsa) vg保持不变
+         */
+
+        if(disLess == 0)
+        {
+            vg = vgs;
+        }
+
+        /*
+         * 清除积分累计值
+         */
+        disSum = 0;
+    }
+    else
+    {
+        vg = vgs;
+        disLess = 0;
+
+        /*
+         * 清除积分累计值
+         */
+        disSum = 0;
+    }
+    return vg;
+}
 
 void MotoSendFdbkToCellTask()
 {
@@ -558,6 +708,9 @@ float MotoPidCalc(int16_t expRpm,int16_t realRpm,float kp,float ki, float ku,uin
     static int32_t lastDiff = 0;
     static int32_t elastDiff = 0;
 
+    /*
+     * 清除历史值
+     */
     if(clear==1)
     {
     	lastDiff =0;
@@ -565,20 +718,31 @@ float MotoPidCalc(int16_t expRpm,int16_t realRpm,float kp,float ki, float ku,uin
     	return 0;
     }
 
+    /*
+     * 计算差值
+     */
     diffRpm = expRpm - realRpm;
 
-    //限定差值最大范围
+    /*
+     * 限定差值最大范围，防止突变
+     */
     if(diffRpm > DIFF_RPM_UPSCALE)
         diffRpm = DIFF_RPM_UPSCALE;
     else if(diffRpm < DIFF_RPM_DWSCALE)
         diffRpm = DIFF_RPM_DWSCALE;
     else;
 
+    /*
+     * 增量式PID，输出(油门/刹车)调节量
+     */
     adjThrottle = kp*(diffRpm - lastDiff) + ki*diffRpm + ku*(diffRpm - 2*lastDiff + elastDiff);
 
     elastDiff = lastDiff;
     lastDiff = diffRpm;
 
+    /*
+     * 限制调节量最大范围，防止发生急加/急刹
+     */
     if(adjThrottle > ADJ_THROTTLE_UPSCALE)
         adjThrottle = ADJ_THROTTLE_UPSCALE;
     else if(adjThrottle < ADJ_THROTTLE_DWSCALE)
@@ -644,4 +808,17 @@ uint8_t MotoGetPidOn()
 	return m_motoCtrl.PidOn;
 }
 
+uint16_t MotoGetCircles()
+{
+    return recvCircle;
+}
 
+uint16_t MotoGetRpm()
+{
+    return g_fbData.recvRPM;
+}
+
+uint8_t MotoGetCarMode()
+{
+    return g_fbData.mode;
+}

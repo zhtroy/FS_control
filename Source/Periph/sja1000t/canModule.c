@@ -103,6 +103,32 @@ canCfgTable_t can_cfg_table[]=
 		{55,RIE|TIE,NULL,NULL}
 		}
 	},
+	/*设备3资源定义*/
+    {
+        /*设备名*/
+        "/sja1000/",
+        /*设备序列号*/
+        3,
+        {
+        /*总线基地址 总线位宽(8/16/32/64) CAN帧模式 滤波屏蔽码 滤波掩码 波特率设置*/
+        {0x60001600,16,CAN_FRAME_TYPE_STD,0xffffffff,0xffffffff,BAUDTATE_500K},
+        /*中断事件号 路由规则    CAN中断类型 中断回调函数(模块维护) 回调参数*/
+        {56,RIE|TIE,NULL,NULL}
+        }
+    },
+    /*设备4资源定义*/
+    {
+        /*设备名*/
+        "/sja1000/",
+        /*设备序列号*/
+        4,
+        {
+        /*总线基地址 总线位宽(8/16/32/64) CAN帧模式 滤波屏蔽码 滤波掩码 波特率设置*/
+        {0x60001800,16,CAN_FRAME_TYPE_STD,0xffffffff,0xffffffff,BAUDTATE_500K},
+        /*中断事件号 路由规则    CAN中断类型 中断回调函数(模块维护) 回调参数*/
+        {57,RIE|TIE,NULL,NULL}
+        }
+    },
 	#endif
 	#ifdef ZMD_ECAN_MODULE
 	/*设备1资源定义*/

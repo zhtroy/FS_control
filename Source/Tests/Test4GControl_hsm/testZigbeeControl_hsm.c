@@ -23,6 +23,8 @@
 #include <ti/sysbios/knl/Clock.h>
 #include "task_moto.h"
 #include "logLib.h"
+#include "Sensor/RFID/EPCdef.h"
+#include "Sensor/ZCP/v2v_communication.h"
 
 
 extern Void taskRFID(UArg a0, UArg a1);
@@ -185,6 +187,16 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KU_EVT);
 								break;
 							}
+							case 'v':
+							{
+								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSP_EVT);
+								break;
+							}
+							case 'w':
+							{
+								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSI_EVT);
+								break;
+							}
 						}
 
 						EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value = \
@@ -222,6 +234,18 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 						break;
 					}
 
+					case 'A': /*设置后车zigbee地址*/
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_BACKCAR_ADDR);
+						EVT_CAST(&hsmEvt, evt_remote_set_u16_param_t)->value = \
+								(pMsg->data[5]-'0') \
+								+(pMsg->data[4]-'0') * 10 \
+								+(pMsg->data[3]-'0') * 100 \
+								+(pMsg->data[2]-'0') * 1000 \
+								+(pMsg->data[1]-'0') * 10000;
+						break;
+					}
+
 					case 'h': /*心跳包*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_HEARTBEAT_EVT);
@@ -235,7 +259,7 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 			case rfid:
 			{
 				EVT_SETTYPE(&hsmEvt, RFID_EVT);
-				EVT_CAST(&hsmEvt, evt_rfid_t)->epc = pMsg->data[0];
+				EVT_CAST(&hsmEvt, evt_rfid_t)->epc = *((epc_t*) pMsg->data);
 				break;
 			}/* case rfid: */
 
@@ -334,4 +358,7 @@ void testZigbeeControlHSM_init()
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
+
+	//ZCP
+	V2VZCPInit();
 }
