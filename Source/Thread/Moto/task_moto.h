@@ -126,6 +126,7 @@ typedef struct{
 	uint32_t rfidReadTime;
 	uint32_t calcRPM;
  	uint32_t recvRPM;
+ 	uint32_t forwardCarDistance;
 
 }fbdata_t;
 
