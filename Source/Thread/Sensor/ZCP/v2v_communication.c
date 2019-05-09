@@ -21,6 +21,8 @@
 #define V2V_ZCP_UART_DEV_NUM    (5)
 #define V2V_ZCP_DEV_NUM (0)
 
+extern fbdata_t g_fbData;
+
 static ZCPInstance_t v2vInst;
 static uint16_t sMotoCircle = 0;
 static uint16_t rMotoCircle = 0;
@@ -155,6 +157,8 @@ void V2VRecvTask(UArg arg0, UArg arg1)
 
         fbCarSts.rpm = recvCarSts.rpm;
         fbCarSts.state = recvCarSts.state;
+
+        g_fbData.forwardCarDistance = fbCarSts.distance;
     }
 }
 

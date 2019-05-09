@@ -108,7 +108,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 
 			g_fbData.rfid = epc.distance;
 			/*记录圈数*/
-			if(data[2] != lastrfid && data[2] == 0x06)
+			if(epc.distance == 0)
 			{
 				circleNum++;
 			}
