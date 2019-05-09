@@ -12,6 +12,7 @@
  * 单位(10cm)
  */
 #define WHEEL_PERIMETER (11.78)
+#define WHEEL_SPEED_RATIO (3.286)
 #define TOTAL_DISTANCE (2775)
 
 #define V2V_CAR_FATAL (1)

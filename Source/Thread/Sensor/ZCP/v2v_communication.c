@@ -41,14 +41,13 @@ void V2VSendTask(UArg arg0, UArg arg1)
     uint16_t circleNums = 0;
     uint16_t circleDiff = 0;
 
-    sendPacket.addr = ParamInstance()->REAR_CAR_ADDR;
-    sendPacket.type = V2V_CAR_STATUS_TYPE;
 
     while(1)
     {
         RFIDV2vMbox = RFIDGetV2vMailbox();
         if(RFIDV2vMbox == NULL)
         {
+        	Task_sleep(100);
             continue;
         }
 
@@ -69,9 +68,9 @@ void V2VSendTask(UArg arg0, UArg arg1)
             {
                 circleDiff = sMotoCircle - circleNums;
             }
+            circleNums = sMotoCircle;
 
-
-            carSts.distance += circleDiff * WHEEL_PERIMETER;
+            carSts.distance += circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
             if(carSts.distance > TOTAL_DISTANCE)
             {
                 carSts.distance = carSts.distance - TOTAL_DISTANCE;
@@ -86,6 +85,8 @@ void V2VSendTask(UArg arg0, UArg arg1)
             carSts.state = V2V_CAR_OK;
 
         memcpy(sendPacket.data,&carSts,sizeof(carStatus_t));
+        sendPacket.addr = ParamInstance()->REAR_CAR_ADDR;
+        sendPacket.type = V2V_CAR_STATUS_TYPE;
         sendPacket.len = sizeof(carStatus_t);
 
         if(FALSE == ZCPSendPacket(&v2vInst, &sendPacket, NULL,BIOS_NO_WAIT))

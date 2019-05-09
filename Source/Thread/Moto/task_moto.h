@@ -189,8 +189,8 @@ typedef struct{
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
-#define ADJ_THROTTLE_UPSCALE (50)
-#define ADJ_THROTTLE_DWSCALE (-50)
+#define ADJ_THROTTLE_UPSCALE (20)
+#define ADJ_THROTTLE_DWSCALE (-20)
 
 #if CAR_VERSION == 20
 //#define MAX_THROTTLE_SIZE (55)
@@ -199,7 +199,7 @@ typedef struct{
 #define MAX_THROTTLE_SIZE (100)
 
 #elif CAR_VERSION == 22
-#define MAX_THROTTLE_SIZE (140)
+#define MAX_THROTTLE_SIZE (110)
 
 #endif
 

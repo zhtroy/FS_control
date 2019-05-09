@@ -24,6 +24,7 @@
 #include "task_moto.h"
 #include "logLib.h"
 #include "Sensor/RFID/EPCdef.h"
+#include "Sensor/ZCP/v2v_communication.h"
 
 
 extern Void taskRFID(UArg a0, UArg a1);
@@ -357,4 +358,7 @@ void testZigbeeControlHSM_init()
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
+
+	//ZCP
+	V2VZCPInit();
 }
