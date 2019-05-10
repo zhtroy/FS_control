@@ -127,6 +127,7 @@ typedef struct{
 	uint32_t calcRPM;
  	uint32_t recvRPM;
  	uint32_t forwardCarDistance;
+ 	uint32_t forwardCarRPM;
 
 }fbdata_t;
 
