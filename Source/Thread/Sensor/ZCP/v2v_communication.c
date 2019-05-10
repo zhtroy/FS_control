@@ -159,6 +159,7 @@ void V2VRecvTask(UArg arg0, UArg arg1)
         fbCarSts.state = recvCarSts.state;
 
         g_fbData.forwardCarDistance = fbCarSts.distance;
+        g_fbData.forwardCarRPM = fbCarSts.rpm;
     }
 }
 
