@@ -478,7 +478,7 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
     uint16_t vf;
     uint32_t di;
     uint16_t vgs;
-    uint16_t vg;
+    static uint16_t vg;
     int32_t dis;
     int32_t vt;
     static float disSum = 0;
