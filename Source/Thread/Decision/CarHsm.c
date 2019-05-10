@@ -82,6 +82,34 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
 			return 0;
 		} /*case REMOTE_CHMODE_EVT:*/
 
+		case RFID_EVT:
+		{
+			evt_rfid_t* p = EVT_CAST(msg, evt_rfid_t);
+
+			if(EPC_FEAT_AUXILIARY_TRACK_START == p->epc.roadFeature)
+			{
+				if(RIGHTRAIL == RailGetRailState() && (GEAR_REVERSE == MotoGetGear()))
+				{
+					MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
+					STATE_TRAN(me, &me->forcebrake);
+					return 0;
+				}
+			}
+			else if(EPC_FEAT_AUXILIARY_TRACK_END == p->epc.roadFeature)
+			{
+				if(RIGHTRAIL == RailGetRailState() && (GEAR_DRIVE == MotoGetGear() || GEAR_LOW == MotoGetGear()))
+				{
+					MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
+					STATE_TRAN(me, &me->forcebrake);
+					return 0;
+				}
+			}
+
+			break;
+
+		}/* case RFID_EVT: */
+
+
 	}
 
 	/*如果未处理该消息，返回msg*/
