@@ -34,6 +34,9 @@
 #define EPC_FEAT_UPHILL_STEEP  		 (0x04)
 #define EPC_FEAT_DOWNHILL_GRADUAL	 (0x05)
 #define EPC_FEAT_DOWNHILL_STEEP		 (0x06)
+
+#define EPC_FEAT_AUXILIARY_TRACK_START (0x0F)
+#define EPC_FEAT_AUXILIARY_TRACK_END (0x10)
 /*未完。。。*/
 
 #pragma pack(1)
