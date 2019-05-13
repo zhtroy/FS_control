@@ -1,6 +1,6 @@
 #include "canModule.h"
 #include "task_moto.h"
-#include "Sensor/CellCommunication/CellCommunication.h"
+#include "Sensor/CellCommunication/CellDriver.h"
 
 /*SYSBIOS includes*/
 #include <ti/sysbios/knl/Task.h>

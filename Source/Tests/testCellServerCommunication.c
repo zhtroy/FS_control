@@ -14,23 +14,22 @@
 #include "stdio.h"
 #include "DSP_Uart/dsp_uart2.h"
 #include "uartStdio.h"
+#include "Sensor/CellCommunication/CellDriver.h"
 
-extern Void taskServerCommunication(UArg a0, UArg a1);
 
 static Void taskCellComMain(UArg a0, UArg a1)
 {
 	p_msg_t msg;
 	float distance;
 	char string[100];
+	net_packet_t packet;
+	int count = 0;
 
 	while(1){
-		msg= Message_pend();
-		if(msg->type==cell){
-			sprintf(string,"recv server command %x \n", *((uint16_t*) (msg->data)) );
+		CellRecvPacket(&packet, BIOS_WAIT_FOREVER);
 
-			UARTPuts(string, -2);
-		}
 
+		count ++;
 	}
 }
 
@@ -40,6 +39,7 @@ void testServerCom_init()
 	Error_Block eb;
 	Task_Params taskParams;
 
+	CellInit();
 
 	Error_init(&eb);
     Task_Params_init(&taskParams);
@@ -51,14 +51,6 @@ void testServerCom_init()
 		BIOS_exit(0);
 	}
 
-	//4G
-	Task_Params_init(&taskParams);
-	taskParams.priority = 3;
-	taskParams.stackSize = 2048;
-	taskParams.arg0 = 0;
-	task = Task_create(taskServerCommunication, &taskParams, &eb);
-	if (task == NULL) {
-		System_printf("Task_create() failed!\n");
-		BIOS_exit(0);
-	}
+
+
 }

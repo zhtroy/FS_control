@@ -44,35 +44,43 @@
  */
 net_packet_t* NetPacketBuildHeaderFromRaw(net_packet_t* p, char* raw)
 {
-	memcpy((void *) p, (void*) raw, HDR_LEN);
-	p->cks = ntohs(p->cks);
-	p->len = ntohs(p->len);
-	p->cmd = ntohs(p->cmd);
-	p->req = ntohl(p->req);
-	p->src_cab = ntohl(p->src_cab);
-	p->dst_cab = ntohl(p->dst_cab);
+	memcpy(((char *) p), (void*) raw, HDR_LEN);
+	NetPacketToHostOrder(p);
 
 	return p;
 }
 
 /*
  * 将主机字节序的net_packet_t转换成网络字节序
- * 返回总长度
  */
-uint16_t NetPacketToNetOrder(net_packet_t * p)
+void NetPacketToNetOrder(net_packet_t * p)
 {
-	uint16_t len = p->len;
 
 	p->cks = htons(p->cks);
 	p->len = htons(p->len);
 	p->cmd = htons(p->cmd);
-	p->req = htonl(p->req);
-	p->src_cab = htonl(p->src_cab);
-	p->dst_cab = htonl(p->dst_cab);
+	p->reqid = htonl(p->reqid);
+	p->srcid = htonl(p->srcid);
+	p->dstid = htonl(p->dstid);
+	p->opt = htons(p->opt);
 
-	return len;
 }
 
+/*
+ * 将网络字节序的net_packet_t转换成主机字节序
+ * 返回总长度
+ */
+void NetPacketToHostOrder(net_packet_t * p)
+{
+	p->cks = ntohs(p->cks);
+	p->len = ntohs(p->len);
+	p->cmd = ntohs(p->cmd);
+	p->reqid = ntohl(p->reqid);
+	p->srcid = ntohl(p->srcid);
+	p->dstid = ntohl(p->dstid);
+	p->opt = ntohs(p->opt);
+
+}
 
 /*
  * net_packet_t 构造器
@@ -86,22 +94,22 @@ net_packet_t* NetPacketCtor(net_packet_t* p,
 							  const char * p_data,
 							  uint16_t data_len)
 {
-	if(data_len>CELL_DATA_MAX_LEN){
+	if(data_len>PACKET_DATA_MAX_LEN){
 		System_abort("packet data too long");
 	}
 	memset(p,0,sizeof(net_packet_t));
-	p->start[0] =  0x00;
-	p->start[1] =  0x00;
-	p->start[2] =  0x00;
-	p->start[3] =  0x01;
+	p->start[0] =  CELL_START0;
+	p->start[1] =  CELL_START1;
+	p->start[2] =  CELL_START2;
+	p->start[3] =  CELL_START3;
 	p->cks = 	   0xFFFF;
 	p->ver = 	   0x01;
 	p->flag = 	   flag;
 	p->len = HDR_LEN + data_len;
 	p->cmd = cmd;
-	p->req = req;
-	p->src_cab = src_cab;
-	p->dst_cab = dst_cab;
+	p->reqid = req;
+	p->srcid = src_cab;
+	p->dstid = dst_cab;
 
 
 	memcpy(p->data, p_data, data_len);
