@@ -20,8 +20,8 @@
 #include <xdc/runtime/System.h>
 #include "Message/Message.h"
 #include "Sensor/CellCommunication/CellDriver.h"
-#include "Sensor/CellCommunication/NetPacket.h"
 #include "common.h"
+#include "Lib/bitop.h"
 
 
 
@@ -31,6 +31,72 @@ static Mailbox_Handle m_mbox_hdl = 0;
 static int8_t cell_data_buffer[CELL_BUFF_SIZE];
 static uint16_t buff_head = 0;
 static uint16_t buff_tail = 0;
+
+
+/*
+ * 协议解析状态机的各个状态
+ */
+typedef enum{
+	//等待<START>标志
+	cell_wait,
+	//接收START标志
+	cell_start0,
+	cell_start1,
+	cell_start2,
+	cell_start3,
+	//接收HEAD
+	cell_recv_head,
+	//接收DATA
+	cell_recv_data
+}cell_state_t;
+
+
+/*
+ * static function
+ */
+
+
+
+/*
+ * 将主机字节序的net_packet_t转换成网络字节序
+ */
+static void CellPacketToNetOrder(cell_packet_t * p)
+{
+
+	p->cks = htons(p->cks);
+	p->len = htons(p->len);
+	p->cmd = htons(p->cmd);
+	p->reqid = htonl(p->reqid);
+	p->srcid = htonl(p->srcid);
+	p->dstid = htonl(p->dstid);
+	p->opt = htons(p->opt);
+
+}
+
+/*
+ * 将网络字节序的net_packet_t转换成主机字节序
+ */
+static void CellPacketToHostOrder(cell_packet_t * p)
+{
+	p->cks = ntohs(p->cks);
+	p->len = ntohs(p->len);
+	p->cmd = ntohs(p->cmd);
+	p->reqid = ntohl(p->reqid);
+	p->srcid = ntohl(p->srcid);
+	p->dstid = ntohl(p->dstid);
+	p->opt = ntohs(p->opt);
+
+}
+/*
+ * 将32bytes的原始网络数据填充到net_packet_t结构体中,注意网络字节序和主机字节序的转化
+ */
+static cell_packet_t* CellPacketBuildHeaderFromRaw(cell_packet_t* p, char* raw)
+{
+	memcpy(((char *) p), (void*) raw, CELL_HEADER_LEN);
+	CellPacketToHostOrder(p);
+
+	return p;
+}
 
 
 static void CellUartHandler(uint32_t event, unsigned char data)
@@ -63,10 +129,10 @@ static Void taskCellReceive(UArg a0, UArg a1)
 
 	int8_t c;
 	cell_state_t state = cell_wait;
-	net_packet_t packet;
+	cell_packet_t packet;
 	int div_num = 0;
 	int recv_head_num = 0;
-	char headbuff[HDR_LEN];
+	char headbuff[CELL_HEADER_LEN];
 	int recv_data_num = 0;
 
 	while(1)
@@ -134,9 +200,9 @@ static Void taskCellReceive(UArg a0, UArg a1)
 			case cell_recv_head:
 				headbuff[recv_head_num] = c;
 				recv_head_num++;
-				if(recv_head_num>=HDR_LEN)  //4字节start
+				if(recv_head_num>=CELL_HEADER_LEN)  //4字节start
 				{
-					NetPacketBuildHeaderFromRaw(&packet,headbuff);
+					CellPacketBuildHeaderFromRaw(&packet,headbuff);
 					//TODO: check CRC
 					recv_head_num=0;
 					state = cell_recv_data;
@@ -146,7 +212,7 @@ static Void taskCellReceive(UArg a0, UArg a1)
 			case cell_recv_data:
 				packet.data[recv_data_num] = c;
 				recv_data_num++;
-				if(recv_data_num >= packet.len-HDR_LEN)
+				if(recv_data_num >= packet.len-CELL_HEADER_LEN)
 				{
 					recv_data_num = 0;
 					state = cell_wait;
@@ -166,7 +232,7 @@ static Void taskCellReceive(UArg a0, UArg a1)
 /*                                                                          */
 /****************************************************************************/
 
-void CellInit()
+void CellDriverInit()
 {
 	Task_Handle task;
 	Task_Params taskParams;
@@ -190,11 +256,11 @@ void CellInit()
 	/*创建接收邮箱*/
 
     Mailbox_Params_init(&mboxParams);
-    m_mbox_hdl = Mailbox_create (sizeof (net_packet_t),CELL_MAILBOX_DEPTH, &mboxParams, NULL);
+    m_mbox_hdl = Mailbox_create (sizeof (cell_packet_t),CELL_MAILBOX_DEPTH, &mboxParams, NULL);
 
 }
 
-Bool CellRecvPacket(net_packet_t * packet,UInt timeout)
+Bool CellRecvPacket(cell_packet_t * packet,UInt timeout)
 {
 	Bool ret;
 
@@ -203,17 +269,58 @@ Bool CellRecvPacket(net_packet_t * packet,UInt timeout)
 	return ret;
 }
 
-void CellSendPacket(net_packet_t * packet)
+void CellSendPacket(cell_packet_t * packet)
 {
 	int len = packet->len;
 	//转换成网络字节序
-	NetPacketToNetOrder(packet);
+	CellPacketToNetOrder(packet);
 	//使用阻塞发送
 	UART2Send(&packet, len);
 	//在发送完成后，转回主机字节序
-	NetPacketToHostOrder(packet);
+	CellPacketToHostOrder(packet);
 }
 
+
+/*
+ * net_packet_t 构造器
+ */
+cell_packet_t* CellPacketCtor(cell_packet_t* p,
+							  uint8_t flag,
+							  uint16_t cmd,
+							  uint32_t req,
+							  uint32_t src_cab,
+							  uint32_t dst_cab,
+							  const char * p_data,
+							  uint16_t data_len)
+{
+	if(data_len>PACKET_DATA_MAX_LEN){
+		System_abort("packet data too long");
+	}
+	memset(p,0,sizeof(cell_packet_t));
+	p->start[0] =  CELL_START0;
+	p->start[1] =  CELL_START1;
+	p->start[2] =  CELL_START2;
+	p->start[3] =  CELL_START3;
+	p->cks = 	   0xFFFF;
+	p->ver = 	   0x01;
+	p->flag = 	   flag;
+	p->len = CELL_HEADER_LEN + data_len;
+	p->cmd = cmd;
+	p->reqid = req;
+	p->srcid = src_cab;
+	p->dstid = dst_cab;
+
+
+	memcpy(p->data, p_data, data_len);
+
+
+	return p;
+}
+
+uint8_t CellPacketGetType(cell_packet_t* p)
+{
+	return BF_GET(p->flag,0,2);
+}
 
 
 

@@ -22,7 +22,7 @@ static Void taskCellComMain(UArg a0, UArg a1)
 	p_msg_t msg;
 	float distance;
 	char string[100];
-	net_packet_t packet;
+	cell_packet_t packet;
 	int count = 0;
 
 	while(1){
@@ -39,7 +39,7 @@ void testServerCom_init()
 	Error_Block eb;
 	Task_Params taskParams;
 
-	CellInit();
+	CellDriverInit();
 
 	Error_init(&eb);
     Task_Params_init(&taskParams);
