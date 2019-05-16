@@ -84,7 +84,6 @@ typedef struct cell_packet{
 /*
  * API
  */
-cell_packet_t* CellPacketBuildHeaderFromRaw(cell_packet_t* p, char* raw);
 
 cell_packet_t* CellPacketCtor(cell_packet_t* p,
 							  uint8_t flag,
@@ -94,6 +93,12 @@ cell_packet_t* CellPacketCtor(cell_packet_t* p,
 							  uint32_t dst_cab,
 							  const char * p_data,
 							  uint16_t data_len);
+
+void CellPacketBuildResponse(const cell_packet_t * req,
+							 cell_packet_t * response,
+							 uint8_t allowOrDeny,
+							 const char * data,
+							 uint16_t data_len);
 
 uint8_t CellPacketGetType(cell_packet_t* p);
 

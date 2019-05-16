@@ -31,7 +31,7 @@ static Mailbox_Handle m_mbox_hdl = 0;
 static int8_t cell_data_buffer[CELL_BUFF_SIZE];
 static uint16_t buff_head = 0;
 static uint16_t buff_tail = 0;
-
+static uint8_t m_isInited = 0;
 
 /*
  * 协议解析状态机的各个状态
@@ -238,6 +238,9 @@ void CellDriverInit()
 	Task_Params taskParams;
 	Mailbox_Params mboxParams;
 
+	if(m_isInited)
+		return;
+
 	SemInit();
 
 	/* 注册UART2 中断回调函数 */
@@ -258,6 +261,7 @@ void CellDriverInit()
     Mailbox_Params_init(&mboxParams);
     m_mbox_hdl = Mailbox_create (sizeof (cell_packet_t),CELL_MAILBOX_DEPTH, &mboxParams, NULL);
 
+    m_isInited = 1;
 }
 
 Bool CellRecvPacket(cell_packet_t * packet,UInt timeout)
@@ -315,6 +319,24 @@ cell_packet_t* CellPacketCtor(cell_packet_t* p,
 
 
 	return p;
+}
+
+/*
+ * 构造响应包
+ */
+void CellPacketBuildResponse(const cell_packet_t * req, cell_packet_t * response, uint8_t allowOrDeny, const char * data, uint16_t data_len)
+{
+	uint8_t flag = 0;
+
+	if(allowOrDeny) //允许
+	{
+		BF_SET(flag,CELL_TYPE_ALLOW,0,2);
+	}
+	else
+	{
+		BF_SET(flag,CELL_TYPE_DENY,0,2);
+	}
+	CellPacketCtor(response,flag,req->cmd,req->reqid,req->dstid, req->srcid,data,data_len);
 }
 
 uint8_t CellPacketGetType(cell_packet_t* p)
