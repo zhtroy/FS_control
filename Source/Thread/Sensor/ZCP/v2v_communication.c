@@ -10,6 +10,7 @@
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Mailbox.h>
+#include <ti/sysbios/knl/Clock.h>
 #include <xdc/std.h>
 #include "ZCP/zcp_driver.h"
 #include "ZCP/v2v_communication.h"
@@ -17,6 +18,7 @@
 #include "CarState.h"
 #include "RFID/EPCdef.h"
 #include "Parameter.h"
+#include "Message/Message.h"
 
 #define V2V_ZCP_UART_DEV_NUM    (5)
 #define V2V_ZCP_DEV_NUM (0)
@@ -99,6 +101,16 @@ void V2VSendTask(UArg arg0, UArg arg1)
     }
 }
 
+static xdc_Void zigbeeTimeout(xdc_UArg arg)
+{
+    p_msg_t msg;
+
+    msg = Message_getEmpty();
+	msg->type = error;
+	msg->data[0] = ERROR_ZIGBEE_TIMEOUT;
+	msg->dataLen = 1;
+	Message_post(msg);
+}
 
 void V2VRecvTask(UArg arg0, UArg arg1)
 {
@@ -107,9 +119,21 @@ void V2VRecvTask(UArg arg0, UArg arg1)
     uint32_t dis;
     carStatus_t recvCarSts;
     int32_t timestamp;
+
+    /*Zigbee接收超时，停车*/
+	Clock_Params clockParams;
+	Clock_Handle recvClock;
+
+	Clock_Params_init(&clockParams);
+	clockParams.period = 0;       // one shot
+	clockParams.startFlag = FALSE;
+	recvClock = Clock_create(zigbeeTimeout, 500, &clockParams, NULL); //500ms 后没有收到包就停止
+
     while(1)
     {
         ZCPRecvPacket(&v2vInst, &recvPacket, &timestamp, BIOS_WAIT_FOREVER);
+
+        Clock_start(recvClock);
 
         if(recvPacket.type != V2V_CAR_STATUS_TYPE)
         {

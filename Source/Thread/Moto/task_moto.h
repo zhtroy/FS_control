@@ -186,7 +186,10 @@ typedef struct{
 #define ERROR_BRAKE_ERROR	(17)
 
 /*前后轮转速异常*/
-#define ERROR_RPM_ABNORMAL   (17)
+#define ERROR_RPM_ABNORMAL   (18)
+
+/*前车Zigbee通信超时*/
+#define ERROR_ZIGBEE_TIMEOUT   (19)
 
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
