@@ -100,16 +100,20 @@ void V2VSendTask(UArg arg0, UArg arg1)
 
     }
 }
-
+static uint8_t m_zigbeeRecved = 0;
 static xdc_Void zigbeeTimeout(xdc_UArg arg)
 {
     p_msg_t msg;
 
-    msg = Message_getEmpty();
-	msg->type = error;
-	msg->data[0] = ERROR_ZIGBEE_TIMEOUT;
-	msg->dataLen = 1;
-	Message_post(msg);
+    if(0==m_zigbeeRecved)
+    {
+		msg = Message_getEmpty();
+		msg->type = error;
+		msg->data[0] = ERROR_ZIGBEE_TIMEOUT;
+		msg->dataLen = 1;
+		Message_post(msg);
+    }
+    m_zigbeeRecved = 0;
 }
 
 void V2VRecvTask(UArg arg0, UArg arg1)
@@ -125,15 +129,15 @@ void V2VRecvTask(UArg arg0, UArg arg1)
 	Clock_Handle recvClock;
 
 	Clock_Params_init(&clockParams);
-	clockParams.period = 0;       // one shot
-	clockParams.startFlag = FALSE;
-	recvClock = Clock_create(zigbeeTimeout, 500, &clockParams, NULL); //500ms 后没有收到包就停止
+	clockParams.period = 1000;       // 1s周期检测
+	clockParams.startFlag = TRUE;
+	recvClock = Clock_create(zigbeeTimeout, 1000, &clockParams, NULL);
 
     while(1)
     {
         ZCPRecvPacket(&v2vInst, &recvPacket, &timestamp, BIOS_WAIT_FOREVER);
 
-        Clock_start(recvClock);
+        m_zigbeeRecved = 1;
 
         if(recvPacket.type != V2V_CAR_STATUS_TYPE)
         {

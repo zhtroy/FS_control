@@ -665,8 +665,19 @@ void ServoBrakeTask(void *param)
 #elif SERVO_MODE == 3
 
 #define BRAKE_MAX (255)
+#if CAR_VERSION == 21
 #define BRAKE_SLOTS (1000)
 #define REVERSE_FORCE (100)
+
+/*
+ * 2.3的刹车减速机是反向的
+ */
+#elif CAR_VERSION == 23
+#define BRAKE_SLOTS (-1000)
+#define REVERSE_FORCE (-100)
+
+#endif
+
 static void BrakeCanIntrHandler(int32_t devsNum,int32_t event)
 {
     canDataObj_t rxData;
@@ -716,7 +727,11 @@ void ServoBrakeTask(void *param)
     	/*计算力矩*/
     	brakeforce =  -BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
 
+#if CAR_VERSION == 21
     	if(brakeforce>=0)
+#elif CAR_VERSION == 23
+    	if(brakeforce<=0)
+#endif
     	{
     		brakeforce = REVERSE_FORCE;
     	}

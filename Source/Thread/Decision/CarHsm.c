@@ -931,7 +931,7 @@ Msg const * TopForceBrake(car_hsm_t * me, Msg* msg)
 		}
 		case EXIT_EVT:
 		{
-			MotoSetErrorCode(ERROR_NONE);
+//			MotoSetErrorCode(ERROR_NONE);
 			BrakeSetReady(1);
 			return 0;
 		}
