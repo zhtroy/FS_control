@@ -36,8 +36,10 @@
 #ifdef BIGENDIAN
 #define htons(a) (a)
 #define htonl(a) (a)
+#define htonll(a) (a)
 #define ntohl(a) (a)
 #define ntohs(a) (a)
+#define ntohll(a) (a)
 #else
 #define htons(a) ( (((a)>>8)&0xff) + (((a)<<8)&0xff00) )
 /*
@@ -57,8 +59,11 @@
 #define htonl(a) ((((a) & 0xff000000) >> 24) | (((a) & 0x00ff0000) >> 8) | \
                   (((a) & 0x0000ff00) << 8)  | (((a) & 0x000000ff) << 24) )
 
+#define htonll(a) ((((uint64_t)htonl(a)) << 32) + htonl((a) >> 32))
+
 #define ntohl(a) htonl(a)
 #define ntohs(a) htons(a)
+#define ntohll(a) htonll(a)
 
 #endif
 

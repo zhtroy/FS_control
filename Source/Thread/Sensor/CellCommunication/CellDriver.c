@@ -323,6 +323,12 @@ cell_packet_t* CellPacketCtor(cell_packet_t* p,
 
 /*
  * 构造响应包
+ * @params
+ * req 收到的请求报文
+ * response 需要构造的响应报文
+ * allowOrDeny 为1表示这是一个ALLOW报文，为0表示这是一个DENY报文
+ * data 响应报文的数据内容
+ * data_len 响应报文的数据长度
  */
 void CellPacketBuildResponse(const cell_packet_t * req, cell_packet_t * response, uint8_t allowOrDeny, const char * data, uint16_t data_len)
 {
