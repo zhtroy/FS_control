@@ -205,7 +205,18 @@ static Void taskCellReceive(UArg a0, UArg a1)
 					CellPacketBuildHeaderFromRaw(&packet,headbuff);
 					//TODO: check CRC
 					recv_head_num=0;
-					state = cell_recv_data;
+
+					if(packet.len == CELL_HEADER_LEN)  //如果只有包头，接收一个包到此完成
+					{
+						//接收到一个完整包，发送到邮箱
+						Mailbox_post(m_mbox_hdl, (Ptr *)&packet, BIOS_NO_WAIT);
+						state = cell_wait;
+					}
+					else
+					{
+						state = cell_recv_data;
+					}
+
 				}
 				break;
 
@@ -279,7 +290,7 @@ void CellSendPacket(cell_packet_t * packet)
 	//转换成网络字节序
 	CellPacketToNetOrder(packet);
 	//使用阻塞发送
-	UART2Send(&packet, len);
+	UART2Send(packet, len);
 	//在发送完成后，转回主机字节序
 	CellPacketToHostOrder(packet);
 }
@@ -314,8 +325,10 @@ cell_packet_t* CellPacketCtor(cell_packet_t* p,
 	p->srcid = src_cab;
 	p->dstid = dst_cab;
 
-
-	memcpy(p->data, p_data, data_len);
+	if(p_data!=NULL && data_len!=0)
+	{
+		memcpy(p->data, p_data, data_len);
+	}
 
 
 	return p;

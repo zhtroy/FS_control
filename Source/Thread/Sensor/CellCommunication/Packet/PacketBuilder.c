@@ -10,6 +10,10 @@
 #include "Sensor/CellCommunication/CellDriver.h"
 #include "Lib/bitop.h"
 
+/*
+ * 构建CabStateChange包
+ * 输入对应报文的结构体，reqid, srcid, dstid
+ */
 void PacketBuildCabStateChange(cell_packet_t * packet,uint32_t reqid, uint32_t srcid, uint32_t dstid, packet_cabstatechange_t statechange)
 {
 	uint8_t flag = 0;
@@ -28,3 +32,7 @@ void PacketBuildCabStateChange(cell_packet_t * packet,uint32_t reqid, uint32_t s
 	CellPacketCtor(packet, flag,CELL_CMD_CABSTATECHANGE,reqid,srcid,dstid,&statechange,sizeof(statechange));
 }
 
+void PacketBuildCabPulse(cell_packet_t * packet, uint32_t reqid, uint32_t srcid, uint32_t dstid)
+{
+	CellPacketCtor(packet,CELL_TYPE_REQ,CELL_CMD_CABPULSE, reqid, srcid, dstid, NULL,0);
+}

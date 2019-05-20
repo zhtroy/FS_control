@@ -21,7 +21,7 @@
 
 typedef enum{
 	unknown,
-	free,
+	freestate,
 	ordered,
 	arrived_start,
 	loading,
@@ -37,18 +37,30 @@ typedef enum{
 static Void taskCellMock(UArg a0, UArg a1)
 {
 	cell_packet_t recvPacket, sendPacket;
-	orderstate_t state = free;
-	orderstate_t laststate = free;
+	orderstate_t state = freestate;
+	orderstate_t laststate = freestate;
 	packet_cabstatechange_t cabstatechange;
 	Bool recved = 0;
-	const int RECV_TIMEOUT = 200;
+	const int RECV_TIMEOUT = 1000;
+	const int SESSIONID = 0x100;
 
 	while(1)
 	{
 		/*
+		 * test
+		 */
+		Task_sleep(500);
+		PacketBuildCabPulse(&sendPacket,SESSIONID ,CELL_ADDR_TESTCAR , CELL_ADDR_VRC_BACKUP);
+		CellSendPacket(&sendPacket);
+
+		recved = CellRecvPacket(&recvPacket, RECV_TIMEOUT);
+
+		continue;
+		/*
 		 * recved为0时，表示超时，保证状态机可以继续运行
 		 * recved为1时，表示收到了包
 		 */
+		recved = 0;
 		recved = CellRecvPacket(&recvPacket, RECV_TIMEOUT);
 
 		/*
@@ -60,7 +72,7 @@ static Void taskCellMock(UArg a0, UArg a1)
 			{
 				case CELL_CMD_ORDERCAB:
 				{
-					if(state != free)
+					if(state != freestate)
 						CellPacketBuildResponse(&recvPacket,&sendPacket,0,NULL,0);
 					else
 						CellPacketBuildResponse(&recvPacket,&sendPacket,1,NULL,0);
@@ -71,7 +83,7 @@ static Void taskCellMock(UArg a0, UArg a1)
 
 				case CELL_CMD_UPDATEROUTE:
 				{
-					if(state == free ||
+					if(state == freestate ||
 					   state == ordered ||
 					   state == shipping)
 					{
@@ -94,7 +106,7 @@ static Void taskCellMock(UArg a0, UArg a1)
 		 */
 		switch(state)
 		{
-			case free:
+			case freestate:
 			{
 				if(recved && recvPacket.cmd == CELL_CMD_ORDERCAB)
 				{
@@ -148,16 +160,18 @@ static Void taskCellMock(UArg a0, UArg a1)
 
 		}  //	switch(state)
 
+		/*
+		 * 订单状态改变
+		 * 发送cabstatechange报文
+		 */
 		if(state != laststate)
 		{
-			/*
-			 * 发送cabstatechange报文
-			 */
+
 			cabstatechange.nid = 0x1;
 			cabstatechange.cs = 0;
 			BF_SET(cabstatechange.cs,state,0,4);
 			cabstatechange.ps = 0;
-			BF_SET(cabstatechange.cs,laststate,0,4);
+			BF_SET(cabstatechange.ps,laststate,0,4);
 
 			PacketBuildCabStateChange(&sendPacket,recvPacket.reqid,recvPacket.dstid,recvPacket.srcid,cabstatechange);
 			CellSendPacket(&sendPacket);
@@ -174,12 +188,12 @@ void testServerCom_init()
 	Error_Block eb;
 	Task_Params taskParams;
 
-	CellSessionInit();
+	CellDriverInit();
 
 	Error_init(&eb);
     Task_Params_init(&taskParams);
 	taskParams.priority = 5;
-	taskParams.stackSize = 2048;
+	taskParams.stackSize = 4096;
 	task = Task_create(taskCellMock, &taskParams, &eb);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");

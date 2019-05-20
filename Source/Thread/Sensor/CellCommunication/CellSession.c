@@ -12,16 +12,16 @@
 #include "Sensor/CellCommunication/CellDriver.h"
 #include "Sensor/CellCommunication/CellSession.h"
 #include <ti/sysbios/BIOS.h>
-#include "Sensor/CellCommunication/PacketHandlers/PacketHandler.h"
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/MailBox.h>
+#include <ti/sysbios/knl/Task.h>
 
 
 /*
  * session list
  */
-#define CELL_SESSION_NUMS (16)
-static cell_session_t m_sessions[CELL_SESSION_NUMS];
+#define CELL_SESSION_NUM (16)
+static cell_session_t m_sessions[CELL_SESSION_NUM];
 static Mailbox_Handle m_mailbox = 0;
 
 
@@ -126,7 +126,6 @@ void CellSessionInit(Mailbox_Handle mb)
 	taskParams.stackSize = 2048;
 	task = Task_create(taskSessionManage, &taskParams, NULL);
 	if (task == NULL) {
-		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
 
@@ -163,7 +162,7 @@ uint8_t CellSessionOpen(//报文指令
 	/*
 	 * 找到一个空的session
 	 */
-	for(i=0;i<CELL_SESSION_NUMS;i++)
+	for(i=0;i<CELL_SESSION_NUM;i++)
 	{
 		if(!m_sessions[i].isOpen)
 		{

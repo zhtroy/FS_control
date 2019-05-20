@@ -59,6 +59,12 @@
 #define CELL_TYPE_ALLOW (2)
 #define CELL_TYPE_DENY 	(3)
 
+/*
+ * 地址定义
+ */
+#define CELL_ADDR_VRC_MAIN (0x01)
+#define CELL_ADDR_VRC_BACKUP (0x02)
+#define CELL_ADDR_TESTCAR (0x100)
 
 typedef struct cell_packet{
 	//header part

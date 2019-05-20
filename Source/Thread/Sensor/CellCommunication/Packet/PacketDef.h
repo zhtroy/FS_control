@@ -8,6 +8,8 @@
 #ifndef PACKETDEF_H_
 #define PACKETDEF_H_
 
+#include "stdint.h"
+
 typedef struct {
 	uint64_t nid;
 	double offset;
