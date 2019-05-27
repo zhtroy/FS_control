@@ -15,8 +15,9 @@
 #include "DSP_Uart/dsp_uart2.h"
 #include "uartStdio.h"
 #include "Sensor/CellCommunication/CellDriver.h"
-#include "Sensor/CellCommunication/Packet/PacketBuilder.h"
+#include "Sensor/CellCommunication/Packet/Packet.h"
 #include "Lib/bitop.h"
+#include "Lib/vector.h"
 
 
 typedef enum{
@@ -41,21 +42,23 @@ static Void taskCellMock(UArg a0, UArg a1)
 	orderstate_t laststate = freestate;
 	packet_cabstatechange_t cabstatechange;
 	Bool recved = 0;
+	packet_routenode_t * v_route;
+	char outputbuff[100];
+
+
 	const int RECV_TIMEOUT = 1000;
 	const int SESSIONID = 0x100;
 
+
 	while(1)
 	{
-		/*
-		 * test
-		 */
-		Task_sleep(500);
-		PacketBuildCabPulse(&sendPacket,SESSIONID ,CELL_ADDR_TESTCAR , CELL_ADDR_VRC_BACKUP);
-		CellSendPacket(&sendPacket);
 
-		recved = CellRecvPacket(&recvPacket, RECV_TIMEOUT);
+        /*
+         * test
+         */
+        PacketBuildCabPulse(&sendPacket,SESSIONID ,CELL_ADDR_TESTCAR , CELL_ADDR_VRC_BACKUP);
+        CellSendPacket(&sendPacket);
 
-		continue;
 		/*
 		 * recved为0时，表示超时，保证状态机可以继续运行
 		 * recved为1时，表示收到了包
@@ -87,11 +90,28 @@ static Void taskCellMock(UArg a0, UArg a1)
 					   state == ordered ||
 					   state == shipping)
 					{
-						CellPacketBuildResponse(&recvPacket,&sendPacket,0,NULL,0);
+						CellPacketBuildResponse(&recvPacket,&sendPacket,1,NULL,0);
+						v_route = PacketResolveUpdateRoute(&recvPacket);
+
+						/*
+						 * 将收到的路径打印出来
+						 */
+						if(v_route)
+						{
+							size_t i;
+							for(i=0; i<vector_size(v_route); i++)
+							{
+								sprintf(outputbuff, "route nid: %llu\n",v_route[i].nid);
+
+								System_printf("%s",  outputbuff);
+							}
+							vector_free(v_route);
+						}
+
 					}
 					else
 					{
-						CellPacketBuildResponse(&recvPacket, &sendPacket, 1, NULL, 0);
+						CellPacketBuildResponse(&recvPacket, &sendPacket, 0, NULL, 0);
 					}
 					CellSendPacket(&sendPacket);
 					break;
@@ -167,7 +187,7 @@ static Void taskCellMock(UArg a0, UArg a1)
 		if(state != laststate)
 		{
 
-			cabstatechange.nid = 0x1;
+			cabstatechange.nid = 1000200;
 			cabstatechange.cs = 0;
 			BF_SET(cabstatechange.cs,state,0,4);
 			cabstatechange.ps = 0;

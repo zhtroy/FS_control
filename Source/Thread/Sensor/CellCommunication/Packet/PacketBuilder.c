@@ -6,7 +6,7 @@
  *  Created on: 2019-5-18
  *      Author: zhtro
  */
-#include "Sensor/CellCommunication/Packet/PacketDef.h"
+#include "Sensor/CellCommunication/Packet/Packet.h"
 #include "Sensor/CellCommunication/CellDriver.h"
 #include "Lib/bitop.h"
 

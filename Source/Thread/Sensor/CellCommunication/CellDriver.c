@@ -275,6 +275,9 @@ void CellDriverInit()
     m_isInited = 1;
 }
 
+/*
+ * 接收报文，只有报文头部被转换成主机字节序了，报文的data部分需要调用者自己解析
+ */
 Bool CellRecvPacket(cell_packet_t * packet,UInt timeout)
 {
 	Bool ret;
