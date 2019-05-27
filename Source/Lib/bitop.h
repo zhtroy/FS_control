@@ -60,10 +60,19 @@
                   (((a) & 0x0000ff00) << 8)  | (((a) & 0x000000ff) << 24) )
 
 #define htonll(a) ((((uint64_t)htonl(a)) << 32) + htonl((a) >> 32))
+inline double htond(double a)
+{
+	uint64_t temp;
+
+	temp = htonll(*((uint64_t*) (&a)));
+
+	return *((double*)(&temp));
+}
 
 #define ntohl(a) htonl(a)
 #define ntohs(a) htons(a)
 #define ntohll(a) htonll(a)
+#define ntohd(a) htond(a)
 
 #endif
 

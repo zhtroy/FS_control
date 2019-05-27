@@ -36,10 +36,10 @@ packet_routenode_t * PacketResolveUpdateRoute(cell_packet_t * packet)
 		memcpy(&node, &(packet->data[i*32]),sizeof(node));
 
 		node.flag = ntohl(node.flag);
-//		node.length = ntohll(pnode->length);
+		node.length = ntohd(node.length);
 		node.nid = ntohll(node.nid);
 		node.reserved = ntohl(node.reserved);
-//		node.speedlimit = ntohll(pnode->speedlimit);
+		node.speedlimit = ntohd(node.speedlimit);
 
 		vector_push_back(vnode,node);
 	}
