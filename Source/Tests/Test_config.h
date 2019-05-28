@@ -23,7 +23,7 @@
 #define TEST_UART_COMMAND_LINE
 //#define TEST_NDK
 //#define TEST_CELL_COM
-//#define TEST_SERVER_COM
+#define TEST_SERVER_COM
 
 
 //#define TEST_MOTO_TASK
@@ -36,7 +36,7 @@
 //#define TEST_SPEED_CONTROL
 //#define TEST_4G_CONTROL
 
-#define TEST_ZIGBEE_CONTROL_HSM
+//#define TEST_ZIGBEE_CONTROL_HSM
 
 //#define TEST_ZCP
 
