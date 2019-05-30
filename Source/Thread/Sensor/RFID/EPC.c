@@ -80,5 +80,5 @@ uint8_t EPCequal(epc_t * a, epc_t * b)
  */
 uint64_t EPCgetShortID(epc_t * epc)
 {
-	return 0;
+	return (uint64_t)(epc->reserved);
 }

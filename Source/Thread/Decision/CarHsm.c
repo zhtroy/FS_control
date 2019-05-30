@@ -345,7 +345,11 @@ Msg const * AutoModeInterJump(car_hsm_t * me, Msg * msg)
 						STATE_TRAN(me, &me->automode_arrived);
 						return 0;
 					}
-					else   //进入变轨流程
+					else if(ROUTE_NT_START == RouteGetNodeNT(curNode))  //起点
+					{
+						return 0;
+					}
+					else   //其他路径点都需要进入变轨流程
 					{
 						STATE_TRAN(me, &me->automode_changerail);
 						return 0;
