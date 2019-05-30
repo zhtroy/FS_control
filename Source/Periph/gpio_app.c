@@ -16,7 +16,7 @@ static void GPIOBank6Pin14PinMuxSetup(void);
 static void GPIOBank6Pin10PinMuxSetup(void);
 static void GPIOBank0Pin0PinMuxSetup(void);
 static void GPIOBank0Pin1PinMuxSetup(void);
-static void GPIOBank2Pin5PinMuxSetup(void);
+static void GPIOBank2Pin15PinMuxSetup(void);
 /* FPGA DONE信号*/
 static void GPIOBank8Pin10PinMuxSetup(void);
 
@@ -58,7 +58,7 @@ static void GPIOBankPinMuxSet(void)
     /* FPGA DONE信号 */
     GPIOBank8Pin10PinMuxSetup();
     //4G 模块复位 调试时为了restart后不用等4G上电，先屏蔽，等后面再加入
-//    GPIOBank2Pin5PinMuxSetup();  //LTE Reset
+    GPIOBank2Pin15PinMuxSetup();  //LTE Reset
 }
 
 static void GPIOBankPinInit(void)
@@ -72,12 +72,12 @@ static void GPIOBankPinInit(void)
     GPIODirModeSet(SOC_GPIO_0_REGS, GPIO_FPGA_DONE, GPIO_DIR_INPUT);
 
     //4G 模块复位 调试时为了restart后不用等4G上电，先屏蔽，等后面再加入
-    /*
-    GPIODirModeSet(SOC_GPIO_0_REGS, 48, GPIO_DIR_OUTPUT);  // GPIO2[15]
-    GPIOPinWrite(SOC_GPIO_0_REGS, 48, GPIO_PIN_LOW);
+
+    GPIODirModeSet(SOC_GPIO_0_REGS, GPIO_LTE_RESET, GPIO_DIR_OUTPUT);  // GPIO2[15]
+    GPIOPinWrite(SOC_GPIO_0_REGS, GPIO_LTE_RESET, GPIO_PIN_LOW);
     rst_delay(10000);
-    GPIOPinWrite(SOC_GPIO_0_REGS, 48, GPIO_PIN_HIGH);
-    */
+    GPIOPinWrite(SOC_GPIO_0_REGS, GPIO_LTE_RESET, GPIO_PIN_HIGH);
+
 }
 
 static void GPIOBank6Pin0PinMuxSetup(void)  
@@ -97,7 +97,7 @@ static void GPIOBank6Pin0PinMuxSetup(void)
 
 }
 
-static void GPIOBank2Pin5PinMuxSetup(void)  
+static void GPIOBank2Pin15PinMuxSetup(void)
 {
      unsigned int savePinmux = 0;
 

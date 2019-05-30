@@ -8,6 +8,7 @@ extern "C"{
 /* 文件头 */
 #include "common.h"
 #include "soc_C6748.h"
+#include "fpga_periph_def.h"
 /* 宏定义 */
 #define ZMD_SJA1000_MODULE 1
 
@@ -70,10 +71,10 @@ extern "C"{
 #define CAN_DEV_OPENED			(0xffff)
 #define CAN_DEV_CLOSED			(0)
 
-#define CAN_INT_STATUS_ADDR (SOC_EMIFA_CS2_ADDR + (0x21<<1))
-#define CAN_RESET_ADDR (SOC_EMIFA_CS2_ADDR + (0x23<<1))
-#define CAN_INT_ENABLE_ADDR (SOC_EMIFA_CS2_ADDR + (0x26<<1))
-#define CAN_INT_MASK_ADDR (SOC_EMIFA_CS2_ADDR + (0x27<<1))
+#define CAN_INT_STATUS_ADDR         FPGA_CAN_INT
+#define CAN_RESET_ADDR              FPGA_CAN_RESET
+#define CAN_INT_ENABLE_ADDR         FPGA_CAN_INT_ENB
+#define CAN_INT_MASK_ADDR           FPGA_CAN_INT_MASK
 
 
 #define CanHardIntEnable() \

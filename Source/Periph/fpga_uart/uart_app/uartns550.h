@@ -10,15 +10,10 @@
 		(sizeof (array) / sizeof ((array) [0]))
 
 /* FPGA串口特殊寄存器地址 */
-#define UART_INT_STATUS_ADDR (SOC_EMIFA_CS2_ADDR + (0x20<<1))
-#define UART_RESET_ADDR (SOC_EMIFA_CS2_ADDR + (0x22<<1))
-#define UART_INT_ENABLE_ADDR (SOC_EMIFA_CS2_ADDR + (0x24<<1))
-#define UART_INT_MASK_ADDR (SOC_EMIFA_CS2_ADDR + (0x25<<1))
-#define UART_RS485_ADDR (SOC_EMIFA_CS2_ADDR + (0x08<<1))
-
-/* 串口模式 */
-#define UART_RS485_MODE (1)
-#define UART_RS232_MODE (0)
+#define UART_INT_STATUS_ADDR    FPGA_RS232_INT
+#define UART_RESET_ADDR         FPGA_RS232_RESET
+#define UART_INT_ENABLE_ADDR    FPGA_RS232_INT_ENB
+#define UART_INT_MASK_ADDR      FPGA_RS232_INT_MASK
 
 /* 串口接收Buffer的大小 */
 #define UART_REC_BUFFER_SIZE (32)

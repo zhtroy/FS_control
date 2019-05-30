@@ -25,8 +25,7 @@
 #include "fpga_ttl.h"
 #include "common.h"
 #include "TL6748.h"
-
-#define FPGA_TEST_REG (SOC_EMIFA_CS2_ADDR + (0x5<<1))
+#include "fpga_periph_def.h"
 
 void PeriphInit()
 {

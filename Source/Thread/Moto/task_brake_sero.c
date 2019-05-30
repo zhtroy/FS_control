@@ -1029,7 +1029,7 @@ void ServoTaskInit()
 	ServoInitSem();
 
 	//初始化串口
-	UartNs550SetMode(SERVOR_MOTOR_UART, UART_RS485_MODE);
+
 	UartNs550Init(SERVOR_MOTOR_UART,ServorUartIntrHandler);
 	UartNs550RS485TxDisable(SERVOR_MOTOR_UART);
 
