@@ -27,6 +27,27 @@
 #include "Sensor/ZCP/v2v_communication.h"
 
 
+#define REMOTE_CMD_MODE          1
+#define REMOTE_CMD_MOTOR         2
+#define REMOTE_CMD_GEAR          3
+#define REMOTE_CMD_THROTTOLE     4
+#define REMOTE_CMD_CHANGERAIL    5
+#define REMOTE_CMD_RAILSTATE     6
+#define REMOTE_CMD_BRAKE         7
+#define REMOTE_CMD_KI            8
+#define REMOTE_CMD_KP            9
+#define REMOTE_CMD_KU            10
+#define REMOTE_CMD_KSP           11
+#define REMOTE_CMD_KSI           12
+#define REMOTE_CMD_ENCHANGERAIL  13
+#define REMOTE_CMD_SPEED         14
+#define REMOTE_CMD_AUTOSTART     15
+#define REMOTE_CMD_BACKADDR      16
+#define REMOTE_CMD_HEARTBEAT     17
+#define REMOTE_CMD_ROUTENODE     18
+#define REMOTE_CMD_NEWROUTE      19
+
+
 extern Void taskRFID(UArg a0, UArg a1);
 /*
  * 全局变量
@@ -110,45 +131,44 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 				//清零clock
 				Clock_start(heartClock);
 
-				int data = atoi(&pMsg->data[1]);
 				switch(pMsg->data[0])
 				{
-					case 'z': /*模式切换命令*/
+					case REMOTE_CMD_MODE: /*模式切换命令*/
 					{
 						evt_remote_chmode_t * p;
 
 						EVT_SETTYPE(&hsmEvt, REMOTE_CHMODE_EVT);
 						p = EVT_CAST(&hsmEvt, evt_remote_chmode_t);
-						p->mode = pMsg->data[1] - '0';
+						p->mode = pMsg->data[1];
 						if(p->mode == 3)
 						{
-							p->errorcode = (pMsg->data[2]-'0')*10 + (pMsg->data[3]-'0');
+							p->errorcode = ERROR_MANUAL_STOP;
 						}
 						break;
 					}
 
-					case 'm': /*选择前驱，后驱，双驱*/
+					case REMOTE_CMD_MOTOR: /*选择前驱，后驱双驱*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_SELECT_MOTOR_EVT);
-						EVT_CAST(&hsmEvt, evt_remote_sel_motor_t)->mode = data;
+						EVT_CAST(&hsmEvt, evt_remote_sel_motor_t)->mode = pMsg->data[1];
 						break;
 					}
 
-					case 'g': /*选择挡位*/
+					case REMOTE_CMD_GEAR: /*选择挡位*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_SELECT_GEAR_EVT);
-						EVT_CAST(&hsmEvt, evt_remote_sel_gear_t)->gear = data;
+						EVT_CAST(&hsmEvt, evt_remote_sel_gear_t)->gear = pMsg->data[1];
 						break;
 					}
 
-					case 't': /*设置油门*/
+					case REMOTE_CMD_THROTTOLE: /*设置油门*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_SET_THROTTLE_EVT);
-						EVT_CAST(&hsmEvt, evt_remote_set_throttle_t) ->throttle = data;
+						EVT_CAST(&hsmEvt, evt_remote_set_throttle_t) ->throttle = pMsg->data[1];
 						break;
 					}
 
-					case 'r': /*开始变轨命令*/
+					case REMOTE_CMD_CHANGERAIL: /*开始变轨命令*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_CH_RAIL_EVT);
 						break;
@@ -161,96 +181,105 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 //						break;
 //					}
 
-					case 'b': /*设置刹车量*/
+					case REMOTE_CMD_BRAKE: /*设置刹车量*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_SET_BRAKE_EVT);
-						EVT_CAST(&hsmEvt, evt_remote_set_brake_t)->brake = data;
+						EVT_CAST(&hsmEvt, evt_remote_set_brake_t)->brake = pMsg->data[1];
 						break;
 					}
 
-					case 'k': /*设置pid参数*/
+					 /*设置pid参数*/
+
+					case REMOTE_CMD_KI:
 					{
-						switch(pMsg->data[1])
-						{
-							case 'i':
-							{
-								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KI_EVT);
-								break;
-							}
-							case 'p':
-							{
-								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KP_EVT);
-								break;
-							}
-							case 'u':
-							{
-								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KU_EVT);
-								break;
-							}
-							case 'v':
-							{
-								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSP_EVT);
-								break;
-							}
-							case 'w':
-							{
-								EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSI_EVT);
-								break;
-							}
-						}
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KI_EVT);
+						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
 
-						EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value = \
-							((pMsg->data[2]-'0')*1000000 + (pMsg->data[3]-'0')*100000\
-							+(pMsg->data[4]-'0')*10000 +(pMsg->data[5]-'0')*1000+(pMsg->data[6]-'0')*100\
-							+(pMsg->data[7]-'0')*10 + (pMsg->data[8]-'0')) / 1000000.0;
+						break;
+					}
+					case REMOTE_CMD_KP:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KP_EVT);
+						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
 
+						break;
+					}
+					case REMOTE_CMD_KU:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KU_EVT);
+						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
+
+						break;
+					}
+					case REMOTE_CMD_KSP:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSP_EVT);
+						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
+
+						break;
+					}
+					case REMOTE_CMD_KSI:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSI_EVT);
+						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
 
 						break;
 					}
 
-					case 'c': /*设置是否允许变轨*/
+
+					case REMOTE_CMD_ENCHANGERAIL: /*设置是否允许变轨*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_SET_ENABLE_CHANGERAIL_EVT);
-						EVT_CAST(&hsmEvt, evt_remote_set_u8_param_t)->value =(pMsg->data[1]-'0');
+						EVT_CAST(&hsmEvt, evt_remote_set_u8_param_t)->value =pMsg->data[1];
 						break;
 					}
 
-					case 's': /*设置转速*/
+					case REMOTE_CMD_SPEED: /*设置转速*/
 					{
 						evt_remote_set_rpm_t * p;
 						EVT_SETTYPE(&hsmEvt, REMOTE_SET_RPM_EVT);
 						p = EVT_CAST(&hsmEvt, evt_remote_set_rpm_t);
-						p->statecode = (pMsg->data[1]-'0')*10 + (pMsg->data[2]-'0');
-						p->rpm = (pMsg->data[3]-'0')*1000 \
-								+ (pMsg->data[4]-'0')*100 \
-								+(pMsg->data[5]-'0')*10   \
-								+ (pMsg->data[6]-'0');
+						memcpy(&(p->statecode),&pMsg->data[1],sizeof(uint16_t)) ;
+						memcpy(&(p->rpm),&pMsg->data[3],sizeof(uint16_t)) ;
 						break;
 					}
 
-					case 'S': /*在automode下开始启动*/
+					case REMOTE_CMD_AUTOSTART: /*在automode下开始启动*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_AUTO_START_EVT);
 						break;
 					}
 
-					case 'A': /*设置后车zigbee地址*/
+					case REMOTE_CMD_BACKADDR: /*设置后车zigbee地址*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_SET_BACKCAR_ADDR);
-						EVT_CAST(&hsmEvt, evt_remote_set_u16_param_t)->value = \
-								(pMsg->data[5]-'0') \
-								+(pMsg->data[4]-'0') * 10 \
-								+(pMsg->data[3]-'0') * 100 \
-								+(pMsg->data[2]-'0') * 1000 \
-								+(pMsg->data[1]-'0') * 10000;
+						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_u16_param_t)->value), &pMsg->data[1],sizeof(uint16_t));
+
 						break;
 					}
 
-					case 'h': /*心跳包*/
+					case REMOTE_CMD_HEARTBEAT: /*心跳包*/
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_HEARTBEAT_EVT);
 						break;
 					}
+
+					case REMOTE_CMD_ROUTENODE:
+					{
+
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_ROUTENODE);
+						memcpy(&(EVT_CAST(&hsmEvt, evt_routenode_t)->node), &pMsg->data[1],sizeof(packet_routenode_t));
+
+
+						break;
+					}
+
+					case REMOTE_CMD_NEWROUTE:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_NEW_ROUTE);
+						break;
+					}
+
 
 				}
 				break;
@@ -310,7 +339,7 @@ void testZigbeeControlHSM_init()
 	Error_init(&eb);
     Task_Params_init(&taskParams);
 	taskParams.priority = 6;      //比5高
-	taskParams.stackSize = 2048;
+	taskParams.stackSize = 10000;
 	task = Task_create(taskZigbeeControlMain_hsm, &taskParams, &eb);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");

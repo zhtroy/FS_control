@@ -381,7 +381,7 @@ static void MotoRecvTask(void)
              */
             if( MotoGetPidOn()  )
             {
-                vg = MotoGoalSpeedGen(recvRpm, ParamInstance()->KSP, ParamInstance()->KSI);
+                vg = MotoGoalSpeedGen(recvRpm, g_param.KSP, g_param.KSI);
 
                 /*
                  * 拟合加速曲线（当前为固定加速度曲线）
@@ -409,8 +409,8 @@ static void MotoRecvTask(void)
                 /*
                  * PID计算调节量
                  */
-                adjThrottle = MotoPidCalc(calcRpm,recvRpm,ParamInstance()->KP,
-                                        ParamInstance()->KI,ParamInstance()->KU, 0);
+                adjThrottle = MotoPidCalc(calcRpm,recvRpm,g_param.KP,
+                                        g_param.KI,g_param.KU, 0);
 
                 hisThrottle += adjThrottle;
 

@@ -11,6 +11,7 @@
 
 #include "stdint.h"
 #include "Sensor/CellCommunication/CellDriver.h"
+#include "Decision/route/Route.h"
 
 typedef struct {
 	uint64_t nid;
@@ -29,13 +30,7 @@ typedef struct {
 }packet_cabstatechange_t;
 
 
-typedef struct {
-	uint64_t nid;
-	double length;
-	double speedlimit;
-	uint32_t flag;
-	uint32_t reserved;
-}packet_routenode_t;
+
 
 /*
  * PacketBuild

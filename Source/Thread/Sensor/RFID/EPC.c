@@ -6,6 +6,7 @@
  */
 
 #include "Sensor/RFID/EPCdef.h"
+#include "string.h"
 
 void EPCfromByteArray(epc_t * epc, uint8_t array[])
 {
@@ -72,4 +73,12 @@ void EPCfromByteArray(epc_t * epc, uint8_t array[])
 uint8_t EPCequal(epc_t * a, epc_t * b)
 {
 	return !(memcmp(a,b, sizeof(epc_t)));
+}
+
+/*
+ * 得到epc的64位短ID
+ */
+uint64_t EPCgetShortID(epc_t * epc)
+{
+	return 0;
 }

@@ -9,6 +9,7 @@
 #include "uartns550.h"
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Mailbox.h>
+#include <xdc/runtime/System.h>
 #include "stdint.h"
 #include "string.h"
 #include <ti/sysbios/hal/Hwi.h>
@@ -94,7 +95,8 @@ Void taskZigbee(UArg a0, UArg a1)
 	int i;
 	uint8_t c;
 	p_msg_t pMsg;
-	int commandLen = 0;
+	int recvLen = 0;
+	int dataLen;
 	uartDataObj_t buffObj;
 
 	ZigbeeInit();
@@ -108,31 +110,69 @@ Void taskZigbee(UArg a0, UArg a1)
 			c = buffObj.buffer[i];
 			switch(state)
 			{
-				case 0:  //等待包头 $
+				case 0:  //等待包头 0xAA
 				{
-					if('$' == c)
+					if(0xAA == c)
 					{
 						state = 1;
-						commandLen = 0;
-						pMsg = Message_getEmpty();
-						pMsg->type = zigbee;
-						memset(pMsg->data,0,MSGSIZE);
 					}
 					break;
 				}
-				case 1:  //接收命令
+				case 1:
 				{
-					if( c == '^')
-					{
-						state = 0;
+                    if(0x42==c)
+                    {
+                    	state = 2;
+                    }
+                    else
+                    {
+                    	state = 0;
+                    }
+                    break;
+				}
+				case 2:
+				{
+                    if(0x55==c)
+                    {
+                    	state = 3;
+                    }
+                    else
+                    {
+                    	state = 0;
+                    }
+                    break;
+				}
+				case 3://接收长度
+				{
+					recvLen = 0;
+					pMsg = Message_getEmpty();
+					pMsg->type = zigbee;
+					memset(pMsg->data,0,MSGSIZE);
 
-						pMsg->dataLen = commandLen;
+					dataLen = c;
+					state = 4;
+					break;
+				}
+				case 4:  //接收命令
+				{
+					pMsg->data[recvLen++] = c;
+					if(recvLen>=dataLen)
+					{
+						state = 5;
+					}
+					break;
+				}
+
+				case 5:
+				{
+					state = 0;
+
+					if(0x0D == c)
+					{
+						System_printf("zigbee recv cmd:%d\n", pMsg->data[0]);
+						pMsg->dataLen = recvLen;
 
 						Message_post(pMsg);
-					}
-					else
-					{
-						pMsg->data[commandLen++] = c;
 					}
 
 					break;

@@ -11,6 +11,7 @@
 #include "stdint.h"
 #include "Decision/CarState.h"
 
+#pragma pack(1)
 typedef struct parameter_tag{
 	float KI;
 	float KP;
@@ -27,7 +28,7 @@ typedef struct parameter_tag{
 
 }parameter_t;
 
-extern parameter_t* ParamInstance();
+extern parameter_t g_param;
 
 
 

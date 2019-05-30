@@ -69,5 +69,6 @@ typedef struct epc_tag
 
 extern void EPCfromByteArray(epc_t * epc, uint8_t array[]);
 extern uint8_t EPCequal(epc_t * a, epc_t * b);
+extern uint64_t EPCgetShortID(epc_t * epc);
 
 #endif /* EPCDEF_H_ */

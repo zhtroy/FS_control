@@ -7,7 +7,7 @@
 
 #include "Parameter.h"
 
-static parameter_t m_param = {
+parameter_t g_param = {
 		.KI = 0,
 		.KP = 0,
 		.KU = 0,
@@ -19,7 +19,4 @@ static parameter_t m_param = {
 
 };
 
-parameter_t * ParamInstance()
-{
-	return &m_param;
-}
+

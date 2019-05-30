@@ -11,8 +11,8 @@
 
 typedef enum
 {
-	seperate_wait_photon = 0,
-	seperate_wait_changerail,
+	changerail_wait_photon = 0,
+	changerail_wait_changerail,
 	station_stop,
 	merge_wait_photon,
 	merge_wait_changerail,

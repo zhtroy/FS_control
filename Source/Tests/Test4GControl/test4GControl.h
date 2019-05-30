@@ -30,20 +30,7 @@ typedef enum{
 
 
 
-typedef enum
-{
-	seperate_wait_photon,
-	seperate_wait_changerail,
-	station_stop,
-	merge_wait_photon,
-	merge_wait_changerail,
-	seperate_wait_enter_station,
-	seperate_wait_stop_station,
-	seperate_wait_leave_station,
-	seperate_wait_pre_merge,
-	seperate_wait_merge
 
-}timeout_type_t;
 
 /*
  * 延时

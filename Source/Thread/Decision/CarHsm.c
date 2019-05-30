@@ -22,6 +22,7 @@
 #include "task_brake_servo.h"
 #include "Moto/Parameter.h"
 #include "RFID/EPCdef.h"
+#include "Decision/route/Route.h"
 
 
 
@@ -182,50 +183,69 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 	{
 		case REMOTE_SET_KI_EVT:
 		{
-			ParamInstance()->KI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_param.KI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_KP_EVT:
 		{
-			ParamInstance()->KP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_param.KP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_KU_EVT:
 		{
-			ParamInstance()->KU = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_param.KU = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_KSP_EVT:
 		{
-			ParamInstance()->KSP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_param.KSP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_KSI_EVT:
 		{
-			ParamInstance()->KSI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_param.KSI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_BACKCAR_ADDR:
 		{
-			ParamInstance()->REAR_CAR_ADDR = EVT_CAST(msg, evt_remote_set_u16_param_t)->value;
+			g_param.REAR_CAR_ADDR = EVT_CAST(msg, evt_remote_set_u16_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_ENABLE_CHANGERAIL_EVT:
 		{
-			ParamInstance()->EnableChangeRail = EVT_CAST(msg, evt_remote_set_u8_param_t) ->value;
+			g_param.EnableChangeRail = EVT_CAST(msg, evt_remote_set_u8_param_t) ->value;
 			return 0;
 		}
 
 		case REMOTE_SET_RPM_EVT:
 		{
 			evt_remote_set_rpm_t * p = EVT_CAST(msg, evt_remote_set_rpm_t);
-			ParamInstance()->StateRPM[ p->statecode] = p->rpm;
+			if(p->statecode < car_state_None)  //防止访问越界
+			{
+				g_param.StateRPM[ p->statecode] = p->rpm;
+			}
+			return 0;
+		}
+
+		case REMOTE_SET_ROUTENODE:
+		{
+			evt_routenode_t * p = EVT_CAST(msg, evt_routenode_t);
+			packet_routenode_t node = p->node;
+			RouteAddNode(node);
+			return  0;
+		}
+
+		case REMOTE_NEW_ROUTE:
+		{
+			//如果是新设置路径，将原来的路径删除
+
+			RouteFree();
 			return 0;
 		}
 	}
@@ -297,18 +317,45 @@ Msg const * AutoModeInterJump(car_hsm_t * me, Msg * msg)
 	{
 		case START_EVT:
 		{
-			return 0;
-		}
-		case ENTRY_EVT:
-		{
+			STATE_START(me, me->automode_interjump_hist);
 			return 0;
 		}
 		case EXIT_EVT:
 		{
+			me->automode_interjump_hist = STATE_CURR(me);
 			return 0;
 		}
 		case RFID_EVT:
 		{
+			/*
+			 * 先进行路径EPC判断，如果是路径上的点,进行处理
+			 */
+			if(RouteHasOngoing())
+			{
+				evt_rfid_t * pEvt = EVT_CAST(msg, evt_rfid_t);
+				packet_routenode_t curNode = RoutePeek();
+
+				if(EPCgetShortID(&(pEvt->epc)) == curNode.nid)
+				{
+
+					RoutePop();    //如果路径点匹配，弹出当前节点
+
+					if( RouteGetNodeNT(curNode) == ROUTE_NT_STOP ) //终点
+					{
+						STATE_TRAN(me, &me->automode_arrived);
+						return 0;
+					}
+					else   //进入变轨流程
+					{
+						STATE_TRAN(me, &me->automode_changerail);
+						return 0;
+					}
+				}
+			}
+
+			/*
+			 * 如果不是路径上的点，再根据rfid的路段特性来调整速度
+			 */
 			switch(EVT_CAST(msg, evt_rfid_t)->epc.roadFeature)
 			{
 				case EPC_FEAT_HORIZONTAL_STRAIGHT:
@@ -354,7 +401,7 @@ Msg const * InterJumpCruising(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =cruising;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[cruising]);
+			MotoSetGoalRPM(g_param.StateRPM[cruising]);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -377,7 +424,7 @@ Msg const * InterJumpStraight(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =straight;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[straight]);
+			MotoSetGoalRPM(g_param.StateRPM[straight]);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -400,7 +447,7 @@ Msg const * InterJumpPreCurve(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =pre_curve;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[pre_curve]);
+			MotoSetGoalRPM(g_param.StateRPM[pre_curve]);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -423,7 +470,7 @@ Msg const * InterJumpCurving(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =curving;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[curving]);
+			MotoSetGoalRPM(g_param.StateRPM[curving]);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -446,7 +493,7 @@ Msg const * InterJumpUphill(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =uphill;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[uphill]);
+			MotoSetGoalRPM(g_param.StateRPM[uphill]);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -469,7 +516,7 @@ Msg const * InterJumpDownhill(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =downhill;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[downhill]);
+			MotoSetGoalRPM(g_param.StateRPM[downhill]);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -492,7 +539,7 @@ Msg const * InterJumpPreDownhill(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =pre_downhill;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[pre_downhill]);
+			MotoSetGoalRPM(g_param.StateRPM[pre_downhill]);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -515,7 +562,7 @@ Msg const * InterJumpPreDownhill(car_hsm_t * me, Msg * msg)
 //		{
 //			g_fbData.FSMstate =pre_seperate;
 //
-//			MotoSetGoalRPM(ParamInstance()->StateRPM[pre_seperate]);
+//			MotoSetGoalRPM(g_param.StateRPM[pre_seperate]);
 //			return 0;
 //		}
 //		case EXIT_EVT:
@@ -540,20 +587,19 @@ Msg const * InterJumpPreDownhill(car_hsm_t * me, Msg * msg)
  * 自动模式- 分轨
  */
 
-Msg const * AutomodeSeperate(car_hsm_t * me, Msg * msg)
+Msg const * AutomodeChangeRail(car_hsm_t * me, Msg * msg)
 {
 	switch(msg->evt)
 	{
 		case START_EVT:
 		{
-			STATE_START(me, &me->seperate_waitphoton);
+			STATE_START(me, &me->changerail_waitphoton);
 			return 0;
 		}
 		case ENTRY_EVT:
 		{
 			g_fbData.FSMstate = seperate;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[seperate]);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -569,29 +615,31 @@ Msg const * AutomodeSeperate(car_hsm_t * me, Msg * msg)
  * 分轨 - 等待光电对管
  */
 
-Msg const * SeperateWaitPhoton(car_hsm_t * me, Msg * msg)
+Msg const * ChangeRailWaitPhoton(car_hsm_t * me, Msg * msg)
 {
 	switch(msg->evt)
 	{
 		case ENTRY_EVT:
 		{
-			TimeoutSet(seperate_wait_photon);
+			TimeoutSet(changerail_wait_photon);
 			return 0;
 		}
 
 		case TIMER_EVT:
 		{
-			if(seperate_wait_photon == EVT_CAST(msg, evt_timeout_t)->type )
+			if(changerail_wait_photon == EVT_CAST(msg, evt_timeout_t)->type )
 			{
-				STATE_TRAN(me, &me->cruising);
+				//没等到对管，不变轨
+				MotoSetErrorCode(ERROR_SEPERATE_FAILED);
+				STATE_TRAN(me, &me->forcebrake);
 				return 0;
 			}
 			break;
 		}
 		case PHOTON_EVT:
 		{
-
-			STATE_TRAN(me, &me->seperate_seperating);
+			me->prevrailstate = RailGetRailState();
+			STATE_TRAN(me, &me->changerail_changing);
 			return 0;
 		}
 	}
@@ -600,24 +648,24 @@ Msg const * SeperateWaitPhoton(car_hsm_t * me, Msg * msg)
 }
 
 
-Msg const * SeperateSeperating(car_hsm_t * me, Msg * msg)
+Msg const * ChangeRailChanging(car_hsm_t * me, Msg * msg)
 {
 	switch(msg->evt)
 	{
 		case ENTRY_EVT:
 		{
-			TimeoutSet(seperate_wait_changerail);
+			TimeoutSet(changerail_wait_changerail);
 			RailChangeStart();
 			return 0;
 		}
 
 		case TIMER_EVT:
 		{
-			if(seperate_wait_changerail == EVT_CAST(msg, evt_timeout_t)->type)
+			if(changerail_wait_changerail == EVT_CAST(msg, evt_timeout_t)->type)
 			{
-				if(RIGHTRAIL==RailGetRailState())
+				if(me->prevrailstate != RailGetRailState())
 				{
-					STATE_TRAN(me, &me->seperate_seperateok);
+					STATE_TRAN(me, &me->automode_interjump);
 					return 0;
 				}
 				else{
@@ -632,41 +680,26 @@ Msg const * SeperateSeperating(car_hsm_t * me, Msg * msg)
 	return msg;
 }
 
-//Msg const * SeperateSeperateOk(car_hsm_t * me, Msg * msg)
-//{
-//	switch(msg->evt)
-//	{
-//		case ENTRY_EVT:
-//		{
-//			TimeoutSet(seperate_wait_enter_station);
-//			return 0;
-//		}
-//
-//		case TIMER_EVT:
-//		{
-//			if(seperate_wait_enter_station == EVT_CAST(msg, evt_timeout_t)->type)
-//			{
-//				MotoSetErrorCode(ERROR_WAIT_ENTER_STATION);
-//				STATE_TRAN(me, &me->forcebrake);
-//				return 0;
-//			}
-//			break;
-//		}
-//		case RFID_EVT:
-//		{
-//			if(EPC_ENTER_STATION == EVT_CAST(msg, evt_rfid_t)->epc)
-//			{
-//
-//				STATE_TRAN(me,&me->automode_enterstation);
-//				return 0;
-//			}
-//			break;
-//		}
-//
-//	}
-//
-//	return msg;
-//}
+Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
+{
+	switch(msg->evt)
+	{
+		case START_EVT:
+		{
+			return 0;
+		}
+		case ENTRY_EVT:
+		{
+			return 0;
+		}
+		case EXIT_EVT:
+		{
+			return 0;
+		}
+	}
+
+	return msg;
+}
 
 //Msg const * AutomodeEnterStation(car_hsm_t * me, Msg * msg)
 //{
@@ -676,7 +709,7 @@ Msg const * SeperateSeperating(car_hsm_t * me, Msg * msg)
 //		{
 //			g_fbData.FSMstate =enter_station;
 //
-//			MotoSetGoalRPM(ParamInstance()->StateRPM[enter_station]);
+//			MotoSetGoalRPM(g_param.StateRPM[enter_station]);
 //			TimeoutSet(seperate_wait_stop_station);
 //			return 0;
 //		}
@@ -726,7 +759,7 @@ Msg const * AutomodeStopStation(car_hsm_t * me, Msg * msg)
 //	{
 //		case ENTRY_EVT:
 //		{
-//			MotoSetGoalRPM(ParamInstance()->StateRPM[stop_station]);
+//			MotoSetGoalRPM(g_param.StateRPM[stop_station]);
 //			TimeoutSet(seperate_wait_leave_station);
 //			return 0;
 //		}
@@ -764,7 +797,7 @@ Msg const * AutomodeStopStation(car_hsm_t * me, Msg * msg)
 //		{
 //			g_fbData.FSMstate = leave_station;
 //
-//			MotoSetGoalRPM(ParamInstance()->StateRPM[leave_station]);
+//			MotoSetGoalRPM(g_param.StateRPM[leave_station]);
 //			TimeoutSet(seperate_wait_pre_merge);
 //			return 0;
 //		}
@@ -800,7 +833,7 @@ Msg const * AutomodeStopStation(car_hsm_t * me, Msg * msg)
 //		{
 //			g_fbData.FSMstate = pre_merge;
 //
-//			MotoSetGoalRPM(ParamInstance()->StateRPM[pre_merge]);
+//			MotoSetGoalRPM(g_param.StateRPM[pre_merge]);
 //			TimeoutSet(seperate_wait_merge);
 //			return 0;
 //		}
@@ -841,7 +874,7 @@ Msg const * AutomodeMerge(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =merge;
 
-			MotoSetGoalRPM(ParamInstance()->StateRPM[merge]);
+			MotoSetGoalRPM(g_param.StateRPM[merge]);
 			return 0;
 		}
 	}
@@ -957,12 +990,15 @@ void CarHsmCtor(car_hsm_t * me)
 			StateCtor(&me->curving, "interjump.curving", &me->automode_interjump, (EvtHndlr) InterJumpCurving);
 			StateCtor(&me->uphill, "interjump.uphill", &me->automode_interjump, (EvtHndlr) InterJumpUphill);
 			StateCtor(&me->downhill, "interjump.downhill", &me->automode_interjump, (EvtHndlr) InterJumpDownhill);
+			me->automode_interjump_hist = &me->cruising;
 //			StateCtor(&me->pre_downhill, "interjump.pre_downhill", &me->automode_interjump, (EvtHndlr) InterJumpPreDownhill);
 //			StateCtor(&me->pre_seperate, "interjump.pre_seperate", &me->automode_interjump, (EvtHndlr) InterJumpPreSeperate);
-//		StateCtor(&me->automode_seperate, "automode_seperate",&me->automode, (EvtHndlr) AutomodeSeperate);
-//			StateCtor(&me->seperate_waitphoton, "seperate_waitphoton",&me->automode_seperate, (EvtHndlr) SeperateWaitPhoton);
-//			StateCtor(&me->seperate_seperating, "seperate_seperating",&me->automode_seperate, (EvtHndlr) SeperateSeperating);
-//			StateCtor(&me->seperate_seperateok, "seperate_seperateok",&me->automode_seperate, (EvtHndlr) SeperateSeperateOk);
+
+		StateCtor(&me->automode_changerail, "automode_changerail",&me->automode, (EvtHndlr) AutomodeChangeRail);
+			StateCtor(&me->changerail_waitphoton, "changerail_waitphoton",&me->automode_changerail, (EvtHndlr) ChangeRailWaitPhoton);
+			StateCtor(&me->changerail_changing, "changerail_changing",&me->automode_changerail, (EvtHndlr) ChangeRailChanging);
+
+		StateCtor(&me->automode_arrived, "automode_arrived", &me->automode, (EvtHndlr) AutoModeArrived);
 //		StateCtor(&me->automode_enterstation, "automode_enterstation",&me->automode, (EvtHndlr) AutomodeEnterStation);
 //		StateCtor(&me->automode_stopstation, "automode_stopstation",&me->automode, (EvtHndlr) AutomodeStopStation);
 //		StateCtor(&me->autemode_stopstationleave, "autemode_stopstationleave",&me->automode, (EvtHndlr) AutomodeStopStationLeave);

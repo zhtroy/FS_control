@@ -321,17 +321,17 @@ static Void task4GControlMain(UArg a0, UArg a1)
 						case 'k': //设置PID参数  1000000倍
 							switch(msg->data[1]){
 							case 'i':
-								ParamInstance()->KI = (msg->data[2]-'0')*1000000 + (msg->data[3]-'0')*100000\
+								g_param.KI = (msg->data[2]-'0')*1000000 + (msg->data[3]-'0')*100000\
 												+(msg->data[4]-'0')*10000 +(msg->data[5]-'0')*1000+(msg->data[6]-'0')*100\
 												+(msg->data[7]-'0')*10 + (msg->data[8]-'0');
 								break;
 							case 'p':
-								ParamInstance()->KP = (msg->data[2]-'0')*1000000 + (msg->data[3]-'0')*100000\
+								g_param.KP = (msg->data[2]-'0')*1000000 + (msg->data[3]-'0')*100000\
 												+(msg->data[4]-'0')*10000 +(msg->data[5]-'0')*1000+(msg->data[6]-'0')*100\
 												+(msg->data[7]-'0')*10 + (msg->data[8]-'0');
 								break;
 							case 'u':
-								ParamInstance()->KU = (msg->data[2]-'0')*1000000 + (msg->data[3]-'0')*100000\
+								g_param.KU = (msg->data[2]-'0')*1000000 + (msg->data[3]-'0')*100000\
 												+(msg->data[4]-'0')*10000 +(msg->data[5]-'0')*1000+(msg->data[6]-'0')*100\
 												+(msg->data[7]-'0')*10 + (msg->data[8]-'0');
 								break;
@@ -340,7 +340,7 @@ static Void task4GControlMain(UArg a0, UArg a1)
 							break;
 
 						case 'c': // 是否允许变轨
-							ParamInstance()->EnableChangeRail = (msg->data[1]-'0');
+							g_param.EnableChangeRail = (msg->data[1]-'0');
 							break;
 
 					}
@@ -405,7 +405,7 @@ static Void task4GControlMain(UArg a0, UArg a1)
 
 									break;
 								case EPC_PRE_SEPERATE:
-									if(ParamInstance()->EnableChangeRail == 1){  //在上位机设置了变轨才进入变轨流程
+									if(g_param.EnableChangeRail == 1){  //在上位机设置了变轨才进入变轨流程
 										carState = pre_seperate;
 									}
                                     break;

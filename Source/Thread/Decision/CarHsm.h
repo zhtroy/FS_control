@@ -12,6 +12,7 @@
 #include "stdint.h"
 #include "utils/Timeout.h"
 #include "Sensor/RFID/EPCdef.h"
+#include "Decision/route/Route.h"
 
 typedef struct {
 	Hsm super;
@@ -28,12 +29,14 @@ typedef struct {
 			State uphill;
 			State downhill;
 			State pre_downhill;
-			State pre_seperate;
-		State automode_seperate;
-			State seperate_waitphoton;
-			State seperate_seperating;
-			State seperate_seperateok;
+			State *automode_interjump_hist;
 
+		State automode_changerail;
+			State changerail_waitphoton;
+			State changerail_changing;
+			uint8_t prevrailstate;
+
+		State automode_arrived;
 		State automode_enterstation;
 		State automode_stopstation;
 		State autemode_stopstationleave;
@@ -65,6 +68,8 @@ enum CarEvents
 	REMOTE_SET_BACKCAR_ADDR,
 	REMOTE_AUTO_START_EVT,
 	REMOTE_HEARTBEAT_EVT,
+	REMOTE_SET_ROUTENODE,
+	REMOTE_NEW_ROUTE,
 
 	/*RFID 开始*/
 	RFID_EVT,
@@ -245,6 +250,13 @@ typedef struct{
 	uint8_t code;
 }evt_error_t;
 
+/*
+ * routenode
+ */
+typedef struct{
+	Msg super;
+	packet_routenode_t node;
+}evt_routenode_t;
 
 /*
  *
