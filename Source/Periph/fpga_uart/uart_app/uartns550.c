@@ -1,5 +1,6 @@
 /***************************** Include Files ********************************/
 #include "uartns550.h"
+#include "fpga_periph_def.h"
 
 /************************** Constant Definitions ****************************/
 
@@ -8,7 +9,7 @@ uartCfgTable_t uartCfgTable[] = {
      /*设备0资源配置*/
     {
          /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
-         0,(SOC_EMIFA_CS2_ADDR+0x200),80000000,
+         0,FPGA_RS232_DEV0,80000000,
          /*波特率,数据长度,校验位,ֹͣ停止位*/
          {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_NO_PARITY,XUN_FORMAT_1_STOP_BIT},
          /*设备OPTIONS*/
@@ -20,7 +21,7 @@ uartCfgTable_t uartCfgTable[] = {
      /*设备1资源配置*/
     {
          /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
-         1,(SOC_EMIFA_CS2_ADDR+0x400),80000000,
+         1,FPGA_RS232_DEV1,80000000,
          /*波特率,数据长度,校验位,ֹͣ停止位*/
          {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_NO_PARITY,XUN_FORMAT_1_STOP_BIT},
          /*设备OPTIONS*/
@@ -32,7 +33,7 @@ uartCfgTable_t uartCfgTable[] = {
      /*设备2资源配置*/
     {
          /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
-         2,(SOC_EMIFA_CS2_ADDR+0x600),80000000,
+         2,FPGA_RS232_DEV2,80000000,
          /*波特率,数据长度,校验位,ֹͣ停止位*/
          {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_ODD_PARITY,XUN_FORMAT_1_STOP_BIT},
          /*设备OPTIONS*/
@@ -44,7 +45,7 @@ uartCfgTable_t uartCfgTable[] = {
      /*设备3资源配置*/
     {
          /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
-         3,(SOC_EMIFA_CS2_ADDR+0x800),80000000,
+         3,FPGA_RS232_DEV3,80000000,
          /*波特率,数据长度,校验位,ֹͣ停止位*/
          {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_NO_PARITY,XUN_FORMAT_1_STOP_BIT},
          /*设备OPTIONS*/
@@ -56,7 +57,7 @@ uartCfgTable_t uartCfgTable[] = {
     /*设备4资源配置*/
     {
          /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
-         4,(SOC_EMIFA_CS2_ADDR+0xA00),80000000,
+         4,FPGA_RS232_DEV4,80000000,
          /*波特率,数据长度,校验位,ֹͣ停止位*/
          {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_NO_PARITY,XUN_FORMAT_1_STOP_BIT},
          /*设备OPTIONS*/
@@ -68,7 +69,7 @@ uartCfgTable_t uartCfgTable[] = {
      /*设备5资源配置*/
     {
          /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
-         5,(SOC_EMIFA_CS2_ADDR+0xC00),80000000,
+         5,FPGA_RS232_DEV5,80000000,
          /*波特率,数据长度,校验位,ֹͣ停止位*/
          {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_NO_PARITY,XUN_FORMAT_1_STOP_BIT},
          /*设备OPTIONS*/
@@ -411,16 +412,6 @@ uint32_t UartNs550DeviceIsExist(uint16_t deviceNum)
     else
         return 1;
 }
-
-void UartNs550SetMode(uint16_t deviceNum,uint8_t mode)
-{
-    uint8_t Reg;
-    Reg = *(volatile uint16_t *) (UART_RS485_ADDR);
-    if(UART_RS485_MODE == mode)
-        *(volatile uint16_t *) (UART_RS485_ADDR) =  Reg | (1 << deviceNum);
-    else
-        *(volatile uint16_t *) (UART_RS485_ADDR) =  Reg & (~(1 << deviceNum));
-}   
     
 void UartNs550RS485TxDisable(uint16_t deviceNum)
 {

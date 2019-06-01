@@ -83,11 +83,11 @@ BaseType_t prvMemroyWrite( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
             uxParameterNumber++;
             if(xParameterStringLength == 2)
             { 
-                if(strncmp(pcParameter,"-l",( size_t ) xParameterStringLength))
+                if(strncmp(pcParameter,"-l",( size_t ) xParameterStringLength) == 0)
                     ucType = DWORD_TYPE;     //32Bits(Dwords)
-                else if(strncmp(pcParameter,"-s",( size_t ) xParameterStringLength))
+                else if(strncmp(pcParameter,"-s",( size_t ) xParameterStringLength) == 0)
                     ucType = WORD_TYPE;     //16Bits(Words)
-                else if(strncmp(pcParameter,"-c",( size_t ) xParameterStringLength))
+                else if(strncmp(pcParameter,"-c",( size_t ) xParameterStringLength) == 0)
                     ucType = BYTE_TYPE;     //8Bits(Byte)
                 else
                     xReturn = pdFALSE;
@@ -114,7 +114,7 @@ BaseType_t prvMemroyWrite( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
             ioWrite(ulAddr,0,ulValue,ucType);
 
             memset( pcWriteBuffer, 0x00, xWriteBufferLen );
-            sprintf( pcWriteBuffer, "0x:%08x:%x", ulAddr,ulValue );
+            sprintf( pcWriteBuffer, "0x%08x:%x", ulAddr,ulValue );
             uxParameterNumber = 0;
             xReturn = pdFALSE;
         }
