@@ -32,13 +32,7 @@ static RFID_instance_t rfid_cfg_table[]={
 		{
 		  //串口设备号,不能重复
 		  0
-		},
-		//RFID设备1
-		{
-		  //串口设备号,不能重复
-		  1
 		}
-
 };
 
 static uartDataObj_t rfidUartDataObj;

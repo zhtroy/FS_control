@@ -47,7 +47,7 @@
 #endif
 
 //#define RAIL_ENABLE (0)
-#define RAIL_ENABLE (4)
+#define RAIL_ENABLE (0)
 #define RAIL_DIRECT (1)
 
 typedef struct{

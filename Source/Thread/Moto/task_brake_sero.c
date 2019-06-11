@@ -16,7 +16,7 @@
 extern uint16_t getRPM(void);
 
 #define BRAKE_MBOX_DEPTH (16)
-#define CAN_DEV_BRAKE (4)
+#define CAN_DEV_BRAKE (1)
 
 extern uint16_t MotoGetRPM(void);
 
@@ -799,13 +799,13 @@ static void ServoChangeRailTask(void)
 			 * 4.判断电机是否到位
 			 */
 			if(RailGetRailState() == LEFTRAIL)
-				TTLWriteBit(RAIL_DIRECT,0);
-			else
 				TTLWriteBit(RAIL_DIRECT,1);
+			else
+				TTLWriteBit(RAIL_DIRECT,0);
 
 			Task_sleep(10);
 
-			TTLWriteBit(RAIL_ENABLE, 0);
+			TTLWriteBit(RAIL_ENABLE, 1);
 
 			changerail_timeout_cnt = 0;
 			while(changerail_timeout_cnt < CHANGERAIL_TIMEOUT)
@@ -825,7 +825,7 @@ static void ServoChangeRailTask(void)
 
 			}
 
-			TTLWriteBit(RAIL_ENABLE, 1);	/* 关闭电机使能 */
+			TTLWriteBit(RAIL_ENABLE, 0);	/* 关闭电机使能 */
 
 		}/*if(1 == changeRail)*/
 

@@ -12,7 +12,7 @@ void TTLInit()
 	 * 4.使能LVTTL;
 	 */
 	EMIFAWriteWord(FPGA_RELAY_OEN, 0, 0x01);
-	TTLWrite(0xFF);
+	TTLWrite(0x00);
 	EMIFAWriteWord(FPGA_RELAY_OEN, 0, 0x00);
 	EMIFAWriteWord(FPGA_LVTTL_EN, 0, 0x00);
 }

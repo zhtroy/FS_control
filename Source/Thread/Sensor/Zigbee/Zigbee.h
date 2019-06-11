@@ -15,7 +15,7 @@
  * define
  */
 /*FPGA 串口设备号*/
-#define ZIGBEE_UART_NUM (4)
+#define ZIGBEE_UART_NUM (3)
 /*
  * API
  */

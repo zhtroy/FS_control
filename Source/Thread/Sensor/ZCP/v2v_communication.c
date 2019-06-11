@@ -20,7 +20,7 @@
 #include "Parameter.h"
 #include "Message/Message.h"
 
-#define V2V_ZCP_UART_DEV_NUM    (5)
+#define V2V_ZCP_UART_DEV_NUM    (1)
 #define V2V_ZCP_DEV_NUM (0)
 
 extern fbdata_t g_fbData;
@@ -131,7 +131,7 @@ void V2VRecvTask(UArg arg0, UArg arg1)
 	Clock_Params_init(&clockParams);
 	clockParams.period = 100000;       // 1s周期检测
 	clockParams.startFlag = TRUE;
-	recvClock = Clock_create(zigbeeTimeout, 1000, &clockParams, NULL);
+//	recvClock = Clock_create(zigbeeTimeout, 1000, &clockParams, NULL);
 
     while(1)
     {
