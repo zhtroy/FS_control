@@ -220,7 +220,7 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 
 		case REMOTE_SET_ENABLE_CHANGERAIL_EVT:
 		{
-			g_param.EnableChangeRail = EVT_CAST(msg, evt_remote_set_u8_param_t) ->value;
+			g_param.cycleRoute = EVT_CAST(msg, evt_remote_set_u8_param_t) ->value;
 			return 0;
 		}
 
@@ -331,6 +331,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 		case RFID_EVT:
 		{
 			evt_rfid_t * pEvt = EVT_CAST(msg, evt_rfid_t);
+			packet_routenode_t routenode;
 			/*
 			 * 先进行路径EPC判断，如果是路径上的点,进行处理
 			 */
@@ -343,11 +344,19 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 				if(shortid == curNode.nid)
 				{
 
-					RoutePop();    //如果路径点匹配，弹出当前节点
+					routenode = RoutePop();    //如果路径点匹配，弹出当前节点
+
+					if(g_param.cycleRoute == 1)
+					{
+						RouteAddNode(routenode);
+					}
 
 					if( RouteGetNodeNT(curNode) == ROUTE_NT_STOP ) //终点
 					{
-						STATE_TRAN(me, &me->automode_arrived);
+						if(g_param.cycleRoute == 0)
+						{
+							STATE_TRAN(me, &me->automode_arrived);
+						}
 					}
 					else if(ROUTE_NT_START == RouteGetNodeNT(curNode))  //起点
 					{

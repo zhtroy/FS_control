@@ -21,8 +21,8 @@ typedef struct parameter_tag{
 	float KP;
 	float KU;
 
-	/*是否允许变轨*/
-    uint8_t EnableChangeRail;
+	/*路线是否循环*/
+    uint8_t cycleRoute;
     uint16_t StateRPM[EPC_FEAT_END];
 
     float KSP;
