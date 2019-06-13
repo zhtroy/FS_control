@@ -93,7 +93,7 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
                 {
                     MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
                     STATE_TRAN(me, &me->forcebrake);
-                    return 0;
+//                    return 0;
                 }
             }
             else if(EPC_FEAT_AUXILIARY_TRACK_END == p->epc.roadFeature)
@@ -102,11 +102,12 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
                 {
                     MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
                     STATE_TRAN(me, &me->forcebrake);
-                    return 0;
+//                    return 0;
                 }
             }
 
-            break;
+//            break;
+            return 0;
 
         }/* case RFID_EVT: */
 
@@ -226,7 +227,7 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 		case REMOTE_SET_RPM_EVT:
 		{
 			evt_remote_set_rpm_t * p = EVT_CAST(msg, evt_remote_set_rpm_t);
-			if(p->statecode < car_state_None)  //防止访问越界
+			if(p->statecode < EPC_FEAT_END)  //防止访问越界
 			{
 				g_param.StateRPM[ p->statecode] = p->rpm;
 			}
@@ -396,11 +397,13 @@ Msg const * RunningNormal(car_hsm_t * me, Msg * msg)
 				case EPC_FUNC_SEPERATE:
 				{
 					STATE_TRAN(me, &me->running_seperate);
+					break;
 				}
 				case EPC_FUNC_RADJUST:
 				case EPC_FUNC_LADJUST:
 				{
 					STATE_TRAN(me, &me->running_adjust);
+					break;
 				}
 
 			}
@@ -438,10 +441,12 @@ Msg const * RunningAdjust(car_hsm_t * me, Msg * msg)
 				case EPC_FUNC_SEPERATE:
 				{
 					STATE_TRAN(me, &me->running_seperate);
+					break;
 				}
 				case EPC_FUNC_NORMAL:
 				{
 					STATE_TRAN(me, &me->running_normal);
+					break;
 				}
 
 			}
@@ -479,11 +484,13 @@ Msg const * RunningSeperate(car_hsm_t * me, Msg * msg)
 				case EPC_FUNC_NORMAL:
 				{
 					STATE_TRAN(me, &me->running_normal);
+					break;
 				}
 				case EPC_FUNC_RADJUST:
 				case EPC_FUNC_LADJUST:
 				{
 					STATE_TRAN(me, &me->running_adjust);
+					break;
 				}
 
 			}

@@ -46,7 +46,6 @@ void HsmExit_(Hsm *me, unsigned char toLca);
                      /* take a state transition (exit states up to the LCA) */
 #define STATE_TRAN(me_, target_) if (1) { \
     static unsigned char toLca_ = 0xFF; \
-    assert(((Hsm *)me_)->next == 0); \
     if (toLca_ == 0xFF) \
         toLca_ = HsmToLCA_((Hsm *)(me_), (target_)); \
     HsmExit_((Hsm *)(me_), toLca_); \

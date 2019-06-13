@@ -761,7 +761,7 @@ void RailStartChangeRoutine()
 	Semaphore_post(sem_startChangeRail);
 }
 
-#define WAIT_PHOTON_TIMEOUT (2000)
+#define WAIT_PHOTON_TIMEOUT (5000)
 #define WAIT_CHANGERAIL_TIMEOUT (3000)
 static void TaskChangeRailRoutine()
 {
