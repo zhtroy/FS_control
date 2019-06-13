@@ -36,6 +36,8 @@ static uint32_t circleNum = 0;
 static uint8_t lastrfid;
 static uint8_t rfidOnline = 0;
 static Mailbox_Handle RFIDV2vMbox;
+static uint8_t m_rawrfid[12];
+static epc_t m_lastepc = {0};
 
 static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 {
@@ -83,7 +85,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 	p_msg_t msg;
 	epc_t epc;
 	int32_t timeMs;
-	static epc_t lastepc = {0};
+
 
 	switch(type)
 	{
@@ -100,11 +102,12 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 				break;
 			}
 			/*筛除重复的EPC */
-			if(EPCequal(&lastepc, &epc))
+			if(EPCequal(&m_lastepc, &epc))
 			{
 				break;
 			}
-			lastepc = epc;
+			m_lastepc = epc;
+			memcpy(m_rawrfid, &data[2], EPC_SIZE);
 
 			g_fbData.rfid = epc.distance;
 			/*记录圈数*/
@@ -124,8 +127,8 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			/*
 			 * 发送RFID至V2V模块
 			 */
-			userGetMS(&timeMs);
-			epc.timeStamp = timeMs;
+//			userGetMS(&timeMs);
+//			epc.timeStamp = timeMs;
 			Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
 			break;
        case 0x40:
@@ -172,5 +175,14 @@ Void taskRFID(UArg a0, UArg a1)
 
 }
 
+uint8_t * RFIDGetRaw()
+{
+	return m_rawrfid;
+}
+
+epc_t RFIDGetEpc()
+{
+	return m_lastepc;
+}
 
 

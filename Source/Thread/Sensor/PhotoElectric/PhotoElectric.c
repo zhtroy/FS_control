@@ -17,8 +17,7 @@
 #include "Sensor/PhotoElectric/PhotoElectric.h"
 #include "Message/Message.h"
 
-
-/*static Semaphore_Handle sem_photoelectric_dataReady;*/
+Semaphore_Handle g_sem_photoelectric;
 static Mailbox_Handle rxDataMbox = NULL;
 
 
@@ -50,12 +49,12 @@ static void CAN0IntrHandler(int32_t devsNum,int32_t event)
 static void InitSem()
 {
 
-    /*
+
 	Semaphore_Params semParams;
 	Semaphore_Params_init(&semParams);
-	semParams.mode = Semaphore_Mode_COUNTING;
-	sem_photoelectric_dataReady = Semaphore_create(0, &semParams, NULL);
-    */
+	semParams.mode = Semaphore_Mode_BINARY;
+	g_sem_photoelectric = Semaphore_create(0, &semParams, NULL);
+
     Mailbox_Params mboxParams;
     
     /* 初始化接收邮箱 */
@@ -114,6 +113,12 @@ void taskPhotoElectric()
         		msg = Message_getEmpty();
         		msg->type = photon;
         		Message_post(msg);
+
+        		/*
+        		 * 向刹车模块发信号
+        		 * 这种跨模块之间共享信号量的方式不好，造成模块耦合
+        		 */
+        		Semaphore_post(g_sem_photoelectric);
         		levelState = 0;
         	}
         	break;

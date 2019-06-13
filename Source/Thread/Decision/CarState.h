@@ -12,24 +12,12 @@
  * 状态机状态
  */
 typedef enum{
-	cruising,
-	straight,
-	pre_curve,
-	curving,
-	uphill,
-	pre_downhill,
-	downhill,
-
-	//并轨 合轨
-	pre_seperate,
-	seperate,
-	enter_station,
-	stop_station,
-	leave_station,
-	pre_merge,
-	merge,
-
 	idle,
+	running,
+	running_normal,
+	running_adjust,
+	running_seperate,
+	stop,
 	car_state_None
 }car_state_t;
 

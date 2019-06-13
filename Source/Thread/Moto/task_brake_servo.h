@@ -78,6 +78,7 @@ typedef struct rail_ctrl_tag{
 /*
  * Rail 变轨
  */
+extern void RailStartChangeRoutine();
 extern void RailChangeStart();
 
 extern void RailSetRailState(uint8_t state);

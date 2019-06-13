@@ -12,6 +12,7 @@
 #include "common.h"
 #include "fpga_ttl.h"
 #include "canModule.h"
+#include "Sensor/PhotoElectric/PhotoElectric.h"
 
 extern uint16_t getRPM(void);
 
@@ -41,6 +42,7 @@ static uint8_t keyState;
 static Semaphore_Handle sem_txData;
 static Semaphore_Handle sem_rxData;
 static Semaphore_Handle sem_modbus;
+static Semaphore_Handle sem_startChangeRail;
 static Mailbox_Handle recvMbox;
 static uartDataObj_t brakeUartDataObj;
 static uartDataObj_t recvUartDataObj;
@@ -106,6 +108,7 @@ static void ServoInitSem(void)
     sem_rxData = Semaphore_create(0, &semParams, NULL);
     sem_txData = Semaphore_create(0, &semParams, NULL);
     sem_modbus = Semaphore_create(1, &semParams, NULL);
+    sem_startChangeRail = Semaphore_create(0, &semParams, NULL);
 }
  
 
@@ -749,7 +752,54 @@ void RailChangeStart()
 	changeRail = 1;
 }
 
+/*
+ * 开始变轨的流程，包括等待光电对管，执行变轨动作
+ * 如出现超时发错误消息
+ */
+void RailStartChangeRoutine()
+{
+	Semaphore_post(sem_startChangeRail);
+}
 
+#define WAIT_PHOTON_TIMEOUT (2000)
+#define WAIT_CHANGERAIL_TIMEOUT (3000)
+static void TaskChangeRailRoutine()
+{
+	Bool result;
+	uint8_t lastRailState;
+	while(1)
+	{
+		Semaphore_pend(sem_startChangeRail, BIOS_WAIT_FOREVER);
+		lastRailState = RailGetRailState();
+
+		/*
+		 * 等待经过光电对管
+		 */
+		//先清除对管信号量
+		Semaphore_reset(g_sem_photoelectric,0);
+		//开始等待对管
+		result = Semaphore_pend(g_sem_photoelectric, WAIT_PHOTON_TIMEOUT );
+		if(result == FALSE)
+		{
+			Message_postError(ERROR_WAIT_MERGE_PHOTON);
+			continue;
+		}
+
+		//开始变轨
+		RailChangeStart();
+
+		//等待
+		Task_sleep(WAIT_CHANGERAIL_TIMEOUT);
+
+		//检测是否变轨成功
+		if(RailGetRailState() == lastRailState)
+		{
+			Message_postError(ERROR_MERGE_FAILED);
+			continue;
+		}
+
+	}
+}
 static void ServoChangeRailTask(void)
 {
 	uint8_t state;
@@ -1057,6 +1107,12 @@ void ServoTaskInit()
         System_printf("Task_create() failed!\n");
         BIOS_exit(0);
     }
+
+    task = Task_create(TaskChangeRailRoutine, &taskParams, NULL);
+	if (task == NULL) {
+	   System_printf("Task_create() failed!\n");
+	   BIOS_exit(0);
+	}
 
 }
 

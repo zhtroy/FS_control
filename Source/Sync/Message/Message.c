@@ -109,3 +109,14 @@ char* Message_getNameByType(msg_type_t t)
 {
 	return typeToName[(int) t];
 }
+
+void Message_postError(unsigned char errorcode)
+{
+	p_msg_t msg;
+
+	msg = Message_getEmpty();
+	msg->type = error;
+	msg->data[0] = errorcode;
+	msg->dataLen = 1;
+	Message_post(msg);
+}

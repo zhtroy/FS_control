@@ -44,6 +44,7 @@ void Message_recycle(p_msg_t msg);
 p_msg_t Message_pend();
 void Message_post(p_msg_t);
 char* Message_getNameByType(msg_type_t t);
+void Message_postError(unsigned char errorcode);
 
 
 #endif /* MESSAGE_H_ */

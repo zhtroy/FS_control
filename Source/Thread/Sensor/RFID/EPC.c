@@ -7,65 +7,52 @@
 
 #include "Sensor/RFID/EPCdef.h"
 #include "string.h"
+#include "Lib/bitop.h"
 
 void EPCfromByteArray(epc_t * epc, uint8_t array[])
 {
+	/*
 	uint8_t reserved;
 	//干道编号
 	uint8_t mainNo;
 	//1级支道编号
-	uint16_t firstNo;
+	uint8_t firstNo;
 	//2级支道编号
 	uint8_t secondNo;
 	//3级支道编号
 	uint8_t thirdNo;
 	//4级支道编号
 	uint8_t fourthNo;
-	//区域类型
+	//AB
+	uint8_t ab;
+	//路段类型
 	uint8_t areaType;
-	//区域编号
-	uint16_t areaNo;
-	//子区域类型
-	uint8_t subareaType;
+	//功能区
+	uint8_t funcType;
+	//变轨点
+	uint8_t changePoint;
 	//道路特性
 	uint8_t roadFeature;
 	//距起始位置距离
 	uint32_t distance;
+	*/
 
-	reserved = array[0];
-	mainNo = array[1];
-	firstNo = array[2];
-	firstNo = firstNo <<2;
-	firstNo += array[3] >> 6;
-	secondNo = (array[3] & 0x3F) <<2;
-	secondNo += array[4]>>6;
-	thirdNo = array[4] & 0x3F;
-	fourthNo = array[5] >>2;
-	areaType = ((array[5] & 0x03) <<1) + (array[6] >> 7);
-	areaNo = array[6] & 0x7F;
-	areaNo = areaNo << 3;
-	areaNo += array[7] >> 5;
-	subareaType = array[7] & 0x1F;
-	roadFeature = array[8] >> 3;
-	distance = array[8] & 0x07;
-	distance = distance << 8;
-	distance += array[9];
-	distance = distance <<8;
-	distance += array[10];
-	distance = distance << 5;
-	distance += array[11] >> 3;
+	epc->reserved = array[0];
+	epc->mainNo = array[1];
+	epc->firstNo = array[2];
+	epc->secondNo = array[3];
+	epc->thirdNo = array[4];
+	epc->fourthNo = array[5];
+	epc->ab = BF_GET(array[6],7,1);
+	epc->areaType = BF_GET(array[6],0,7);
+	epc->funcType = BF_GET(array[7],6,2);
+	epc->changePoint = BF_GET(array[7],5,1);
+	epc->roadFeature = BF_GET(array[7],0,5);
 
-	epc->reserved = reserved;
-	epc->areaNo = areaNo;
-	epc->areaType = areaType;
-	epc->distance = distance;
-	epc->firstNo = firstNo;
-	epc->secondNo = secondNo;
-	epc->thirdNo = thirdNo;
-	epc->fourthNo = fourthNo;
-	epc->mainNo = mainNo;
-	epc->roadFeature = roadFeature;
-	epc->distance = distance;
+
+	epc->distance = array[8]*65536 + array[9]*256 + array[10];
+
+
 
 
 }
@@ -80,5 +67,10 @@ uint8_t EPCequal(epc_t * a, epc_t * b)
  */
 uint64_t EPCgetShortID(epc_t * epc)
 {
-	return (uint64_t)(epc->reserved);
+	return 	(((uint64_t)epc->mainNo)<<56)| \
+			(((uint64_t)epc->firstNo)<<48)| \
+			(((uint64_t)epc->secondNo)<<40)| \
+			(((uint64_t)epc->thirdNo)<<32)| \
+			(((uint64_t)epc->fourthNo)<<24)| \
+			(((uint64_t)epc->distance)) ;
 }

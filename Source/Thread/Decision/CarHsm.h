@@ -21,15 +21,11 @@ typedef struct {
 	State automode;
 		State automode_idle;
 		/*interjump的子状态根据RFID跳转*/
-		State automode_interjump;
-			State cruising;
-			State straight;
-			State pre_curve;
-			State curving;
-			State uphill;
-			State downhill;
-			State pre_downhill;
-			State *automode_interjump_hist;
+		State automode_running;
+			State running_normal;
+			State running_adjust;
+			State running_seperate;
+
 
 		State automode_changerail;
 			State changerail_waitphoton;

@@ -30,7 +30,7 @@ static uint16_t sMotoCircle = 0;
 static uint16_t rMotoCircle = 0;
 static carStatus_t carSts;
 static carStatus_t fbCarSts = {
-        .distance = MAX_AWAY_DISTANCE,
+        .distance = MAX_SAFE_DISTANCE,
         .rpm = 0,
         .state =0
 };

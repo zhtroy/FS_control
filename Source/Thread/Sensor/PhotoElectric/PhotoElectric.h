@@ -8,6 +8,8 @@
 #ifndef PHOTOELECTRIC_H_
 #define PHOTOELECTRIC_H_
 
+#include <ti/sysbios/knl/Semaphore.h>
+
 #define PHOTO_CAN_DEV 2          //暂时使用CAN 2
 
 
@@ -61,5 +63,7 @@ extern void PhotoEleChangeID(uint32_t oldID, uint32_t newID);
 extern void PhotoEleSetLight(uint32_t id, uint8_t mask);
 
 extern void taskPhotoElectric();
+
+extern Semaphore_Handle g_sem_photoelectric;
 
 #endif /* PHOTOELECTRIC_H_ */

@@ -338,7 +338,7 @@ void testZigbeeControlHSM_init()
 
 	Error_init(&eb);
     Task_Params_init(&taskParams);
-	taskParams.priority = 6;      //比5高
+	taskParams.priority = 15;      //状态机优先级最高
 	taskParams.stackSize = 10000;
 	task = Task_create(taskZigbeeControlMain_hsm, &taskParams, &eb);
 	if (task == NULL) {

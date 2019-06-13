@@ -191,6 +191,9 @@ typedef struct{
 /*前车Zigbee通信超时*/
 #define ERROR_ZIGBEE_TIMEOUT   (19)
 
+/*V2C通信异常*/
+#define ERROR_V2C		   (20)
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
