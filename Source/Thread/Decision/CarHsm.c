@@ -23,6 +23,7 @@
 #include "Moto/Parameter.h"
 #include "RFID/EPCdef.h"
 #include "Decision/route/Route.h"
+#include "Sensor/ZCP/V2C.h"
 
 
 
@@ -212,9 +213,9 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 			return 0;
 		}
 
-		case REMOTE_SET_BACKCAR_ADDR:
+		case REMOTE_SET_STATION_ADDR:
 		{
-			g_param.REAR_CAR_ADDR = EVT_CAST(msg, evt_remote_set_u16_param_t)->value;
+			g_param.station_addr = EVT_CAST(msg, evt_remote_set_u16_param_t)->value;
 			return 0;
 		}
 
@@ -293,6 +294,10 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 		case ENTRY_EVT:
 		{
 			g_fbData.FSMstate =idle;
+//			V2CAskFrontID();
+//			V2CEnterStation();
+//			V2CLeaveStation();
+//			V2COpenDoor(1);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -433,8 +438,12 @@ Msg const * RunningAdjust(car_hsm_t * me, Msg * msg)
 	{
 		case ENTRY_EVT:
 		{
-			//TODO
 			g_fbData.FSMstate =running_adjust;
+
+			/*
+			 * 向站台申请前车ID
+			 */
+			V2CAskFrontID();
 			return 0;
 		}
 		case EXIT_EVT:

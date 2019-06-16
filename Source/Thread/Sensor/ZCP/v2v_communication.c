@@ -89,7 +89,7 @@ void V2VSendTask(UArg arg0, UArg arg1)
             carSts.state = V2V_CAR_OK;
 
         memcpy(sendPacket.data,&carSts,sizeof(carStatus_t));
-        sendPacket.addr = g_param.REAR_CAR_ADDR;
+//        sendPacket.addr = g_param.REAR_CAR_ADDR;
         sendPacket.type = V2V_CAR_STATUS_TYPE;
         sendPacket.len = sizeof(carStatus_t);
 

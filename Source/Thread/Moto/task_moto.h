@@ -4,6 +4,15 @@
 #include <stdint.h>
 #include "Test_config.h"
 
+/*
+ * 轮子周长,轨道总长
+ * 单位(10cm)
+ */
+#define WHEEL_PERIMETER (11.78)
+#define WHEEL_SPEED_RATIO (3.286)
+#define TOTAL_DISTANCE (2775)
+
+
 //MOTO F CAN ID
 #define MOTO_F_CANID1	0x10F8E3F3
 #define MOTO_F_CANID2	0x10F8139A
@@ -194,6 +203,11 @@ typedef struct{
 /*V2C通信异常*/
 #define ERROR_V2C		   (20)
 
+/*V2V通信异常*/
+#define ERROR_V2V		   (21)
+
+
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
@@ -269,4 +283,5 @@ extern uint8_t MotoGetPidOn();
 uint16_t MotoGetCircles();
 uint16_t MotoGetRpm();
 uint8_t MotoGetCarMode();
+uint32_t MotoGetCarDistance();
 #endif

@@ -27,7 +27,6 @@ typedef struct parameter_tag{
 
     float KSP;
     float KSI;
-    uint16_t REAR_CAR_ADDR;
     uint16_t station_addr;   //站台zigbee地址
 
 

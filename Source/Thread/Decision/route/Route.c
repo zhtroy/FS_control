@@ -85,3 +85,28 @@ void RouteAddNode(packet_routenode_t node)
 	vector_push_back(m_vnode,node);
 }
 
+/*
+ * 改变停站点，即路径终点
+ */
+void RouteChangeDestination(packet_routenode_t node)
+{
+
+	if(!RouteHasOngoing())
+		return;
+
+	vector_pop_back(m_vnode);
+	vector_push_back(m_vnode,node);
+
+}
+
+/*
+ * 获取路径终点
+ */
+packet_routenode_t RouteGetDestination()
+{
+	if(!RouteHasOngoing())
+		return ;
+	return m_vnode[vector_size(m_vnode)-1];
+}
+
+

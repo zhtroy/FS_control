@@ -41,6 +41,7 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi);
 static uint8_t frontValid = 0;
 static uint8_t rearValid = 0;
 static uint16_t recvCircle = 0;
+static uint32_t m_distance = 0;
 /********************************************************************************/
 /*          静态全局变量                                                              */
 /********************************************************************************/
@@ -200,6 +201,56 @@ static void MotoSendTask(void)
 
 		
 	}/* end while(1) */
+}
+
+/*
+ * 根据RFID和轮子圈数，计算距离
+ */
+static void MotoUpdateDistanceTask(void)
+{
+    Mailbox_Handle RFIDV2vMbox;
+    epc_t epc;
+    uint16_t lastCircleNum;
+    uint16_t curCircleNum;
+    uint16_t circleDiff = 0;
+
+
+    const int UPDATE_INTERVAL = 100;
+
+
+    while(1)
+    {
+    	/*
+    	 * 等待邮箱被初始化
+    	 */
+        RFIDV2vMbox = RFIDGetV2vMailbox();
+    	if(RFIDV2vMbox == NULL)
+		{
+			Task_sleep(100);
+			continue;
+		}
+    	//读到RFID，校正距离
+    	if(TRUE == Mailbox_pend(RFIDV2vMbox,(Ptr *)&epc,UPDATE_INTERVAL))
+		{
+    		lastCircleNum = MotoGetCircles();
+			m_distance = epc.distance;
+		}
+    	else
+    	{
+    		curCircleNum = MotoGetCircles();
+    		if(lastCircleNum > curCircleNum)
+    		{
+				circleDiff = 65535 -lastCircleNum + curCircleNum;
+			}
+			else
+			{
+				circleDiff = curCircleNum - lastCircleNum;
+			}
+
+    		lastCircleNum = curCircleNum;
+    		m_distance += circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+    	}
+    }
 }
 
 static void MotoRecvTask(void)
@@ -636,6 +687,13 @@ void MototaskInit()
 		BIOS_exit(0);
 	}
 
+    task = Task_create(MotoUpdateDistanceTask, &taskParams, NULL);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
+
+
 
 	taskParams.priority = 2;
     task = Task_create(MotoSendFdbkToCellTask, &taskParams, NULL);
@@ -821,4 +879,12 @@ uint16_t MotoGetRpm()
 uint8_t MotoGetCarMode()
 {
     return g_fbData.mode;
+}
+
+/*
+ * 返回车辆在轨道上的距离
+ */
+uint32_t MotoGetCarDistance()
+{
+	return m_distance;
 }

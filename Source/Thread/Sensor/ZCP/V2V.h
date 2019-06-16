@@ -8,7 +8,7 @@
 #ifndef V2V_H_
 #define V2V_H_
 
-#define V2V_ID_NONE (0xFFFF)
+#define V2V_ID_NONE (0x0000)
 
 typedef struct
 {
@@ -16,10 +16,18 @@ typedef struct
 	uint16_t backId;
 }v2v_param_t;
 
+typedef struct
+{
+	uint8_t epc[12];
+	uint32_t distance;
+	uint16_t rpm;
+	uint8_t status;
+}v2v_req_carstatus_t;
 /*
  * API
  */
-void V2VInit();
-void V2VHandShakeFrontCar(uint16_t frontid);
+extern void V2VInit();
+extern void V2VHandShakeFrontCar();
+extern void V2VSetFrontCarId(uint16_t frontid);
 
 #endif /* V2V_H_ */

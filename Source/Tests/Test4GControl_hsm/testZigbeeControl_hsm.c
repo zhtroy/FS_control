@@ -252,7 +252,7 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 
 					case REMOTE_CMD_BACKADDR: /*设置后车zigbee地址*/
 					{
-						EVT_SETTYPE(&hsmEvt, REMOTE_SET_BACKCAR_ADDR);
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_STATION_ADDR);
 						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_u16_param_t)->value), &pMsg->data[1],sizeof(uint16_t));
 
 						break;
@@ -389,5 +389,8 @@ void testZigbeeControlHSM_init()
 	}
 
 	//ZCP
-	V2VZCPInit();
+	//V2VZCPInit();
+
+	V2CInit();
+	V2VInit();
 }

@@ -16,8 +16,11 @@
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/BIOS.h>
 #include <xdc/runtime/System.h>
+#include "Sensor/ZCP/V2C.h"
+#include "Sensor/RFID/EPCdef.h"
+#include "Decision/CarState.h"
 
-#define V2V_ZCP_UART_DEV_NUM    (5)
+#define V2V_ZCP_UART_DEV_NUM    (1)
 #define V2V_ZCP_DEV_NUM (0)
 /*
  * 确保接收task优先级比较低
@@ -30,6 +33,8 @@ static v2v_param_t m_param = {
 		.backId = V2V_ID_NONE,
 		.frontId = V2V_ID_NONE
 };
+//前车状态
+static v2v_req_carstatus_t frontCarStatus;
 //ZCP驱动实例
 static ZCPInstance_t v2vInst;
 
@@ -41,8 +46,49 @@ static Task_Handle m_task_handshakefrontcar = NULL;
 /*
  * sems
  */
-static Semaphore_Handle m_sem_handshakefrontcar;
+static Semaphore_Handle m_sem_handshakefrontcar_resp;
+static Semaphore_Handle m_sem_handshakefrontcar_start;
 
+
+static void V2VSendTask(UArg arg0, UArg arg1)
+{
+
+	const int INTERVAL = 100;
+
+	v2v_req_carstatus_t carstatus;
+	ZCPUserPacket_t sendPacket;
+
+	while(1)
+	{
+		Task_sleep(INTERVAL);
+		//发送carstatus报文给后车
+		if(m_param.backId != V2V_ID_NONE)
+		{
+			carstatus.rpm = MotoGetRealRPM();
+			if(MotoGetCarMode() == ForceBrake)
+			{
+				carstatus.status = 2;
+			}
+			else
+			{
+				if(MotoGetRealRPM() == 0)
+					carstatus.status = 0;
+				else
+					carstatus.status = 1;
+			}
+
+			memcpy(carstatus.epc, RFIDGetRaw(), EPC_SIZE);
+			carstatus.distance = MotoGetCarDistance();
+
+			memcpy(sendPacket.data, &carstatus, sizeof(carstatus));
+			sendPacket.addr = m_param.backId;
+			sendPacket.type = ZCP_TYPE_V2V_REQ_FRONT_CARSTATUS;
+			sendPacket.len = sizeof(carstatus);
+
+			ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+		}
+	}
+}
 
 static void V2VRecvTask(UArg arg0, UArg arg1)
 {
@@ -74,7 +120,18 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 			case ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE:
 			{
-				Semaphore_post(m_sem_handshakefrontcar);
+				Semaphore_post(m_sem_handshakefrontcar_resp);
+				break;
+			}
+
+			case ZCP_TYPE_V2V_REQ_FRONT_CARSTATUS:
+			{
+				//如果收到的包不是前车发来的，不处理
+				if(recvPacket.addr != m_param.frontId)
+				{
+					break;
+				}
+				memcpy(&frontCarStatus, recvPacket.data, sizeof(frontCarStatus));
 				break;
 			}
 		}
@@ -90,33 +147,37 @@ static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
     Bool pendResult;
     int retryNum;
 
-    retryNum = RETRY_NUM;
-	do
-	{
-		/*
-		 * 构造请求报文
-		 */
+    while(1)
+    {
+    	Semaphore_pend(m_sem_handshakefrontcar_start,BIOS_WAIT_FOREVER);
 
-		sendPacket.addr = m_param.frontId;
-		sendPacket.type = ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE;
-		sendPacket.len = 0;
+		retryNum = RETRY_NUM;
+		do
+		{
+			/*
+			 * 构造请求报文
+			 */
 
-		/*
-		 * 发送请求
-		 */
-		ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+			sendPacket.addr = m_param.frontId;
+			sendPacket.type = ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE;
+			sendPacket.len = 0;
 
-		pendResult = Semaphore_pend(m_sem_handshakefrontcar, TIMEOUT);
-		retryNum --;
-	}
-	while(retryNum>0 && pendResult==FALSE);
+			/*
+			 * 发送请求
+			 */
+			ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
 
-	if(pendResult == FALSE)
-	{
-		Message_postError(ERROR_V2C);
-	}
+			pendResult = Semaphore_pend(m_sem_handshakefrontcar_resp, TIMEOUT);
+			retryNum --;
+		}
+		while(retryNum>0 && pendResult==FALSE);
 
-	return;
+		if(pendResult == FALSE)
+		{
+			Message_postError(ERROR_V2C);
+		}
+    }
+
 
 }
 
@@ -128,6 +189,7 @@ void V2VInit()
 {
 	Task_Handle task;
 	Task_Params taskParams;
+	Semaphore_Params semParams;
 
 	ZCPInit(&v2vInst, V2V_ZCP_DEV_NUM,V2V_ZCP_UART_DEV_NUM );
 
@@ -141,14 +203,32 @@ void V2VInit()
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
+
+	taskParams.priority = V2V_SESSION_TASK_PRIO;
+	task = Task_create((Task_FuncPtr)V2VHandShakeFrontCarTask, &taskParams, NULL);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
+	/*
+	 * sems
+	 */
+	Semaphore_Params_init(&semParams);
+	semParams.mode = Semaphore_Mode_BINARY;
+	m_sem_handshakefrontcar_start = Semaphore_create(0, &semParams, NULL);
+	m_sem_handshakefrontcar_resp = Semaphore_create(0, &semParams, NULL);
 }
 /*
  * 和前车frontid建立连接,通知前车向本车发送
  */
-void V2VHandShakeFrontCar(uint16_t frontid)
+void V2VHandShakeFrontCar()
+{
+	Semaphore_post(m_sem_handshakefrontcar_start);
+}
+
+void V2VSetFrontCarId(uint16_t frontid)
 {
 	m_param.frontId = frontid;
-	StartIfNotRunning(m_task_handshakefrontcar, V2VHandShakeFrontCarTask, V2V_SESSION_TASK_PRIO);
 }
 
 

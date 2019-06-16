@@ -32,5 +32,7 @@ uint8_t RouteHasOngoing();
 uint8_t RouteGetNodeNT(packet_routenode_t node);
 void RouteFree();
 void RouteAddNode(packet_routenode_t node);
+void RouteChangeDestination(packet_routenode_t node);
+packet_routenode_t RouteGetDestination();
 
 #endif /* ROUTE_H_ */
