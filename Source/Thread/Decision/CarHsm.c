@@ -853,6 +853,7 @@ Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
 		}
 		case ENTRY_EVT:
 		{
+			g_fbData.FSMstate = stop;
 			MotoSetGoalRPM(0);
 			return 0;
 		}

@@ -761,15 +761,19 @@ void RailStartChangeRoutine()
 	Semaphore_post(sem_startChangeRail);
 }
 
-#define WAIT_PHOTON_TIMEOUT (5000)
+#define WAIT_PHOTON_TIMEOUT (100)
+#define WAIT_PHOTON_DISTANCE (500) // 5m
 #define WAIT_CHANGERAIL_TIMEOUT (3000)
 static void TaskChangeRailRoutine()
 {
 	Bool result;
 	uint8_t lastRailState;
+	uint32_t startPos;
+	uint8_t outofdistance  = 0;
 	while(1)
 	{
 		Semaphore_pend(sem_startChangeRail, BIOS_WAIT_FOREVER);
+		startPos = MotoGetCarDistance();
 		lastRailState = RailGetRailState();
 
 		/*
@@ -777,13 +781,27 @@ static void TaskChangeRailRoutine()
 		 */
 		//先清除对管信号量
 		Semaphore_reset(g_sem_photoelectric,0);
-		//开始等待对管
-		result = Semaphore_pend(g_sem_photoelectric, WAIT_PHOTON_TIMEOUT );
-		if(result == FALSE)
+		while(1)
 		{
-			Message_postError(ERROR_WAIT_MERGE_PHOTON);
+			//开始等待对管
+			result = Semaphore_pend(g_sem_photoelectric, WAIT_PHOTON_TIMEOUT );
+			if(result == TRUE)
+			{
+				break;
+			}
+			if((int32_t)MotoGetCarDistance() - (int32_t)startPos > WAIT_PHOTON_DISTANCE)
+			{
+				outofdistance =1 ;
+				Message_postError(ERROR_WAIT_MERGE_PHOTON);
+				break;
+			}
+		}
+
+		if(outofdistance)
+		{
 			continue;
 		}
+
 
 		//开始变轨
 		RailChangeStart();
