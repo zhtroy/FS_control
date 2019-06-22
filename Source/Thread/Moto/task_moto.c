@@ -413,6 +413,7 @@ static void MotoRecvTask(void)
 		        /*
                  * 前后轮转速差过大，视为异常，进入急停模式
                  */
+		        /*
 		        if(abs((int32_t)frontRpm - (int32_t)rearRpm) > MAX_DIFF_RPM)
 		        {
 
@@ -422,6 +423,7 @@ static void MotoRecvTask(void)
                     msg->dataLen = 1;
                     Message_post(msg);
 		        }
+		        */
 
 		    }
 		    else if(frontValid == 1)
