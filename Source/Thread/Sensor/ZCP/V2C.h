@@ -21,6 +21,7 @@
 typedef struct
 {
 	uint8_t rfid[12];
+	uint32_t distance;
 	uint8_t railpos;
 }v2c_req_forward_id_t;
 
@@ -30,6 +31,7 @@ typedef struct
 typedef struct
 {
 	uint8_t rfid[12];
+	uint32_t distance;
 	uint16_t rpm;
 	uint8_t status;
 }v2c_req_carstatus_t;

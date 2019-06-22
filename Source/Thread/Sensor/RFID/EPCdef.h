@@ -49,6 +49,19 @@ typedef enum{
 }epc_feat_t;
 
 /*
+ * AB段
+ */
+#define EPC_AB_A  	(0)
+#define EPC_AB_B	(1)
+/*
+ * 路段类型
+ */
+#define EPC_AREATYPE_NORMAL 	(0)
+#define EPC_AREATYPE_STATION 	(1)
+#define EPC_AREATYPE_LEFTEND 	(2)
+#define EPC_AREATYPE_RIGHTEND 	(3)
+
+/*
  * 功能区
  */
 #define EPC_FUNC_NORMAL 	(0)
@@ -92,5 +105,6 @@ typedef struct epc_tag
 extern void EPCfromByteArray(epc_t * epc, uint8_t array[]);
 extern uint8_t EPCequal(epc_t * a, epc_t * b);
 extern uint64_t EPCgetShortID(epc_t * epc);
+extern uint8_t EPCinSameRoad(epc_t * a, epc_t * b);
 
 #endif /* EPCDEF_H_ */

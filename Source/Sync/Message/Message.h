@@ -9,6 +9,7 @@
 #define MESSAGE_H_
 
 #include <ti/sysbios/knl/Queue.h>
+#include "Message/InternalEvtCode.h"
 
 #define NUMMSGS 64 /* number of messages */
 #define MSGSIZE (128)
@@ -26,6 +27,7 @@ typedef enum{
 	brake,    			//刹车
 	error,				//错误
 	zigbee,             //Zigbee
+	internal,           //内部模块通信用的事件
 	Empty               //缺省类型
 }msg_type_t;
 
@@ -45,6 +47,7 @@ p_msg_t Message_pend();
 void Message_post(p_msg_t);
 char* Message_getNameByType(msg_type_t t);
 void Message_postError(unsigned char errorcode);
+void Message_postEvent(msg_type_t type, unsigned char code);
 
 
 #endif /* MESSAGE_H_ */

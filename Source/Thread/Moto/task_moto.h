@@ -125,7 +125,7 @@ typedef struct
 typedef struct{
 	motorData_t motorDataF;
 	motorData_t motorDataR;
-	uint32_t rfid;
+	uint32_t distance;
 	uint8_t mode;
 	uint8_t brake;
 	uint8_t railstate;
@@ -137,6 +137,8 @@ typedef struct{
  	uint32_t recvRPM;
  	uint32_t forwardCarDistance;
  	uint32_t forwardCarRPM;
+ 	uint16_t frontCarID;
+ 	uint8_t rfid[12];
 
 }fbdata_t;
 
@@ -208,6 +210,7 @@ typedef struct{
 
 
 
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
@@ -242,7 +245,7 @@ typedef struct{
 #define BREAK_OFFSET (100)
 
 #elif CAR_VERSION == 23
-#define BREAK_OFFSET (140)
+#define BREAK_OFFSET (110)
 #endif
 
 /*
@@ -266,6 +269,7 @@ typedef struct{
 
 #define BRAKE_THRO_RATIO (1)
 
+extern fbdata_t g_fbData;
 uint16_t MotoGetRealRPM(void);
 uint8_t MotoSetErrorCode(uint8_t code);
 extern void MotoSetMotoSel(enum motoSel sel);

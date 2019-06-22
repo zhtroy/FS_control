@@ -311,6 +311,11 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 				EVT_CAST(&hsmEvt, evt_error_t)->code = pMsg->data[0];
 				break;
 			}
+			case internal:
+			{
+				EVT_SETTYPE(&hsmEvt,INTERNAL_EVT);
+				EVT_CAST(&hsmEvt, evt_internal_t)->eventcode = pMsg->data[0];
+			}
 
 		} /*	switch(pMsg->type) */
 

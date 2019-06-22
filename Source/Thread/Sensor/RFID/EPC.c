@@ -62,6 +62,15 @@ uint8_t EPCequal(epc_t * a, epc_t * b)
 	return !(memcmp(a,b, sizeof(epc_t)));
 }
 
+uint8_t EPCinSameRoad(epc_t * a, epc_t * b)
+{
+	return ((a->mainNo == b->mainNo) &&
+		   (a->firstNo == b->firstNo) &&
+		   (a->secondNo == b->secondNo) &&
+		   (a->thirdNo == b->thirdNo) &&
+		   (a->fourthNo == b->fourthNo)) ? 1:0;
+}
+
 /*
  * 得到epc的64位短ID
  */

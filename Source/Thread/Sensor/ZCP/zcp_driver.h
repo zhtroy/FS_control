@@ -14,7 +14,7 @@
 #include "common.h"
 
 #define MAX_ZCP_DEVIVE_NUMS (2)
-#define MAX_ZCP_PACKET_SIZE (24)
+#define MAX_ZCP_PACKET_SIZE (64)
 
 /*
  * ZIGBEE报文字段定义

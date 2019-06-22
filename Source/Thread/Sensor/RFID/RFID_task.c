@@ -38,6 +38,7 @@ static uint8_t rfidOnline = 0;
 static Mailbox_Handle RFIDV2vMbox;
 static uint8_t m_rawrfid[12];
 static epc_t m_lastepc = {0};
+static epc_t m_lastlastepc = {0};
 
 static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 {
@@ -93,6 +94,8 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			Clock_setTimeout(clock_rfid_heart,3000);
 			Clock_start(clock_rfid_heart);
 
+			//将读到的RFID反馈
+			memcpy(g_fbData.rfid, &data[2], EPC_SIZE);
 			//epc 从第2字节开始，长度12字节
 			EPCfromByteArray(&epc, &data[2]);
 
@@ -106,10 +109,11 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			{
 				break;
 			}
+			m_lastlastepc = m_lastepc;
 			m_lastepc = epc;
 			memcpy(m_rawrfid, &data[2], EPC_SIZE);
 
-			g_fbData.rfid = epc.distance;
+			//g_fbData.distance = epc.distance;
 			/*记录圈数*/
 			if(epc.distance == 0)
 			{
@@ -185,4 +189,8 @@ epc_t RFIDGetEpc()
 	return m_lastepc;
 }
 
+epc_t RFIDGetLastEpc()
+{
+	return m_lastlastepc;
+}
 

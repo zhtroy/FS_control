@@ -77,7 +77,10 @@ enum CarEvents
 	PHOTON_EVT,
 
 	/*错误事件*/
-	ERROR_EVT
+	ERROR_EVT,
+
+	/*内部事件*/
+	INTERNAL_EVT
 
 
 };
@@ -245,6 +248,15 @@ typedef struct{
 	Msg super;
 	uint8_t code;
 }evt_error_t;
+
+
+/*
+ * internal
+ */
+typedef struct{
+	Msg super;
+	uint8_t eventcode;
+}evt_internal_t;
 
 /*
  * routenode

@@ -66,6 +66,14 @@ uint8_t RouteGetNodeNT(packet_routenode_t node)
 }
 
 /*
+ * 返回WS域
+ */
+uint8_t RouteGetNodeWS(packet_routenode_t node)
+{
+	return BF_GET(node.flag, 0, 4);
+}
+
+/*
  * 删除路径
  */
 void RouteFree()

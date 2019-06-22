@@ -17,6 +17,8 @@
 #include "task_brake_servo.h"
 #include "Parameter.h"
 #include "Zigbee/Zigbee.h"
+#include "Sensor/RFID/RFID_task.h"
+#include "Sensor/ZCP/V2V.h"
 
 /* 宏定义 */
 #define RX_MBOX_DEPTH (32)
@@ -213,6 +215,7 @@ static void MotoUpdateDistanceTask(void)
     uint16_t lastCircleNum;
     uint16_t curCircleNum;
     uint16_t circleDiff = 0;
+    epc_t lastEpc;
 
 
     const int UPDATE_INTERVAL = 100;
@@ -229,11 +232,22 @@ static void MotoUpdateDistanceTask(void)
 			Task_sleep(100);
 			continue;
 		}
-    	//读到RFID，校正距离
+    	//读到RFID
     	if(TRUE == Mailbox_pend(RFIDV2vMbox,(Ptr *)&epc,UPDATE_INTERVAL))
 		{
+			/*
+			 * 进入B段，计算deltaS
+			 */
+			if(EPC_AB_A == lastEpc.ab && EPC_AB_B == epc.ab)
+			{
+				V2VSetDeltaDistance((int32_t)(epc.distance)-(int32_t)m_distance);
+			}
+
+    		//校正距离
     		lastCircleNum = MotoGetCircles();
 			m_distance = epc.distance;
+
+			lastEpc = epc;
 		}
     	else
     	{
@@ -250,6 +264,8 @@ static void MotoUpdateDistanceTask(void)
     		lastCircleNum = curCircleNum;
     		m_distance += circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
     	}
+    	g_fbData.distance = m_distance;
+
     }
 }
 
@@ -572,7 +588,7 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
      * vt: 临时速度变量
      */
     vf = V2VGetFrontCarSpeed();
-    di = V2VGetCarDistance();
+    di = V2VGetDistanceToFrontCar();
     vgs = MotoGetGoalRPM();
 
     if(di < ds)
@@ -630,7 +646,7 @@ void MotoSendFdbkToCellTask()
 	/*
 	 * 反馈数据包格式为 包头(0xAA 0x42 0x55) + 长度 + 数据 + 包尾(0x0D)
 	 */
-	uint8_t  sendbuff[256];
+	uint8_t  sendbuff[512];
 	int32_t tms;
 	int bufflen = sizeof(g_fbData)+5;
 

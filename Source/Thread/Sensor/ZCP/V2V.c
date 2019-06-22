@@ -19,6 +19,7 @@
 #include "Sensor/ZCP/V2C.h"
 #include "Sensor/RFID/EPCdef.h"
 #include "Decision/CarState.h"
+#include "Sensor/RFID/RFID_task.h"
 
 #define V2V_ZCP_UART_DEV_NUM    (1)
 #define V2V_ZCP_DEV_NUM (0)
@@ -34,7 +35,9 @@ static v2v_param_t m_param = {
 		.frontId = V2V_ID_NONE
 };
 //前车状态
-static v2v_req_carstatus_t frontCarStatus;
+static v2v_req_carstatus_t m_frontCarStatus;
+static uint32_t m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
+static int32_t m_deltaDistance;
 //ZCP驱动实例
 static ZCPInstance_t v2vInst;
 
@@ -58,6 +61,11 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 	v2v_req_carstatus_t carstatus;
 	ZCPUserPacket_t sendPacket;
 
+	epc_t myepc;
+	epc_t frontepc;
+
+	uint32_t distanceDiff;
+
 	while(1)
 	{
 		Task_sleep(INTERVAL);
@@ -79,6 +87,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 			memcpy(carstatus.epc, RFIDGetRaw(), EPC_SIZE);
 			carstatus.distance = MotoGetCarDistance();
+			carstatus.deltadistance = m_deltaDistance;
 
 			memcpy(sendPacket.data, &carstatus, sizeof(carstatus));
 			sendPacket.addr = m_param.backId;
@@ -87,6 +96,55 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 			ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
 		}
+
+		/*
+		 * 定时计算前车距离
+		 */
+
+		if(m_param.frontId == V2V_ID_NONE)
+		{
+			m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
+		}
+		else
+		{
+			myepc=RFIDGetEpc();
+			EPCfromByteArray(&frontepc, m_frontCarStatus.epc);
+
+			if(m_frontCarStatus.distance< MotoGetCarDistance())
+			{
+				distanceDiff = m_frontCarStatus.distance + TOTAL_DISTANCE - MotoGetCarDistance();
+			}
+			else
+			{
+				distanceDiff = m_frontCarStatus.distance - MotoGetCarDistance();
+			}
+			if(EPCinSameRoad(&myepc, &frontepc))  //在同一条路上
+			{
+				if(EPC_AB_A == myepc.ab && EPC_AB_B == frontepc.ab)
+				{
+					m_distanceToFrontCar = distanceDiff  - m_frontCarStatus.deltadistance;
+				}
+				else
+				{
+					m_distanceToFrontCar = distanceDiff;
+				}
+			}
+			else
+			{
+				if(myepc.funcType == EPC_FUNC_NORMAL)
+				{
+					m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
+				}
+				else
+				{
+					m_distanceToFrontCar = distanceDiff;
+				}
+			}
+		}
+
+		g_fbData.forwardCarDistance = m_distanceToFrontCar;
+		g_fbData.forwardCarRPM = m_frontCarStatus.rpm;
+
 	}
 }
 
@@ -94,6 +152,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 {
     int32_t timestamp;
     ZCPUserPacket_t recvPacket, sendPacket;
+    epc_t lastFrontEpc, frontEpc;
 
 	while(1)
 	{
@@ -126,12 +185,21 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 			case ZCP_TYPE_V2V_REQ_FRONT_CARSTATUS:
 			{
+
 				//如果收到的包不是前车发来的，不处理
 				if(recvPacket.addr != m_param.frontId)
 				{
 					break;
 				}
-				memcpy(&frontCarStatus, recvPacket.data, sizeof(frontCarStatus));
+				memcpy(&m_frontCarStatus, recvPacket.data, sizeof(m_frontCarStatus));
+				EPCfromByteArray(&frontEpc, m_frontCarStatus.epc);
+				//如果前车上一次在分离区，这次在普通区，即离开分离区，发送消息
+				if(EPC_FUNC_NORMAL == frontEpc.funcType && EPC_FUNC_SEPERATE == lastFrontEpc.funcType)
+				{
+					Message_postEvent(internal, IN_EVTCODE_V2V_FRONTCAR_LEAVE_SEPERATE);
+				}
+				lastFrontEpc = frontEpc;
+
 				break;
 			}
 		}
@@ -141,7 +209,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
 {
 	const uint32_t TIMEOUT = 1000;
-	const int RETRY_NUM = 2;
+	const int RETRY_NUM = 5;
 
 	ZCPUserPacket_t sendPacket;
     Bool pendResult;
@@ -174,7 +242,7 @@ static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
 
 		if(pendResult == FALSE)
 		{
-			Message_postError(ERROR_V2C);
+			Message_postError(ERROR_V2V);
 		}
     }
 
@@ -204,6 +272,12 @@ void V2VInit()
 		BIOS_exit(0);
 	}
 
+	task = Task_create((Task_FuncPtr)V2VSendTask, &taskParams, NULL);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
+
 	taskParams.priority = V2V_SESSION_TASK_PRIO;
 	task = Task_create((Task_FuncPtr)V2VHandShakeFrontCarTask, &taskParams, NULL);
 	if (task == NULL) {
@@ -226,9 +300,39 @@ void V2VHandShakeFrontCar()
 	Semaphore_post(m_sem_handshakefrontcar_start);
 }
 
+void V2VSetDeltaDistance(int32_t delta)
+{
+	m_deltaDistance = delta;
+}
+
 void V2VSetFrontCarId(uint16_t frontid)
 {
+	g_fbData.frontCarID = frontid;
+
 	m_param.frontId = frontid;
+}
+
+uint16_t V2VGetFrontCarId()
+{
+	return m_param.frontId;
+}
+
+uint32_t V2VGetDistanceToFrontCar()
+{
+	return m_distanceToFrontCar;
+}
+
+uint16_t V2VGetFrontCarSpeed()
+{
+	return m_frontCarStatus.rpm;
+}
+
+epc_t V2VGetFrontCarEpc()
+{
+	epc_t epc;
+	EPCfromByteArray(&epc, m_frontCarStatus.epc);
+
+	return epc;
 }
 
 

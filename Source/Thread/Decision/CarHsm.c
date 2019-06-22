@@ -24,6 +24,9 @@
 #include "RFID/EPCdef.h"
 #include "Decision/route/Route.h"
 #include "Sensor/ZCP/V2C.h"
+#include "Sensor/RFID/RFID_task.h"
+#include "Sensor/ZCP/V2V.h"
+#include "Message/InternalEvtCode.h"
 
 
 
@@ -87,25 +90,17 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
         case RFID_EVT:
         {
             evt_rfid_t* p = EVT_CAST(msg, evt_rfid_t);
+			epc_t lastEpc;
 
-            if(EPC_FEAT_AUXILIARY_TRACK_START == p->epc.roadFeature)
+            if(EPC_AREATYPE_LEFTEND == p->epc.areaType)
             {
-                if(RIGHTRAIL == RailGetRailState() && (GEAR_REVERSE == MotoGetGear()))
+                if(LEFTRAIL == RailGetRailState() && (GEAR_DRIVE == MotoGetGear() || GEAR_LOW == MotoGetGear()))
                 {
                     MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
                     STATE_TRAN(me, &me->forcebrake);
-//                    return 0;
                 }
             }
-            else if(EPC_FEAT_AUXILIARY_TRACK_END == p->epc.roadFeature)
-            {
-                if(RIGHTRAIL == RailGetRailState() && (GEAR_DRIVE == MotoGetGear() || GEAR_LOW == MotoGetGear()))
-                {
-                    MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
-                    STATE_TRAN(me, &me->forcebrake);
-//                    return 0;
-                }
-            }
+
 
 //            break;
             return 0;
@@ -294,10 +289,6 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 		case ENTRY_EVT:
 		{
 			g_fbData.FSMstate =idle;
-//			V2CAskFrontID();
-//			V2CEnterStation();
-//			V2CLeaveStation();
-//			V2COpenDoor(1);
 			return 0;
 		}
 		case EXIT_EVT:
@@ -337,6 +328,8 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 		{
 			evt_rfid_t * pEvt = EVT_CAST(msg, evt_rfid_t);
 			packet_routenode_t routenode;
+			epc_t lastEpc;
+
 			/*
 			 * 先进行路径EPC判断，如果是路径上的点,进行处理
 			 */
@@ -369,7 +362,19 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 					}
 					else   //其他路径点都需要进入变轨流程
 					{
-						RailStartChangeRoutine();
+						/*
+						 * 根据路径中WS域来决定是否要变轨
+						 */
+						if(ROUTE_WS_OUTA == RouteGetNodeWS(curNode)
+							&& RailGetRailState() == LEFTRAIL)
+						{
+							RailStartChangeRoutine();
+						}
+						else if(ROUTE_WS_INA == RouteGetNodeWS(curNode)
+								&& RailGetRailState() == RIGHTRAIL)
+						{
+							RailStartChangeRoutine();
+						}
 					}
 				}
 			}
@@ -377,6 +382,17 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 			 * 再根据rfid的路段特性来调整速度
 			 */
 			MotoSetGoalRPM(g_param.StateRPM[pEvt->epc.roadFeature]);
+
+			/*
+			 * 进入站台段
+			 */
+			lastEpc = RFIDGetLastEpc();
+			//RFID变化   一般->站台
+			if(lastEpc.areaType == EPC_AREATYPE_NORMAL && pEvt->epc.areaType == EPC_AREATYPE_STATION)
+			{
+				V2CEnterStation();
+			}
+
 
 
 			break;
@@ -485,12 +501,52 @@ Msg const * RunningSeperate(car_hsm_t * me, Msg * msg)
 	{
 		case ENTRY_EVT:
 		{
-			//TODO
+			epc_t frontepc;
+			epc_t myepc;
+
 			g_fbData.FSMstate =running_seperate;
+			myepc = RFIDGetEpc();
+			frontepc = V2VGetFrontCarEpc();
+			//如果没有前车
+			if(V2VGetFrontCarId() == V2V_ID_NONE)
+			{
+				V2CAskFrontID();
+			}
+			//如果前车不在同一轨道上
+			if(V2VGetFrontCarId() != V2V_ID_NONE &&
+			   !EPCinSameRoad(&frontepc, &myepc) )
+			{
+				V2CAskFrontID();
+			}
+			//如果在同一轨道，前车不在分离区
+			if(V2VGetFrontCarId() != V2V_ID_NONE &&
+			   EPCinSameRoad(&frontepc, &myepc) &&
+			   frontepc.funcType != EPC_FUNC_SEPERATE )
+			{
+				V2CAskFrontID();
+			}
+			//如果前车在同一轨道分离区，但距离在40米以上
+			if(V2VGetFrontCarId() != V2V_ID_NONE &&
+			   EPCinSameRoad(&frontepc, &myepc) &&
+			   frontepc.funcType == EPC_FUNC_SEPERATE &&
+			   V2VGetDistanceToFrontCar() > 400)
+			{
+				V2CAskFrontID();
+			}
 			return 0;
 		}
 		case EXIT_EVT:
 		{
+			return 0;
+		}
+		case INTERNAL_EVT:
+		{
+			evt_internal_t *pEvt = EVT_CAST(msg, evt_internal_t);
+
+			if(pEvt->eventcode == IN_EVTCODE_V2V_FRONTCAR_LEAVE_SEPERATE)
+			{
+				V2CAskFrontID();
+			}
 			return 0;
 		}
 		case RFID_EVT:

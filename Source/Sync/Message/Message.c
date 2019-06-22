@@ -120,3 +120,14 @@ void Message_postError(unsigned char errorcode)
 	msg->dataLen = 1;
 	Message_post(msg);
 }
+
+void Message_postEvent(msg_type_t type, unsigned char code)
+{
+	p_msg_t msg;
+
+	msg = Message_getEmpty();
+	msg->type = type;
+	msg->data[0] = code;
+	msg->dataLen = 1;
+	Message_post(msg);
+}

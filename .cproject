@@ -125,7 +125,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Source/Thread/Moto/task_ctrldata.c|platform/tl/dsp/evm6748/package/build.cfg|Source/Thread/Sensor/mpu9250/mpl|Source/Thread/Sensor/mpu9250/mllite|Source/Thread/Decision/Decision.c|out|Source/Periph/DSP_Uart/uartStdio.c|platform|srcinst|Source/Tests/Test4GControl/test4GControl.c|out/c6748AISgen_456M_config.cfg|Source/Thread/Sensor/mpu9250/eMPL-hal|Source/Tests/testSja1000Task.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Source/Thread/Sensor/ZCP/v2v_communication.c|Source/Thread/Moto/task_ctrldata.c|platform/tl/dsp/evm6748/package/build.cfg|Source/Thread/Sensor/mpu9250/mpl|Source/Thread/Sensor/mpu9250/mllite|Source/Thread/Decision/Decision.c|out|Source/Periph/DSP_Uart/uartStdio.c|platform|srcinst|Source/Tests/Test4GControl/test4GControl.c|out/c6748AISgen_456M_config.cfg|Source/Thread/Sensor/mpu9250/eMPL-hal|Source/Tests/testSja1000Task.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

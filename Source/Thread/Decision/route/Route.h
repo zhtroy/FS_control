@@ -16,6 +16,9 @@
 #define ROUTE_NT_STOP (1)
 #define ROUTE_NT_START (2)
 
+#define ROUTE_WS_OUTA 	(2)
+#define ROUTE_WS_INA 	(6)
+
 typedef struct {
 	uint64_t nid;
 	double length;
@@ -30,6 +33,7 @@ packet_routenode_t RoutePop();
 packet_routenode_t RoutePeek();
 uint8_t RouteHasOngoing();
 uint8_t RouteGetNodeNT(packet_routenode_t node);
+uint8_t RouteGetNodeWS(packet_routenode_t node);
 void RouteFree();
 void RouteAddNode(packet_routenode_t node);
 void RouteChangeDestination(packet_routenode_t node);

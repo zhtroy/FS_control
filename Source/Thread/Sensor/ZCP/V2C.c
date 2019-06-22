@@ -18,6 +18,7 @@
 #include "ZCP/V2C.h"
 #include "Moto/task_brake_servo.h"
 #include "Sensor/RFID/RFID_task.h"
+#include "Sensor/RFID/EPCdef.h"
 #include "Message/Message.h"
 #include "Moto/task_moto.h"
 #include "Moto/Parameter.h"
@@ -146,7 +147,7 @@ static void V2CSendTask(UArg arg0, UArg arg1)
 			else
 				carstatus.status = 1;
 		}
-
+		carstatus.distance = MotoGetCarDistance();
 		memcpy(carstatus.rfid, RFIDGetRaw(), EPC_SIZE);
 		memcpy(sendPacket.data, &carstatus, sizeof(carstatus));
 		sendPacket.addr = g_param.station_addr;
@@ -194,7 +195,7 @@ static void V2COpenDoorTask(UArg arg0, UArg arg1)
 
 		if(pendResult == FALSE) //发送后没收到响应
 		{
-			Message_postError(ERROR_V2C);
+//			Message_postError(ERROR_V2C);
 
 		}
 		else
@@ -222,7 +223,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
     v2c_resp_forward_id_t resp;
     Bool pendResult;
     int retryNum;
-
+    int i;
 
     while(1)
     {
@@ -236,12 +237,20 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			 */
 
 			req.railpos = RailGetRailState();
+			req.distance = MotoGetCarDistance();
 			memcpy(req.rfid, RFIDGetRaw(), EPC_SIZE);
 			memcpy(sendPacket.data, &req, sizeof(req));
 			sendPacket.addr = g_param.station_addr;
 			sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_FRONTCARID;
 			sendPacket.len = sizeof(req);
 
+			/*
+			 * 先清除邮箱
+			 */
+			for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_forcarid);i++)
+			{
+				Mailbox_pend(m_mb_forcarid, (Ptr)&recvPacket, BIOS_NO_WAIT);
+			}
 			/*
 			 * 发送请求
 			 */
@@ -254,7 +263,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 
 		if(pendResult == FALSE) //发送后没收到响应
 		{
-			Message_postError(ERROR_V2C);
+//			Message_postError(ERROR_V2C);
 
 		}
 		else
@@ -284,6 +293,8 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
     Bool pendResult;
     int retryNum;
     packet_routenode_t routeNode;
+    int i;
+    epc_t epc;
 
     while(1)
     {
@@ -310,6 +321,13 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
 			sendPacket.len = sizeof(req);
 
 			/*
+			 * 先清除邮箱
+			 */
+			for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_enterstation);i++)
+			{
+				Mailbox_pend(m_mb_enterstation, (Ptr)&recvPacket, BIOS_NO_WAIT);
+			}
+			/*
 			 * 发送请求
 			 */
 			ZCPSendPacket(&v2cInst, &sendPacket, NULL, BIOS_NO_WAIT);
@@ -321,7 +339,7 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
 
 		if(pendResult == FALSE) //发送后没收到响应
 		{
-			Message_postError(ERROR_V2C);
+//			Message_postError(ERROR_V2C);
 
 		}
 		else
@@ -329,11 +347,17 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
 			memcpy(&resp, recvPacket.data, sizeof(resp));
 			if(resp.status == 1)  //分配了停站点
 			{
-				//TODO:更新路径终点
+				//更新路径终点
+				routeNode = RouteGetDestination();
+
+				EPCfromByteArray(&epc, resp.rfid);
+				routeNode.nid = EPCgetShortID(&epc);
+
+				RouteChangeDestination(routeNode);
 			}
 			else
 			{
-
+				//do nothing
 			}
 		}
 
@@ -350,6 +374,7 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
     Bool pendResult;
     int retryNum;
     packet_routenode_t routeNode;
+    int i;
 
     while(1)
     {
@@ -376,6 +401,13 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
 			sendPacket.len = sizeof(req);
 
 			/*
+			 * 先清除邮箱
+			 */
+			for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_leavestation);i++)
+			{
+				Mailbox_pend(m_mb_leavestation, (Ptr)&recvPacket, BIOS_NO_WAIT);
+			}
+			/*
 			 * 发送请求
 			 */
 			ZCPSendPacket(&v2cInst, &sendPacket, NULL, BIOS_NO_WAIT);
@@ -387,7 +419,7 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
 
 		if(pendResult == FALSE) //发送后没收到响应
 		{
-			Message_postError(ERROR_V2C);
+//			Message_postError(ERROR_V2C);
 
 		}
 		else

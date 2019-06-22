@@ -19,5 +19,5 @@ typedef struct{
 }carStatus_t;
 
 uint16_t V2VGetFrontCarSpeed();
-uint32_t V2VGetCarDistance();
+uint32_t V2VGetDistanceToFrontCar();
 #endif /* V2V_COMMUNICATION_H_ */
