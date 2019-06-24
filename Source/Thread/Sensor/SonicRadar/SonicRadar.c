@@ -44,16 +44,12 @@ Void taskSonicRadar(UArg a0, UArg a1)
 	uint8_t Sonic_query[3] = {0xe8,0x02,0xb4};
 	Mailbox_Params mboxParams;
 	p_msg_t pmsg;
+	const int INTERVAL = 500;
 
 	//初始化串口
 	UartNs550Init(SONIC_UARTNUM,SonicRadarUartIntrHandler);
 
-	UartNs550Recv(SONIC_UARTNUM, &sonicUartDataObj.buffer, UART_REC_BUFFER_SIZE);
-
-	//创建信号量
-	//Semaphore_Params_init(&semParams);
-	//semParams.mode = Semaphore_Mode_COUNTING;
-	//sem_sonicRadar = Semaphore_create(0, &semParams, NULL);
+	UartNs550Recv(SONIC_UARTNUM, sonicUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 
 	/* 初始化接收邮箱 */
 	Mailbox_Params_init(&mboxParams);
@@ -61,7 +57,7 @@ Void taskSonicRadar(UArg a0, UArg a1)
 
 	while(1)
 	{
-		Task_sleep(1000);
+		Task_sleep(INTERVAL);
 
 		UartNs550Send(SONIC_UARTNUM, Sonic_query, 3);
 
@@ -73,7 +69,7 @@ Void taskSonicRadar(UArg a0, UArg a1)
 		if(recvUartDataObj.length != 2)
 		{
 			System_printf("Sonic Radar error: recved %d bytes\n", recvUartDataObj.length);
-			BIOS_exit(0);
+//			BIOS_exit(0);
 		}
 
 		m_distance = recvUartDataObj.buffer[0] * 256 + recvUartDataObj.buffer[1];
@@ -91,6 +87,9 @@ Void taskSonicRadar(UArg a0, UArg a1)
 }
 
 
+/*
+ * 单位为mm
+ */
 uint16_t SonicGetDistance()
 {
 	return m_distance;
@@ -116,7 +115,7 @@ void SonicRadarUartIntrHandler(void *callBackRef, u32 event, unsigned int eventD
 //		TotalReceivedCount = EventData;
 		sonicUartDataObj.length = eventData;
 		Mailbox_post(recvMbox, (Ptr *)&sonicUartDataObj, BIOS_NO_WAIT);
-        UartNs550Recv(DeviceNum, &sonicUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+        UartNs550Recv(DeviceNum, sonicUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 
 	}
 	/*

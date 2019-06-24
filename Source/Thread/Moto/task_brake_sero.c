@@ -43,6 +43,7 @@ static Semaphore_Handle sem_txData;
 static Semaphore_Handle sem_rxData;
 static Semaphore_Handle sem_modbus;
 static Semaphore_Handle sem_startChangeRail;
+static Semaphore_Handle sem_startStopStation;
 static Mailbox_Handle recvMbox;
 static uartDataObj_t brakeUartDataObj;
 static uartDataObj_t recvUartDataObj;
@@ -109,6 +110,7 @@ static void ServoInitSem(void)
     sem_txData = Semaphore_create(0, &semParams, NULL);
     sem_modbus = Semaphore_create(1, &semParams, NULL);
     sem_startChangeRail = Semaphore_create(0, &semParams, NULL);
+    sem_startStopStation = Semaphore_create(0, &semParams, NULL);
 }
  
 
@@ -818,6 +820,71 @@ static void TaskChangeRailRoutine()
 
 	}
 }
+
+/*
+ * 开始停站的流程，包括等待光电对管，速度设为0，并等待真实转速为0
+ * 如出现超时发错误消息
+ */
+void StartStationStopRoutine()
+{
+	Semaphore_post(sem_startStopStation);
+}
+
+#define STOP_STATION_WAIT_PHOTON_DISTANCE (100) //1m
+static void TaskEnterStationStopRoutine()
+{
+	Bool result;
+	uint32_t startPos;
+	uint8_t outofdistance  = 0;
+	while(1)
+	{
+		Semaphore_pend(sem_startStopStation, BIOS_WAIT_FOREVER);
+		startPos = MotoGetCarDistance();
+
+		/*
+		 * 等待经过光电对管
+		 */
+		//先清除对管信号量
+		Semaphore_reset(g_sem_photoelectric,0);
+		while(1)
+		{
+			//开始等待对管
+			result = Semaphore_pend(g_sem_photoelectric, WAIT_PHOTON_TIMEOUT );
+			if(result == TRUE)
+			{
+				break;
+			}
+			if((int32_t)MotoGetCarDistance() - (int32_t)startPos > STOP_STATION_WAIT_PHOTON_DISTANCE)
+			{
+				outofdistance =1 ;
+				Message_postError(ERROR_WAIT_STOP_STATION_PHOTON);
+				break;
+			}
+		}
+
+		if(outofdistance)
+		{
+			continue;
+		}
+
+
+		//开始停车
+		MotoSetGoalRPM(0);
+
+		//等待速度为0
+		while(1)
+		{
+			Task_sleep(100);
+			if(0 == MotoGetRealRPM())
+			{
+				Message_postEvent(internal, IN_EVTCODE_STOPSTATION_COMPLETE);
+				break;
+			}
+		}
+
+	}
+}
+
 static void ServoChangeRailTask(void)
 {
 	uint8_t state;
@@ -1127,6 +1194,12 @@ void ServoTaskInit()
     }
 
     task = Task_create(TaskChangeRailRoutine, &taskParams, NULL);
+	if (task == NULL) {
+	   System_printf("Task_create() failed!\n");
+	   BIOS_exit(0);
+	}
+
+    task = Task_create(TaskEnterStationStopRoutine, &taskParams, NULL);
 	if (task == NULL) {
 	   System_printf("Task_create() failed!\n");
 	   BIOS_exit(0);

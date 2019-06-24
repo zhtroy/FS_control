@@ -93,5 +93,10 @@ extern void BrakeSetReady(uint8_t value);
 extern uint8_t BrakeGetReady();
 
 
+/*
+ * 停站
+ */
+extern void StartStationStopRoutine();
+
 #endif
 

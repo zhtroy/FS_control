@@ -25,6 +25,7 @@
 #include "logLib.h"
 #include "Sensor/RFID/EPCdef.h"
 #include "Sensor/ZCP/v2v_communication.h"
+#include "Sensor/SonicRadar/SonicRadar.h"
 
 
 #define REMOTE_CMD_MODE          1
@@ -392,6 +393,14 @@ void testZigbeeControlHSM_init()
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
+
+	//超声波雷达
+	task = Task_create(taskSonicRadar, &taskParams, &eb);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
+
 
 	//ZCP
 	//V2VZCPInit();

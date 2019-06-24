@@ -208,6 +208,8 @@ typedef struct{
 /*V2V通信异常*/
 #define ERROR_V2V		   (21)
 
+/*超时未检测到停站光电对管*/
+#define ERROR_WAIT_STOP_STATION_PHOTON     (22)
 
 
 

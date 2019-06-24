@@ -854,12 +854,23 @@ Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
 		case ENTRY_EVT:
 		{
 			g_fbData.FSMstate = stop;
-			MotoSetGoalRPM(0);
+			StartStationStopRoutine();
 			return 0;
 		}
 		case EXIT_EVT:
 		{
 			return 0;
+		}
+		case INTERNAL_EVT:
+		{
+			evt_internal_t *pEvt = EVT_CAST(msg, evt_internal_t);
+
+			if(pEvt->eventcode == IN_EVTCODE_STOPSTATION_COMPLETE)
+			{
+				STATE_TRAN(me, &me->automode_idle);
+				return 0;
+			}
+			break;
 		}
 	}
 

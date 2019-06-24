@@ -20,6 +20,7 @@
 #include "Sensor/RFID/EPCdef.h"
 #include "Decision/CarState.h"
 #include "Sensor/RFID/RFID_task.h"
+#include "Sensor/SonicRadar/SonicRadar.h"
 
 #define V2V_ZCP_UART_DEV_NUM    (1)
 #define V2V_ZCP_DEV_NUM (0)
@@ -98,48 +99,56 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		}
 
 		/*
-		 * 定时计算前车距离
+		 * 定时计算前车距离，如果在站台区内用毫米波，其他用V2V数据
 		 */
-
-		if(m_param.frontId == V2V_ID_NONE)
+		myepc=RFIDGetEpc();
+//		if(myepc.areaType == EPC_AREATYPE_STATION)
+//		{
+//			m_distanceToFrontCar = SonicGetDistance()/10000;
+//		}
+//		else
 		{
-			m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
-		}
-		else
-		{
-			myepc=RFIDGetEpc();
-			EPCfromByteArray(&frontepc, m_frontCarStatus.epc);
-
-			if(m_frontCarStatus.distance< MotoGetCarDistance())
+			if(m_param.frontId == V2V_ID_NONE)
 			{
-				distanceDiff = m_frontCarStatus.distance + TOTAL_DISTANCE - MotoGetCarDistance();
+				m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
 			}
 			else
 			{
-				distanceDiff = m_frontCarStatus.distance - MotoGetCarDistance();
-			}
-			if(EPCinSameRoad(&myepc, &frontepc))  //在同一条路上
-			{
-				if(EPC_AB_A == myepc.ab && EPC_AB_B == frontepc.ab)
+
+				EPCfromByteArray(&frontepc, m_frontCarStatus.epc);
+
+				if(m_frontCarStatus.distance< MotoGetCarDistance())
 				{
-					m_distanceToFrontCar = distanceDiff  - m_frontCarStatus.deltadistance;
+					distanceDiff = m_frontCarStatus.distance + TOTAL_DISTANCE - MotoGetCarDistance();
 				}
 				else
 				{
-					m_distanceToFrontCar = distanceDiff;
+					distanceDiff = m_frontCarStatus.distance - MotoGetCarDistance();
 				}
-			}
-			else
-			{
-				if(myepc.funcType == EPC_FUNC_NORMAL)
+				if(EPCinSameRoad(&myepc, &frontepc))  //在同一条路上
 				{
-					m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
+					if(EPC_AB_A == myepc.ab && EPC_AB_B == frontepc.ab)
+					{
+						m_distanceToFrontCar = distanceDiff  - m_frontCarStatus.deltadistance;
+					}
+					else
+					{
+						m_distanceToFrontCar = distanceDiff;
+					}
 				}
 				else
 				{
-					m_distanceToFrontCar = distanceDiff;
+					if(myepc.funcType == EPC_FUNC_NORMAL)
+					{
+						m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
+					}
+					else
+					{
+						m_distanceToFrontCar = distanceDiff;
+					}
 				}
 			}
+
 		}
 
 		g_fbData.forwardCarDistance = m_distanceToFrontCar;
