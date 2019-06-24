@@ -44,6 +44,8 @@ static uint8_t frontValid = 0;
 static uint8_t rearValid = 0;
 static uint16_t recvCircle = 0;
 static uint32_t m_distance = 0;
+static uint16_t maxSafeDistance = MAX_SAFE_DISTANCE;
+static uint16_t minSafeDistance = MIN_SAFE_DISTANCE;
 /********************************************************************************/
 /*          静态全局变量                                                              */
 /********************************************************************************/
@@ -538,7 +540,11 @@ static void MotoRecvTask(void)
 	}
 }
 //TODO: 发送机车状态到4G
-
+void MotoSetSafeDistance(uint16_t minValue,uint16_t maxValue)
+{
+    maxSafeDistance = maxValue;
+    minSafeDistance = minValue;
+}
 static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
 {
     uint16_t ds;
@@ -564,10 +570,10 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
      * da: 远离距离（超出安全距离之后的远离量）
      * dsa: 安全距离+远离距离
      */
-    ds = MIN_SAFE_DISTANCE + KS*vc;
-    if(ds > MAX_SAFE_DISTANCE)
+    ds = minSafeDistance + KS*vc;
+    if(ds > maxSafeDistance)
     {
-        ds = MAX_SAFE_DISTANCE;
+        ds = maxSafeDistance;
     }
 
     da = MIN_AWAY_DISTANCE + KA*vc;

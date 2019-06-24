@@ -259,7 +259,7 @@ typedef struct{
  * 远离距离范围定义,单位(10cm)
  */
 #define MIN_AWAY_DISTANCE (50)
-#define MAX_AWAY_DISTANCE (200)
+#define MAX_AWAY_DISTANCE (50)
 
 
 #define MAX_BRAKE_SIZE (255)
@@ -286,6 +286,7 @@ extern void MotoSetGoalRPM(uint16_t rpm);
 extern uint16_t MotoGetGoalRPM();
 extern void MotoSetPidOn(uint8_t mode);
 extern uint8_t MotoGetPidOn();
+void MotoSetSafeDistance(uint16_t minValue,uint16_t maxValue);
 uint16_t MotoGetCircles();
 uint16_t MotoGetRpm();
 uint8_t MotoGetCarMode();
