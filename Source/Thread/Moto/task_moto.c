@@ -270,7 +270,7 @@ static void MotoUpdateDistanceTask(void)
 
     }
 }
-
+#define VOL_LOW_THRESHOLD (65.0)
 static void MotoRecvTask(void)
 {
     uint16_t recvRpm = 0;
@@ -287,6 +287,8 @@ static void MotoRecvTask(void)
     canDataObj_t canRecvData;
     uint16_t vg = 0;
     p_msg_t msg;
+    int volLowCount = 0;
+	float voltage;
 
 	g_fbData.motorDataF.MotoId = MOTO_FRONT;
 	g_fbData.motorDataR.MotoId = MOTO_REAR;
@@ -331,6 +333,24 @@ static void MotoRecvTask(void)
 					frontValid = 1;
 				else
 					frontValid = 0;
+
+				/*
+				 * 检测电压是否异常
+				 */
+				voltage = (g_fbData.motorDataF.VoltL + g_fbData.motorDataF.VoltH *256 ) * 0.1;
+				if(voltage < VOL_LOW_THRESHOLD)
+				{
+					volLowCount++;
+					if(volLowCount>60) //50ms*60 = 3s
+					{
+						volLowCount=0;
+						Message_postEvent(internal, IN_EVTCODE_RAIL_POWER_DROP);
+					}
+				}
+				else
+				{
+					volLowCount = 0;
+				}
     			break;
     		case MOTO_F_CANID4:
     			g_fbData.motorDataF.TorqueCtrlL    = (uint8_t)canRecvData.Data[0];

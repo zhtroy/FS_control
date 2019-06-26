@@ -275,6 +275,19 @@ Msg const * TopAutoMode(car_hsm_t * me, Msg* msg)
 			MotoSetPidOn(0);
 			return 0;
 		}
+
+		case INTERNAL_EVT:
+		{
+			evt_internal_t *pEvt = EVT_CAST(msg, evt_internal_t);
+
+			if(pEvt->eventcode == IN_EVTCODE_RAIL_POWER_DROP)
+			{
+				MotoSetErrorCode(ERROR_RAIL_POWER_DOWN);
+				STATE_TRAN(me, &me->forcebrake);
+				return 0;
+			}
+
+		}
 	}
 
 	return msg;
@@ -560,8 +573,9 @@ Msg const * RunningSeperate(car_hsm_t * me, Msg * msg)
 			if(pEvt->eventcode == IN_EVTCODE_V2V_FRONTCAR_LEAVE_SEPERATE)
 			{
 				V2CAskFrontID();
+				return 0;
 			}
-			return 0;
+
 		}
 		case RFID_EVT:
 		{

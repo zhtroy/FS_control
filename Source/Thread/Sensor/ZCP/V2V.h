@@ -12,6 +12,9 @@
 
 #define V2V_ID_NONE (0x0000)
 #define V2V_DISTANCE_INFINITY  (0xFFFFFFFF)
+#define V2V_CARSTATUS_ERROR  (2)
+#define V2V_CARSTATUS_RUNNING  (1)
+#define V2V_CARSTATUS_STOP  (0)
 
 typedef struct
 {

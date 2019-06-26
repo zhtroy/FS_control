@@ -76,14 +76,14 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 			carstatus.rpm = MotoGetRealRPM();
 			if(MotoGetCarMode() == ForceBrake)
 			{
-				carstatus.status = 2;
+				carstatus.status = V2V_CARSTATUS_ERROR;
 			}
 			else
 			{
 				if(MotoGetRealRPM() == 0)
-					carstatus.status = 0;
+					carstatus.status = V2V_CARSTATUS_STOP;
 				else
-					carstatus.status = 1;
+					carstatus.status = V2V_CARSTATUS_RUNNING;
 			}
 
 			memcpy(carstatus.epc, RFIDGetRaw(), EPC_SIZE);
@@ -203,8 +203,9 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 					break;
 				}
 				memcpy(&m_frontCarStatus, recvPacket.data, sizeof(m_frontCarStatus));
-				EPCfromByteArray(&frontEpc, m_frontCarStatus.epc);
+
 				//如果前车上一次在分离区，这次在普通区，即离开分离区，发送消息
+				EPCfromByteArray(&frontEpc, m_frontCarStatus.epc);
 				if(EPC_FUNC_NORMAL == frontEpc.funcType && EPC_FUNC_SEPERATE == lastFrontEpc.funcType)
 				{
 					Message_postEvent(internal, IN_EVTCODE_V2V_FRONTCAR_LEAVE_SEPERATE);

@@ -211,6 +211,9 @@ typedef struct{
 /*超时未检测到停站光电对管*/
 #define ERROR_WAIT_STOP_STATION_PHOTON     (22)
 
+/*轨道掉电*/
+#define ERROR_RAIL_POWER_DOWN			(23)
+
 
 
 #define DIFF_RPM_UPSCALE (4000)
