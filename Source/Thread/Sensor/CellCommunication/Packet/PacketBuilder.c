@@ -36,3 +36,16 @@ void PacketBuildCabPulse(cell_packet_t * packet, uint32_t reqid, uint32_t srcid,
 {
 	CellPacketCtor(packet,CELL_TYPE_REQ,CELL_CMD_CABPULSE, reqid, srcid, dstid, NULL,0);
 }
+
+void PacketBuildCabStatus(cell_packet_t * packet, uint32_t reqid, uint32_t srcid, uint32_t dstid, packet_cabstatus_t cabstatus)
+{
+	cabstatus.acc = htond(cabstatus.acc);
+	cabstatus.nid = htonll(cabstatus.nid);
+	cabstatus.offset = htond(cabstatus.offset);
+	cabstatus.speed = htond(cabstatus.speed);
+	cabstatus.state = htonl(cabstatus.state);
+	cabstatus.ts = htonll(cabstatus.ts);
+
+	CellPacketCtor(packet, CELL_TYPE_REQ, CELL_CMD_CABSTATUS, reqid, srcid, dstid, &cabstatus,sizeof(cabstatus)	);
+
+}

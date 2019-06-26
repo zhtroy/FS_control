@@ -27,6 +27,7 @@
 #include "Sensor/RFID/RFID_task.h"
 #include "Sensor/ZCP/V2V.h"
 #include "Message/InternalEvtCode.h"
+#include "stdio.h"
 
 
 

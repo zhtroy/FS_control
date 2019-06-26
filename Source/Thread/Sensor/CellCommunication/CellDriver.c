@@ -22,6 +22,7 @@
 #include "Sensor/CellCommunication/CellDriver.h"
 #include "common.h"
 #include "Lib/bitop.h"
+#include "string.h"
 
 
 
@@ -339,6 +340,8 @@ cell_packet_t* CellPacketCtor(cell_packet_t* p,
 
 /*
  * 构造响应包
+ * 从请求报文中提取目标地址和源地址，填充到发送报文的源地址和目标地址
+ *
  * @params
  * req 收到的请求报文
  * response 需要构造的响应报文

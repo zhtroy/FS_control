@@ -13,7 +13,7 @@
 #include "Message/Message.h"
 #include <ti/sysbios/knl/Task.h>
 
-#define SONIC_UARTNUM 1
+#define SONIC_UARTNUM 4
 #define SONIC_MBOX_DEPTH (16)
 
 /****************************************************************************/
@@ -45,6 +45,7 @@ Void taskSonicRadar(UArg a0, UArg a1)
 	Mailbox_Params mboxParams;
 	p_msg_t pmsg;
 	const int INTERVAL = 500;
+	Bool result;
 
 	//初始化串口
 	UartNs550Init(SONIC_UARTNUM,SonicRadarUartIntrHandler);
@@ -62,7 +63,12 @@ Void taskSonicRadar(UArg a0, UArg a1)
 		UartNs550Send(SONIC_UARTNUM, Sonic_query, 3);
 
 		//Semaphore_pend(sem_sonicRadar,BIOS_WAIT_FOREVER);
-		Mailbox_pend(recvMbox,(Ptr*) &recvUartDataObj, BIOS_WAIT_FOREVER);
+		result = Mailbox_pend(recvMbox,(Ptr*) &recvUartDataObj, 1000);
+
+		if(!result)
+		{
+			continue;
+		}
 
 		///Buf = UartNs550PopBuffer(SONIC_UARTNUM);
 

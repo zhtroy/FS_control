@@ -102,11 +102,13 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		 * 定时计算前车距离，如果在站台区内用毫米波，其他用V2V数据
 		 */
 		myepc=RFIDGetEpc();
+
 //		if(myepc.areaType == EPC_AREATYPE_STATION)
 //		{
-//			m_distanceToFrontCar = SonicGetDistance()/10000;
+//			m_distanceToFrontCar = SonicGetDistance()/100;
 //		}
 //		else
+
 		{
 			if(m_param.frontId == V2V_ID_NONE)
 			{

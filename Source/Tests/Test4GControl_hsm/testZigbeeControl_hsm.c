@@ -26,6 +26,7 @@
 #include "Sensor/RFID/EPCdef.h"
 #include "Sensor/ZCP/v2v_communication.h"
 #include "Sensor/SonicRadar/SonicRadar.h"
+#include "stdio.h"
 
 
 #define REMOTE_CMD_MODE          1
@@ -80,6 +81,7 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 	p_msg_t pMsg;
 	evt_placeholder_t hsmEvt;
 	car_hsm_t carHsm;
+	uint8_t msgTypeUnKnown;
 
 
 	 // 使用一个Clock来检测通信心跳包
@@ -113,10 +115,7 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 	{
 		pMsg = Message_pend();
 
-		/*
-		 * TODO: 将输入数据记录在StatusData模块中
-		 */
-
+		msgTypeUnKnown = 0;
 		/*
 		 * 将pMsg翻译成HSM的事件 hsmEvt
 		 */
@@ -316,6 +315,12 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 			{
 				EVT_SETTYPE(&hsmEvt,INTERNAL_EVT);
 				EVT_CAST(&hsmEvt, evt_internal_t)->eventcode = pMsg->data[0];
+				break;
+			}
+
+			default:
+			{
+				msgTypeUnKnown = 1;
 			}
 
 		} /*	switch(pMsg->type) */
@@ -325,8 +330,11 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 		/*
 		 * 输入event，驱动HSM运行
 		 */
-		HsmOnEvent((Hsm *) &carHsm, (Msg *) &hsmEvt);
+		if(!msgTypeUnKnown)
+		{
+			HsmOnEvent((Hsm *) &carHsm, (Msg *) &hsmEvt);
 //		LogMsg("hsm state: %s\n", (STATE_CURR(&carHsm))->name);
+		}
 
 		/*
 		 * 回收消息
@@ -395,11 +403,11 @@ void testZigbeeControlHSM_init()
 	}
 
 	//超声波雷达
-//	task = Task_create(taskSonicRadar, &taskParams, &eb);
-//	if (task == NULL) {
-//		System_printf("Task_create() failed!\n");
-//		BIOS_exit(0);
-//	}
+	task = Task_create(taskSonicRadar, &taskParams, &eb);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
 
 
 	//ZCP
