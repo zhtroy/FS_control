@@ -391,7 +391,10 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 			//RFID变化   一般->站台
 			if(lastEpc.areaType == EPC_AREATYPE_NORMAL && pEvt->epc.areaType == EPC_AREATYPE_STATION)
 			{
-				V2CEnterStation();
+				if(!g_param.cycleRoute)
+				{
+					V2CEnterStation();
+				}
 			}
 
 			if(pEvt->epc.areaType == EPC_AREATYPE_STATION)
