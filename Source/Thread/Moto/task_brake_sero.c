@@ -770,7 +770,7 @@ void RailStartChangeRoutine()
 }
 
 #define WAIT_PHOTON_TIMEOUT (100)
-#define WAIT_PHOTON_DISTANCE (500) // 5m
+#define WAIT_PHOTON_DISTANCE (50) // 5m
 #define WAIT_CHANGERAIL_TIMEOUT (3000)
 static void TaskChangeRailRoutine()
 {
@@ -836,7 +836,7 @@ void StartStationStopRoutine()
 	Semaphore_post(sem_startStopStation);
 }
 
-#define STOP_STATION_WAIT_PHOTON_DISTANCE (100) //1m
+#define STOP_STATION_WAIT_PHOTON_DISTANCE (10) //1m
 static void TaskEnterStationStopRoutine()
 {
 	Bool result;
