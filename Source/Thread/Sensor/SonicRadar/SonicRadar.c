@@ -41,7 +41,7 @@ void SonicRadarUartIntrHandler(void *CallBackRef, u32 Event, unsigned int EventD
 /****************************************************************************/
 Void taskSonicRadar(UArg a0, UArg a1)
 {
-	uint8_t Sonic_query[3] = {0xe8,0x02,0xb4};
+	uint8_t Sonic_query[3] = {0xe8,0x02,0xbc};
 	Mailbox_Params mboxParams;
 	p_msg_t pmsg;
 	const int INTERVAL = 500;
