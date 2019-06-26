@@ -26,6 +26,7 @@ extern uint16_t MotoGetRPM(void);
 /*          静态全局变量                                                              */
 /********************************************************************************/
 static Semaphore_Handle txReadySem;
+static Semaphore_Handle changeRailSem;
 static uint8_t uBrake,uLastBrake;	//刹车信号
 static int8_t  deltaBrake;
 static int16_t sDeltaRPM,sBrake;
@@ -111,6 +112,7 @@ static void ServoInitSem(void)
     sem_modbus = Semaphore_create(1, &semParams, NULL);
     sem_startChangeRail = Semaphore_create(0, &semParams, NULL);
     sem_startStopStation = Semaphore_create(0, &semParams, NULL);
+    changeRailSem = Semaphore_create(0, &semParams, NULL);
 }
  
 
@@ -751,7 +753,11 @@ void ServoBrakeTask(void *param)
 #endif
 void RailChangeStart()
 {
-	changeRail = 1;
+	//changeRail = 1;
+    if(changeRailSem != NULL)
+    {
+        Semaphore_post(changeRailSem);
+    }
 }
 
 /*
@@ -916,53 +922,57 @@ static void ServoChangeRailTask(void)
 
 	while(1)
 	{
-		Task_sleep(50);
+		//Task_sleep(50);
+	    state = Semaphore_pend(changeRailSem,100);
 
 		/* 更新轨道状态 */
-		regv = TTLRead();
-		RailSetRailState(regv & 0x03);
+	    regv = TTLRead();
+        RailSetRailState(regv & 0x03);
+
+	    if(state == FALSE)
+	        continue;
 
 
-		if(1 == changeRail)
-		{
-			changeRail = 0;
+		//if(1 == changeRail)
+		//{
+			//changeRail = 0;
 
-			/*
-			 * 1.设置电机方向
-			 * 2.使能电机
-			 * 3.等待超时
-			 * 4.判断电机是否到位
-			 */
-			if(RailGetRailState() == LEFTRAIL)
-				TTLWriteBit(RAIL_DIRECT,1);
-			else
-				TTLWriteBit(RAIL_DIRECT,0);
+        /*
+         * 1.设置电机方向
+         * 2.使能电机
+         * 3.等待超时
+         * 4.判断电机是否到位
+         */
+        if(RailGetRailState() == LEFTRAIL)
+            TTLWriteBit(RAIL_DIRECT,1);
+        else
+            TTLWriteBit(RAIL_DIRECT,0);
 
-			Task_sleep(10);
+        Task_sleep(10);
 
-			TTLWriteBit(RAIL_ENABLE, 1);
+        TTLWriteBit(RAIL_ENABLE, 1);
 
-			changerail_timeout_cnt = 0;
-			while(changerail_timeout_cnt < CHANGERAIL_TIMEOUT)
-			{
-				Task_sleep(10);
-				changerail_timeout_cnt ++;
+        changerail_timeout_cnt = 0;
+        while(changerail_timeout_cnt < CHANGERAIL_TIMEOUT)
+        {
+            Task_sleep(10);
+            changerail_timeout_cnt ++;
 
-				regv = TTLRead();
+            regv = TTLRead();
 
-				if((RailGetRailState() == LEFTRAIL && (regv & 0x03) == RIGHTRAIL) ||
-					(RailGetRailState() == RIGHTRAIL && (regv & 0x03) == LEFTRAIL))
-				{
-					RailSetRailState(regv & 0x03);		/* 更新轨道状态 */
-					changerail_timeout_cnt = 0;		/* 超时计数器清零 */
-					break;
-				}
+            if((RailGetRailState() == LEFTRAIL && (regv & 0x03) == RIGHTRAIL) ||
+                (RailGetRailState() == RIGHTRAIL && (regv & 0x03) == LEFTRAIL))
+            {
+                RailSetRailState(regv & 0x03);		/* 更新轨道状态 */
+                changerail_timeout_cnt = 0;		/* 超时计数器清零 */
+                break;
+            }
 
-			}
+        }
 
-			TTLWriteBit(RAIL_ENABLE, 0);	/* 关闭电机使能 */
+        TTLWriteBit(RAIL_ENABLE, 0);	/* 关闭电机使能 */
 
-		}/*if(1 == changeRail)*/
+		//}/*if(1 == changeRail)*/
 
 	}/*while(1)*/
 }
