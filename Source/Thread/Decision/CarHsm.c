@@ -410,15 +410,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 				}
 			}
 
-			if(pEvt->epc.areaType == EPC_AREATYPE_STATION)
-			{
-				MotoSetSafeDistance(60,60);
-			}
 
-			if(pEvt->epc.areaType == EPC_AREATYPE_NORMAL)
-			{
-				MotoSetSafeDistance(MIN_SAFE_DISTANCE,MAX_SAFE_DISTANCE);
-			}
 
 
 

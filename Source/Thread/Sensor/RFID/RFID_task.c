@@ -122,6 +122,8 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			lastrfid = data[2];
 			g_fbData.circleNum = circleNum;
 
+			Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
+
 			msg = Message_getEmpty();
 			msg->type = rfid;
 			memcpy(msg->data, &epc, sizeof(epc_t));
@@ -133,7 +135,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			 */
 //			userGetMS(&timeMs);
 //			epc.timeStamp = timeMs;
-			Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
+
 			break;
        case 0x40:
             Clock_setTimeout(clock_rfid_heart,3000);

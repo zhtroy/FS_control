@@ -103,11 +103,21 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		 */
 		myepc=RFIDGetEpc();
 
-//		if(myepc.areaType == EPC_AREATYPE_STATION)
-//		{
-//			m_distanceToFrontCar = SonicGetDistance()/100;
-//		}
-//		else
+		if(myepc.areaType == EPC_AREATYPE_STATION)
+		{
+			MotoSetSafeDistance(SAFE_DISTANCE_STATION,SAFE_DISTANCE_STATION);
+		}
+
+		if(myepc.areaType == EPC_AREATYPE_NORMAL)
+		{
+			MotoSetSafeDistance(MIN_SAFE_DISTANCE,MAX_SAFE_DISTANCE);
+		}
+
+		if(myepc.areaType == EPC_AREATYPE_STATION)
+		{
+			m_distanceToFrontCar = SonicGetDistance()/100;
+		}
+		else
 
 		{
 			if(m_param.frontId == V2V_ID_NONE)
