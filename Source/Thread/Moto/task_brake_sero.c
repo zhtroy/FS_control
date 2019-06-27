@@ -846,6 +846,7 @@ static void TaskEnterStationStopRoutine()
 	{
 		Semaphore_pend(sem_startStopStation, BIOS_WAIT_FOREVER);
 		startPos = MotoGetCarDistance();
+		outofdistance = 0;
 
 		/*
 		 * 等待经过光电对管
