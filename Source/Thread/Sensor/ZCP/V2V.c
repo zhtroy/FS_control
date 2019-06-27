@@ -21,6 +21,7 @@
 #include "Decision/CarState.h"
 #include "Sensor/RFID/RFID_task.h"
 #include "Sensor/SonicRadar/SonicRadar.h"
+#include <ti/sysbios/knl/Clock.h>
 
 #define V2V_ZCP_UART_DEV_NUM    (1)
 #define V2V_ZCP_DEV_NUM (0)
@@ -168,6 +169,45 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 	}
 }
+static Clock_Handle clock_front_car;
+
+static xdc_Void FrontCarDisconnected(xdc_UArg arg)
+{
+    p_msg_t msg;
+    /*
+    * 前车连接超时，发送错误消息到主线程
+    */
+    if(m_param.frontId != 0)
+    {
+        /*
+         * 有前车，超时异常
+         */
+        msg = Message_getEmpty();
+        msg->type = error;
+        msg->data[0] = ERROR_FRONT_CAR_TIMEOUT;
+        msg->dataLen = 1;
+        Message_post(msg);
+    }
+    else
+    {
+        /*
+         * 无前车，则重新设置定时器
+         */
+        Clock_setTimeout(clock_front_car,TIMEOUT_FRONT_CAR_DISCONNECT);
+        Clock_start(clock_front_car);
+    }
+}
+static void InitTimer()
+{
+    Clock_Params clockParams;
+
+
+    Clock_Params_init(&clockParams);
+    clockParams.period = 0;       // one shot
+    clockParams.startFlag = FALSE;
+
+    clock_front_car = Clock_create(FrontCarDisconnected, TIMEOUT_FRONT_CAR_DISCONNECT, &clockParams, NULL);
+}
 
 static void V2VRecvTask(UArg arg0, UArg arg1)
 {
@@ -201,6 +241,12 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 			case ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE:
 			{
 				Semaphore_post(m_sem_handshakefrontcar_resp);
+
+				/*
+                 * 收到前车报文，重启定时器
+                 */
+                Clock_setTimeout(clock_front_car,TIMEOUT_FRONT_CAR_DISCONNECT);
+                Clock_start(clock_front_car);
 				break;
 			}
 
@@ -222,6 +268,11 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 				}
 				lastFrontEpc = frontEpc;
 
+				/*
+                 * 收到前车报文，重启定时器
+                 */
+                Clock_setTimeout(clock_front_car,TIMEOUT_FRONT_CAR_DISCONNECT);
+                Clock_start(clock_front_car);
 				break;
 			}
 		}
@@ -282,6 +333,7 @@ void V2VInit()
 	Semaphore_Params semParams;
 
 	ZCPInit(&v2vInst, V2V_ZCP_DEV_NUM,V2V_ZCP_UART_DEV_NUM );
+	InitTimer();
 
 	Task_Params_init(&taskParams);
 

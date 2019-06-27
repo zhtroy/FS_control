@@ -217,7 +217,7 @@ static void V2COpenDoorTask(UArg arg0, UArg arg1)
 static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 {
 	const uint32_t TIMEOUT = 1000;
-	const int RETRY_NUM = 2;
+	const int RETRY_NUM = 5;
     ZCPUserPacket_t sendPacket, recvPacket;
     v2c_req_forward_id_t req;
     v2c_resp_forward_id_t resp;
@@ -263,7 +263,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 
 		if(pendResult == FALSE) //发送后没收到响应
 		{
-//			Message_postError(ERROR_V2C);
+			Message_postError(ERROR_V2C);
 
 		}
 		else

@@ -15,7 +15,7 @@
 #define V2V_CARSTATUS_ERROR  (2)
 #define V2V_CARSTATUS_RUNNING  (1)
 #define V2V_CARSTATUS_STOP  (0)
-
+#define TIMEOUT_FRONT_CAR_DISCONNECT    (5000)
 typedef struct
 {
 	uint16_t frontId;

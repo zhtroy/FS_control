@@ -214,6 +214,8 @@ typedef struct{
 /*轨道掉电*/
 #define ERROR_RAIL_POWER_DOWN			(23)
 
+/*前车失联*/
+#define ERROR_FRONT_CAR_TIMEOUT         (24)
 
 
 #define DIFF_RPM_UPSCALE (4000)
