@@ -20,6 +20,7 @@ typedef struct
 {
 	uint16_t frontId;
 	uint16_t backId;
+	uint16_t backIdAdd;
 }v2v_param_t;
 
 typedef struct
