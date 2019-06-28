@@ -264,7 +264,22 @@ static void MotoUpdateDistanceTask(void)
 			}
 
     		lastCircleNum = curCircleNum;
-    		m_distance += circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+    		/*
+    		 * 过滤掉CAN传输出错的圈数数据
+    		 * 圈数差每100ms不超过20圈
+    		 */
+    		if(circleDiff<20)
+    		{
+    			if(GEAR_REVERSE == MotoGetGear())
+    			{
+    				m_distance -= circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+    			}
+    			else
+    			{
+    				m_distance += circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+    			}
+    		}
+
     	}
     	g_fbData.distance = m_distance;
 
