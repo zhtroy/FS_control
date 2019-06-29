@@ -26,6 +26,7 @@
 #include "common.h"
 #include "TL6748.h"
 #include "fpga_periph_def.h"
+#include "mpu9250_drv.h"
 
 void PeriphInit()
 {
@@ -45,6 +46,8 @@ void PeriphInit()
 	UARTStdioInit();
 
 	UART2StdioInit();
+
+	mpu9250I2CInit();
 
 	EMIFAInit();
 

@@ -34,7 +34,9 @@
 //通信参数
 static v2v_param_t m_param = {
 		.backId = V2V_ID_NONE,
-		.frontId = V2V_ID_NONE
+		.backIdAdd = V2V_ID_NONE,
+		.frontId = V2V_ID_NONE,
+		.leftRoadID = {0,0,0,0,0}
 };
 //前车状态
 static v2v_req_carstatus_t m_frontCarStatus;
@@ -67,12 +69,29 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 	epc_t frontepc;
 
 	uint32_t distanceDiff;
+	uint16_t backCarId = 0;
+	uint8_t backCarIndex = 0;
 
 	while(1)
 	{
 		Task_sleep(INTERVAL);
+
+		/*
+		 * 交替发送
+		 */
+		if(backCarIndex  == 0)
+		{
+		    backCarId = m_param.backId;
+		    backCarIndex = 1;
+		}
+		else
+		{
+		    backCarId = m_param.backIdAdd;
+		    backCarIndex = 0;
+		}
+
 		//发送carstatus报文给后车
-		if(m_param.backId != V2V_ID_NONE)
+		if(backCarId != V2V_ID_NONE)
 		{
 			carstatus.rpm = MotoGetRealRPM();
 			if(MotoGetCarMode() == ForceBrake)
@@ -92,7 +111,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 			carstatus.deltadistance = m_deltaDistance;
 
 			memcpy(sendPacket.data, &carstatus, sizeof(carstatus));
-			sendPacket.addr = m_param.backId;
+			sendPacket.addr = backCarId;
 			sendPacket.type = ZCP_TYPE_V2V_REQ_FRONT_CARSTATUS;
 			sendPacket.len = sizeof(carstatus);
 
@@ -157,7 +176,19 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 					}
 					else
 					{
-						m_distanceToFrontCar = distanceDiff;
+					    if(0 == memcmp(&m_frontCarStatus.epc[1],&m_param.leftRoadID,sizeof(roadID_t)) &&
+					            EPC_AB_B == frontepc.ab)
+					    {
+					        /*
+					         * 1.前车处于相邻轨道(主轨)
+					         * 2.前车处于B段
+					         */
+					        m_distanceToFrontCar = distanceDiff  - m_frontCarStatus.deltadistance;
+					    }
+					    else
+					    {
+					        m_distanceToFrontCar = distanceDiff;
+					    }
 					}
 				}
 			}
@@ -226,7 +257,11 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 				/*
 				 * 更新后车RFID，
 				 */
-				m_param.backId = recvPacket.addr;
+			    if(recvPacket.addr != m_param.backId)
+			    {
+			        m_param.backIdAdd = m_param.backId;
+			        m_param.backId = recvPacket.addr;
+			    }
 
 				/*
 				 * 并回复一个响应报文给后车
@@ -384,6 +419,11 @@ void V2VSetFrontCarId(uint16_t frontid)
 	g_fbData.frontCarID = frontid;
 
 	m_param.frontId = frontid;
+}
+
+void V2VSetLeftRoadID(roadID_t raodID)
+{
+    m_param.leftRoadID = raodID;
 }
 
 uint16_t V2VGetFrontCarId()

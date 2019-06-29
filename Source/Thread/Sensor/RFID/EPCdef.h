@@ -101,6 +101,11 @@ typedef struct epc_tag
 	uint32_t distance;
 }epc_t;
 
+typedef struct
+{
+    uint8_t byte[5];
+}roadID_t;
+
 
 extern void EPCfromByteArray(epc_t * epc, uint8_t array[]);
 extern uint8_t EPCequal(epc_t * a, epc_t * b);

@@ -272,6 +272,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			if(resp.status == 1)  //有前车
 			{
 				V2VSetFrontCarId(resp.forwardid);
+				V2VSetLeftRoadID(resp.leftRoadID);
 				V2VHandShakeFrontCar();
 			}
 			else
