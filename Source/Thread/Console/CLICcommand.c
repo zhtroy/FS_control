@@ -20,6 +20,9 @@ extern const CLI_Command_Definition_t xMessageSend;
 extern const CLI_Command_Definition_t xSpeedSet;
 extern const CLI_Command_Definition_t xSetCarID;
 extern const CLI_Command_Definition_t xGetCarID;
+extern const CLI_Command_Definition_t xEEPROMWrite;
+extern const CLI_Command_Definition_t xEEPROMRead;
+extern const CLI_Command_Definition_t xEEPROMClear;
 
 /*-----------------------------------------------------------*/
 
@@ -37,6 +40,9 @@ void vRegisterSampleCLICommands( void )
     FreeRTOS_CLIRegisterCommand( &xSpeedSet );
     FreeRTOS_CLIRegisterCommand( &xSetCarID );
     FreeRTOS_CLIRegisterCommand( &xGetCarID );
+    FreeRTOS_CLIRegisterCommand( &xEEPROMWrite );
+    FreeRTOS_CLIRegisterCommand( &xEEPROMRead );
+    FreeRTOS_CLIRegisterCommand( &xEEPROMClear );
 }
 /*-----------------------------------------------------------*/
 
