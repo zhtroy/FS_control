@@ -935,6 +935,16 @@ uint16_t MotoGetRpm()
     return g_fbData.recvRPM;
 }
 
+/*
+ * 返回速度 (m/s)
+ */
+float MotoGetSpeed()
+{
+	float speed = (float)MotoGetRpm() / WHEEL_SPEED_RATIO * (WHEEL_PERIMETER / 10.0);
+
+	return MotoGetGear() == GEAR_REVERSE ? -speed : speed;
+}
+
 uint8_t MotoGetCarMode()
 {
     return g_fbData.mode;

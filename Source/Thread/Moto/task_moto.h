@@ -297,4 +297,6 @@ uint16_t MotoGetCircles();
 uint16_t MotoGetRpm();
 uint8_t MotoGetCarMode();
 uint32_t MotoGetCarDistance();
+float MotoGetSpeed();
+
 #endif
