@@ -25,6 +25,8 @@
 #include <xdc/runtime/Types.h>
 #include "Sensor/RFID/EPCdef.h"
 #include <ti/sysbios/knl/Mailbox.h>
+#include "mpu9250_drv.h"
+#include "logLib.h"
 
 
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
@@ -113,6 +115,14 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			m_lastepc = epc;
 			memcpy(m_rawrfid, &data[2], EPC_SIZE);
 
+			/*
+			 * 每读到一个新的EPC值，都存入EEPROM
+			 */
+			if(mpu9250WriteBytes(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,&m_rawrfid) == -1)
+			{
+				LogPrintf("EEPROM: fail to save EPC\n");
+			}
+
 			//g_fbData.distance = epc.distance;
 			/*记录圈数*/
 			if(epc.distance == 0)
@@ -173,6 +183,18 @@ Void taskRFID(UArg a0, UArg a1)
 
     RFIDV2vMbox = Mailbox_create (sizeof (epc_t),4, NULL, NULL);
 
+    /*
+     * 从EEPROM中读取上次关机前的EP
+     */
+    if(mpu9250ReadBytes(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,&m_rawrfid) == -1)
+    {
+    	LogPrintf("EEPROM: fail to load EPC\n");
+    }
+    else
+    {
+    	EPCfromByteArray(&m_lastepc, m_rawrfid);
+    }
+
 	while(1)
 	{
 		RFIDProcess(RFID_DEVICENUM);
@@ -194,5 +216,10 @@ epc_t RFIDGetEpc()
 epc_t RFIDGetLastEpc()
 {
 	return m_lastlastepc;
+}
+
+uint64_t RFIDGetNID()
+{
+	return EPCgetShortID(&m_lastepc);
 }
 

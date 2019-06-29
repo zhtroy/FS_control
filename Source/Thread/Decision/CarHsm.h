@@ -276,6 +276,6 @@ typedef struct{
  */
 
 extern void CarHsmCtor(car_hsm_t * me);
-
+extern uint8_t CarHsmIsInStation();
 
 #endif /* CARHSM_H_ */

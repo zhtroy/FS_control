@@ -23,6 +23,7 @@
 #include "common.h"
 #include "Lib/bitop.h"
 #include "string.h"
+#include "logLib.h"
 
 
 
@@ -207,9 +208,15 @@ static Void taskCellReceive(UArg a0, UArg a1)
 					//TODO: check CRC
 					recv_head_num=0;
 
-					if(packet.len == CELL_HEADER_LEN)  //如果只有包头，接收一个包到此完成
+					if(packet.len>CELL_HEADER_LEN + PACKET_DATA_MAX_LEN)  //如果大于data数据大小，提示
+					{
+						LogPrintf("cell recv data length(%d) too long, ignore\n", packet.len);
+						state = cell_wait;
+					}
+					else if(packet.len == CELL_HEADER_LEN)  //如果只有包头，接收一个包到此完成
 					{
 						//接收到一个完整包，发送到邮箱
+						LogMsg("cell recv packet, cmd:%x\tflag:%x\tlen:%d\n", packet.cmd,packet.flag,packet.len);
 						Mailbox_post(m_mbox_hdl, (Ptr *)&packet, BIOS_NO_WAIT);
 						state = cell_wait;
 					}
@@ -229,6 +236,7 @@ static Void taskCellReceive(UArg a0, UArg a1)
 					recv_data_num = 0;
 					state = cell_wait;
 					//接收到一个完整包，发送到邮箱
+					LogMsg("cell recv packet, cmd:%x\tflag:%x\tlen:%d\n", packet.cmd,packet.flag,packet.len);
 					Mailbox_post(m_mbox_hdl, (Ptr *)&packet, BIOS_NO_WAIT);
 
 				}
@@ -261,7 +269,7 @@ void CellDriverInit()
 	/*创建接收task*/
 	Task_Params_init(&taskParams);
 	taskParams.priority = 5;
-	taskParams.stackSize = 2048;
+	taskParams.stackSize = 4096;
 	task = Task_create(taskCellReceive, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");

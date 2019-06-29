@@ -9,8 +9,40 @@
 #include "Decision/route/Route.h"
 #include "Lib/vector.h"
 #include "Lib/bitop.h"
+#include "logLib.h"
+#include "stdio.h"
 
 static packet_routenode_t * m_vnode = 0;
+
+/*
+ * 将路径打印到串口
+ */
+void RouteShow(packet_routenode_t * vnode)
+{
+	char outputbuff[100];
+	/*
+	 * 将收到的路径打印出来
+	 */
+	LogMsg("current route:\n====================\n");
+	if(RouteHasOngoing())
+	{
+		size_t i;
+		for(i=0; i<vector_size(vnode); i++)
+		{
+			LogMsg("nid: %llu\t NT:%d\t WS:%d\n",
+					vnode[i].nid,
+					BF_GET(vnode[i].flag,4,4),
+					BF_GET(vnode[i].flag,0,4));
+
+		}
+
+	}
+	else
+	{
+		LogMsg("EMPTY\n");
+	}
+	LogMsg("=====================\n");
+}
 /*
  * API
  */
@@ -23,6 +55,8 @@ void RouteUpdate(packet_routenode_t * vnode)
 {
 	RouteFree();
 	m_vnode = vnode;
+
+	RouteShow(m_vnode);
 }
 
 /*
@@ -35,6 +69,9 @@ packet_routenode_t RoutePop()
 
 	packet_routenode_t head = * (vector_begin(m_vnode));
 	vector_erase(m_vnode,0);
+
+	RouteShow(m_vnode);
+
 	return head;
 }
 
@@ -83,6 +120,8 @@ void RouteFree()
 		vector_free(m_vnode);
 	}
 	m_vnode = 0;
+
+	RouteShow(m_vnode);
 }
 
 /*
@@ -91,6 +130,8 @@ void RouteFree()
 void RouteAddNode(packet_routenode_t node)
 {
 	vector_push_back(m_vnode,node);
+
+	RouteShow(m_vnode);
 }
 
 /*
@@ -105,6 +146,7 @@ void RouteChangeDestination(packet_routenode_t node)
 	vector_pop_back(m_vnode);
 	vector_push_back(m_vnode,node);
 
+	RouteShow(m_vnode);
 }
 
 /*
@@ -113,7 +155,7 @@ void RouteChangeDestination(packet_routenode_t node)
 packet_routenode_t RouteGetDestination()
 {
 	if(!RouteHasOngoing())
-		return ;
+		return;
 	return m_vnode[vector_size(m_vnode)-1];
 }
 

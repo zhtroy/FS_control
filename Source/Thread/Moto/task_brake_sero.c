@@ -19,7 +19,6 @@ extern uint16_t getRPM(void);
 #define BRAKE_MBOX_DEPTH (16)
 #define CAN_DEV_BRAKE (1)
 
-extern uint16_t MotoGetRPM(void);
 
 
 /********************************************************************************/

@@ -5,8 +5,8 @@
  *      Author: zhtro
  */
 
-#ifndef CELLCOMMUNICATION_H_
-#define CELLCOMMUNICATION_H_
+#ifndef CELLDRIVER_H_
+#define CELLDRIVER_H_
 
 #include "stdint.h"
 #include <xdc/std.h>
@@ -34,10 +34,10 @@
 
 /*包头*/
 #define CELL_HEADER_LEN (32)
-#define	CELL_START0 (0x00)
-#define	CELL_START1 (0x00)
-#define	CELL_START2 (0x00)
-#define	CELL_START3 (0x01)
+#define	CELL_START0 (0x46)
+#define	CELL_START1 (0x46)
+#define	CELL_START2 (0x53)
+#define	CELL_START3 (0x53)
 
 
 /*
@@ -65,6 +65,7 @@
 #define CELL_ADDR_VRC_MAIN (0x01)
 #define CELL_ADDR_VRC_BACKUP (0x02)
 #define CELL_ADDR_TESTCAR (0x100)
+#define SESSIONID (0x100)
 
 typedef struct cell_packet{
 	//header part
@@ -115,4 +116,4 @@ Bool CellRecvPacket(cell_packet_t * packet,UInt timeout);
 
 
 
-#endif /* CELLCOMMUNICATION_H_ */
+#endif /* CELLDRIVER_H_ */

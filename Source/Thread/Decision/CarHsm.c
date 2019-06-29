@@ -28,10 +28,12 @@
 #include "Sensor/ZCP/V2V.h"
 #include "Message/InternalEvtCode.h"
 #include "stdio.h"
+#include "Sensor/CellCommunication/CellCommunication.h"
 
 
 
 extern fbdata_t g_fbData;
+static uint8_t m_isInStation;
 /*
  * 状态机
  */
@@ -63,7 +65,6 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
 			MotoSetGear(GEAR_NONE);    //空挡
 			MotoSetThrottle(0);
 			BrakeSetBrake(0);
-			MotoSetGoalRPM(0);
 			/*回传数据*/
 			g_fbData.mode = pEvt->mode;
 
@@ -76,6 +77,7 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
 					STATE_TRAN(me, &me->setting);
 					break;
 				case 2:
+					MotoSetGoalRPM(0);
 					STATE_TRAN(me, &me->automode);
 					break;
 				case 3:
@@ -334,6 +336,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 		case ENTRY_EVT:
 		{
 			g_fbData.FSMstate =running;
+			m_isInStation = 0;  //一旦开始运行，就认为不在站点
 			MotoSetGoalRPM(g_param.StateRPM[EPC_FEAT_CRUISING]);
 			return 0;
 		}
@@ -885,8 +888,13 @@ Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
 		{
 			evt_internal_t *pEvt = EVT_CAST(msg, evt_internal_t);
 
+			//停站结束
 			if(pEvt->eventcode == IN_EVTCODE_STOPSTATION_COMPLETE)
 			{
+				m_isInStation = 1;
+
+				//发送消息给CellHsm
+				CellHsmPost(carhsm_arrived);
 				STATE_TRAN(me, &me->automode_idle);
 				return 0;
 			}
@@ -1210,4 +1218,8 @@ void CarHsmInit()
 {
 	CarHsmCtor(&carHsm);
 	HsmOnStart((Hsm *) &carHsm);
+}
+uint8_t CarHsmIsInStation()
+{
+	return m_isInStation;
 }

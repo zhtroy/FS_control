@@ -38,5 +38,6 @@ void RouteFree();
 void RouteAddNode(packet_routenode_t node);
 void RouteChangeDestination(packet_routenode_t node);
 packet_routenode_t RouteGetDestination();
+void RouteShow(packet_routenode_t * vnode);
 
 #endif /* ROUTE_H_ */

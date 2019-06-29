@@ -27,6 +27,7 @@
 #include "Sensor/ZCP/v2v_communication.h"
 #include "Sensor/SonicRadar/SonicRadar.h"
 #include "stdio.h"
+#include "Sensor/CellCommunication/CellCommunication.h"
 
 
 #define REMOTE_CMD_MODE          1
@@ -48,6 +49,7 @@
 #define REMOTE_CMD_HEARTBEAT     17
 #define REMOTE_CMD_ROUTENODE     18
 #define REMOTE_CMD_NEWROUTE      19
+
 
 
 extern Void taskRFID(UArg a0, UArg a1);
@@ -317,7 +319,30 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 				EVT_CAST(&hsmEvt, evt_internal_t)->eventcode = pMsg->data[0];
 				break;
 			}
+			case cell:
+			{
+				switch(pMsg->data[0])
+				{
+					case CELL_MSG_ENTERAUTOMODE:
+					{
+						//进入自动模式
+						evt_remote_chmode_t * p;
 
+						EVT_SETTYPE(&hsmEvt, REMOTE_CHMODE_EVT);
+						p = EVT_CAST(&hsmEvt, evt_remote_chmode_t);
+						p->mode = 2;
+						break;
+					}
+
+					case CELL_MSG_STARTRUN:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_AUTO_START_EVT);
+						break;
+					}
+				}
+
+				break;
+			}
 			default:
 			{
 				msgTypeUnKnown = 1;
@@ -415,4 +440,7 @@ void testZigbeeControlHSM_init()
 
 	V2CInit();
 	V2VInit();
+
+	//cell
+	CellCommunicationInit();
 }

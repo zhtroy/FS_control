@@ -37,6 +37,7 @@ typedef struct {
  */
 void PacketBuildCabStateChange(cell_packet_t * packet,uint32_t reqid, uint32_t srcid, uint32_t dstid, packet_cabstatechange_t statechange);
 void PacketBuildCabPulse(cell_packet_t * packet, uint32_t reqid, uint32_t srcid, uint32_t dstid);
+void PacketBuildCabStatus(cell_packet_t * packet, uint32_t reqid, uint32_t srcid, uint32_t dstid, packet_cabstatus_t cabstatus);
 
 
 /*

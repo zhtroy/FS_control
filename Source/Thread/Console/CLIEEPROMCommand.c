@@ -14,7 +14,7 @@
 /* FreeRTOS+CLI includes. */
 #include "FreeRTOS_CLI.h"
 #include "mpu9250/mpu9250_drv.h"
-#define EEPROM_SLV_ADDR (0x50)
+
 BaseType_t prvSetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
