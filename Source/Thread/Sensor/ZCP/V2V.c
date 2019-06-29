@@ -34,7 +34,9 @@
 //通信参数
 static v2v_param_t m_param = {
 		.backId = V2V_ID_NONE,
-		.frontId = V2V_ID_NONE
+		.backIdAdd = V2V_ID_NONE,
+		.frontId = V2V_ID_NONE,
+		.leftRoadID = {0,0,0,0,0}
 };
 //前车状态
 static v2v_req_carstatus_t m_frontCarStatus;
@@ -174,7 +176,19 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 					}
 					else
 					{
-						m_distanceToFrontCar = distanceDiff;
+					    if(0 == memcmp(&m_frontCarStatus.epc[1],&m_param.leftRoadID,sizeof(roadID_t)) &&
+					            EPC_AB_B == frontepc.ab)
+					    {
+					        /*
+					         * 1.前车处于相邻轨道(主轨)
+					         * 2.前车处于B段
+					         */
+					        m_distanceToFrontCar = distanceDiff  - m_frontCarStatus.deltadistance;
+					    }
+					    else
+					    {
+					        m_distanceToFrontCar = distanceDiff;
+					    }
 					}
 				}
 			}
@@ -405,6 +419,11 @@ void V2VSetFrontCarId(uint16_t frontid)
 	g_fbData.frontCarID = frontid;
 
 	m_param.frontId = frontid;
+}
+
+void V2VSetLeftRoadID(roadID_t raodID)
+{
+    m_param.leftRoadID = raodID;
 }
 
 uint16_t V2VGetFrontCarId()

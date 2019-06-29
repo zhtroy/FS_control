@@ -16,11 +16,14 @@
 #define V2V_CARSTATUS_RUNNING  (1)
 #define V2V_CARSTATUS_STOP  (0)
 #define TIMEOUT_FRONT_CAR_DISCONNECT    (5000)
+
+
 typedef struct
 {
 	uint16_t frontId;
 	uint16_t backId;
 	uint16_t backIdAdd;
+	roadID_t leftRoadID;
 }v2v_param_t;
 
 typedef struct
@@ -42,5 +45,6 @@ extern uint32_t V2VGetDistanceToFrontCar();
 extern uint16_t V2VGetFrontCarSpeed();
 extern epc_t V2VGetFrontCarEpc();
 extern void V2VSetDeltaDistance(int32_t delta);
+extern void V2VSetLeftRoadID(roadID_t raodID);
 
 #endif /* V2V_H_ */

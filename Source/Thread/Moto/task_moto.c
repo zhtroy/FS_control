@@ -219,7 +219,7 @@ static void MotoUpdateDistanceTask(void)
     uint16_t circleDiff = 0;
     epc_t lastEpc;
 
-
+    float step;
     const int UPDATE_INTERVAL = 100;
 
 
@@ -270,13 +270,17 @@ static void MotoUpdateDistanceTask(void)
     		 */
     		if(circleDiff<20)
     		{
+    		    step = circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
     			if(GEAR_REVERSE == MotoGetGear())
     			{
-    				m_distance -= circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+    			    if(m_distance > step)
+    			        m_distance -= step;
+    			    else
+    			        m_distance = TOTAL_DISTANCE - step + m_distance;
     			}
     			else
     			{
-    				m_distance += circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+    				m_distance += step;
     			}
     		}
 

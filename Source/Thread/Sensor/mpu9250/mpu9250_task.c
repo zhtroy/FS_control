@@ -139,7 +139,7 @@ static int32_t MPU9250OpenDev()
 	uint8_t selfTestMode;
 
 	/* 初始化I2C的相关配置 */
-	mpu9250I2CInit();
+	//mpu9250I2CInit();
 
 	/* 初始化MPU9250*/
 	result = mpu_init(&intParam);

@@ -62,10 +62,12 @@ typedef struct
 /*
  * 响应前车ID
  */
+
 typedef struct
 {
 	uint8_t status;
 	uint16_t forwardid;
+	roadID_t leftRoadID;
 }v2c_resp_forward_id_t;
 
 /*
