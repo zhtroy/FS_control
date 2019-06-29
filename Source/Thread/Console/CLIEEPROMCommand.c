@@ -116,3 +116,10 @@ BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char 
 
     return xReturn;
 }
+
+uint16_t GetLocalCarID()
+{
+    uint16_t usValue;
+    mpu9250ReadBytes(EEPROM_SLV_ADDR,0,2,&usValue);
+    return usValue;
+}
