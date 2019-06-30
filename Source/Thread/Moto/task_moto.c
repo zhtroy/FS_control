@@ -448,7 +448,7 @@ static void MotoRecvTask(void)
 		         * 限定最大油门
 		         */
 		        recvRpm = (frontRpm + rearRpm)/2;
-		        maxThrottle = MAX_THROTTLE_SIZE/2;
+		        maxThrottle = sysParam.maxtThrottle/2;
 		        recvCircle = (rearCircle + frontCircle)/2;
 
 		        /*
@@ -471,13 +471,13 @@ static void MotoRecvTask(void)
 		    {
 		        recvRpm = frontRpm;
 		        recvCircle = frontCircle;
-		        maxThrottle = MAX_THROTTLE_SIZE;
+		        maxThrottle = sysParam.maxtThrottle;
 		    }
 		    else if(rearValid == 1)
 		    {
 		        recvRpm = rearRpm;
 		        recvCircle = rearCircle;
-		        maxThrottle = MAX_THROTTLE_SIZE;
+		        maxThrottle = sysParam.maxtThrottle;
 		    }
 		    else;
 
@@ -534,10 +534,10 @@ static void MotoRecvTask(void)
                      */
                     MotoSetThrottle(0);
 
-                    adjbrake = BREAK_OFFSET - hisThrottle;
+                    adjbrake = sysParam.brakeOffset - hisThrottle;
                     if(adjbrake > MAX_BRAKE_SIZE)
                     {
-                        hisThrottle = BREAK_OFFSET - MAX_BRAKE_SIZE;
+                        hisThrottle = sysParam.brakeOffset - MAX_BRAKE_SIZE;
                         adjbrake = MAX_BRAKE_SIZE;
                     }
 

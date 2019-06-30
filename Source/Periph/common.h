@@ -6,4 +6,5 @@
 #include "debugLog.h"
 #include "devStatus.h"
 #include "userDelay.h"
+#include "system_param.h"
 #endif

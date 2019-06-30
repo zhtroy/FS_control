@@ -95,6 +95,7 @@ void SyncInit()
 /*
  *  ======== main ========
  */
+
 Int main()
 {
 
@@ -111,6 +112,8 @@ Int main()
 	PeriphInit();
 
 	SyncInit();
+
+	ParamInit();
 
 	ThreadInit();
 

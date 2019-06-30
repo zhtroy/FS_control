@@ -33,18 +33,6 @@
 
 #define CHANGERAIL_TIMEOUT (600)
 
-#if CAR_VERSION == 21
-/*机车2.1*/
-#define BRAKE_STEP_PULSE (-116)
-
-#elif CAR_VERSION == 20
-/*机车2.0*/
-#define BRAKE_STEP_PULSE (-1500)
-
-#elif CAR_VERSION == 22
-/*机车22*/
-#define BRAKE_STEP_PULSE (1500)
-#endif
 
 //#define RAIL_ENABLE (0)
 #define RAIL_ENABLE (0)

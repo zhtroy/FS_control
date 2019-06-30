@@ -164,7 +164,7 @@ BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
     static UBaseType_t uxParameterNumber = 0;
     static uint8_t ucAddr = 0;
     static uint8_t ucLen = 0;
-
+    uint8_t len;
     /* Remove compile time warnings about unused parameters, and check the
     write buffer is not NULL.  NOTE - for simplicity, this example assumes the
     write buffer length is adequate, so does not check for buffer overflows. */
@@ -198,17 +198,24 @@ BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
         else if(uxParameterNumber == 2) /*Length */
         {
             ucLen = autoStrtol(pcParameter);
-
-
             memset( pcWriteBuffer, 0x00, xWriteBufferLen );
-            if(mpu9250WriteBytes(EEPROM_SLV_ADDR,ucAddr,ucLen,pcWriteBuffer) == -1)
+
+            while(ucLen > 0)
             {
-                strncpy( pcWriteBuffer, "\r\nEEPROM Clear Failed!\r\n", xWriteBufferLen );
+                len = (ucAddr/8 + 1)*8 - ucAddr;
+                if(len <= ucLen)
+                {
+                    ucLen -= len;
+                    ucAddr += len;
+                }
+                else
+                {
+                    len = ucLen;
+                    ucLen = 0;
+                }
+                mpu9250WriteBytes(EEPROM_SLV_ADDR,ucAddr,len,pcWriteBuffer);
             }
-            else
-            {
-                strncpy( pcWriteBuffer, "\r\nEEPROM Clear Success!\r\n", xWriteBufferLen );
-            }
+
             uxParameterNumber = 0;
             xReturn = pdFALSE;
         }
@@ -226,6 +233,8 @@ BaseType_t prvEEPROMWrite( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
     static uint8_t ucLen;
     char strArray[256];
     static uint8_t ucData[128];
+    uint8_t len;
+    uint8_t *pData;
     /* Remove compile time warnings about unused parameters, and check the
     write buffer is not NULL.  NOTE - for simplicity, this example assumes the
     write buffer length is adequate, so does not check for buffer overflows. */
@@ -260,14 +269,24 @@ BaseType_t prvEEPROMWrite( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
         {
             strcpy(strArray,pcParameter);
             ucLen = strSplitToData(strArray,ucData);
-            if(mpu9250WriteBytes(EEPROM_SLV_ADDR,ucAddr,ucLen,ucData) == -1)
+            pData = ucData;
+            while(ucLen > 0)
             {
-                strncpy( pcWriteBuffer, "\r\nEEPROM Write Failed!\r\n", xWriteBufferLen );
+                len = (ucAddr/8 + 1)*8 - ucAddr;
+                if(len <= ucLen)
+                {
+                    ucLen -= len;
+                    ucAddr += len;
+                }
+                else
+                {
+                    len = ucLen;
+                    ucLen = 0;
+                }
+                mpu9250WriteBytes(EEPROM_SLV_ADDR,ucAddr,len,pData);
+                pData+=len;
             }
-            else
-            {
-                strncpy( pcWriteBuffer, "\r\nEEPROM Write Success!\r\n", xWriteBufferLen );
-            }
+
             uxParameterNumber = 0;
             xReturn = pdFALSE;
         }

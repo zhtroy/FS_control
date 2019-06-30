@@ -224,20 +224,6 @@ typedef struct{
 #define ADJ_THROTTLE_UPSCALE (20)
 #define ADJ_THROTTLE_DWSCALE (-20)
 
-#if CAR_VERSION == 20
-#define MAX_THROTTLE_SIZE (110)
-
-#elif CAR_VERSION == 21
-#define MAX_THROTTLE_SIZE (160)
-
-#elif CAR_VERSION == 22
-#define MAX_THROTTLE_SIZE (160)
-
-#elif CAR_VERSION == 23
-#define MAX_THROTTLE_SIZE (180)
-
-#endif
-
 #define MIN_THROTTLE_SIZE (-355)
 
 /*
@@ -248,12 +234,6 @@ typedef struct{
 /*
  * 刹车偏移量，由刹车部件导致，一部分行程可能无刹车效果
  */
-#if  CAR_VERSION == 21
-#define BREAK_OFFSET (100)
-
-#elif CAR_VERSION == 23
-#define BREAK_OFFSET (110)
-#endif
 
 /*
  * 安全距离范围定义,单位(10cm)
