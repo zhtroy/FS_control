@@ -146,6 +146,11 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 						{
 							p->errorcode = ERROR_MANUAL_STOP;
 						}
+
+						/*
+						 * 调试用，将订单状态机改为free状态
+						 */
+						CellHsmPost (force_to_freestate);
 						break;
 					}
 

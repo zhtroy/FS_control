@@ -3,6 +3,7 @@
 #include "soc_C6748.h" 
 #include "interrupt.h"
 #include <ti/sysbios/knl/Semaphore.h>
+#include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/BIOS.h>
 #include <xdc/runtime/Types.h>
 #include <xdc/runtime/Timestamp.h>

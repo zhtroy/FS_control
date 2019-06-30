@@ -24,6 +24,7 @@
 #include "Moto/task_moto.h"
 #include "Sensor/CellCommunication/CellCommunication.h"
 #include "logLib.h"
+#include "Moto/task_moto.h"
 
 #define TEST 0
 
@@ -79,15 +80,9 @@ static Void taskCellSend(UArg a0, UArg a1)
 		myepc = RFIDGetEpc();
 		cabstatus.nid = EPCgetShortID(&myepc);
 
-#if TEST
-		cabstatus.nid = 72339069014640006;
-#endif
 
 		//离上一个RFID节点的偏移
 		cabstatus.offset = ((double)MotoGetCarDistance() - (double)(myepc.distance))/10.0;
-#if TEST
-		cabstatus.offset = 0.0;
-#endif
 		//速度
 		cabstatus.speed = (double) MotoGetSpeed();
 		//订单状态
@@ -197,6 +192,10 @@ static Void taskCellHsm(UArg a0, UArg a1)
 			type = cell_msg_tick;
 		}
 
+		if(force_to_freestate == type)
+		{
+			m_orderstate = freestate;
+		}
 
 		/*
 		 * 状态机
@@ -275,6 +274,8 @@ static Void taskCellHsm(UArg a0, UArg a1)
 
 		}
 		laststate = m_orderstate;
+
+		g_fbData.orderState = m_orderstate;
 	}
 }
 

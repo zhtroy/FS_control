@@ -22,7 +22,8 @@ typedef enum
 	cell_ordercab,
 	cell_updateroute,
 	carhsm_arrived,
-	door_opened
+	door_opened,
+	force_to_freestate
 }cellhsm_msg_type_t;
 
 typedef struct{

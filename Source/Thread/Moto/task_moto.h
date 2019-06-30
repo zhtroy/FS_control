@@ -140,6 +140,7 @@ typedef struct{
  	uint16_t frontCarID;
  	uint8_t rfid[12];
  	uint16_t myID;
+ 	uint8_t orderState;
 }fbdata_t;
 
 /*无错误*/
