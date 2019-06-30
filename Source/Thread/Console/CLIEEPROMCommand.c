@@ -14,6 +14,7 @@
 /* FreeRTOS+CLI includes. */
 #include "FreeRTOS_CLI.h"
 #include "mpu9250/mpu9250_drv.h"
+#include <ti/sysbios/knl/Task.h>
 
 BaseType_t prvSetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
@@ -206,7 +207,7 @@ BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
                 if(len <= ucLen)
                 {
                     ucLen -= len;
-                    ucAddr += len;
+
                 }
                 else
                 {
@@ -214,6 +215,8 @@ BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
                     ucLen = 0;
                 }
                 mpu9250WriteBytes(EEPROM_SLV_ADDR,ucAddr,len,pcWriteBuffer);
+                Task_sleep(10);
+                ucAddr += len;
             }
 
             uxParameterNumber = 0;
@@ -276,7 +279,6 @@ BaseType_t prvEEPROMWrite( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
                 if(len <= ucLen)
                 {
                     ucLen -= len;
-                    ucAddr += len;
                 }
                 else
                 {
@@ -285,6 +287,8 @@ BaseType_t prvEEPROMWrite( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
                 }
                 mpu9250WriteBytes(EEPROM_SLV_ADDR,ucAddr,len,pData);
                 pData+=len;
+                ucAddr += len;
+                Task_sleep(10);
             }
 
             uxParameterNumber = 0;

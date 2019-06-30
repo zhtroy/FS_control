@@ -73,6 +73,33 @@ int32_t mpu9250WriteBytes(uint8_t slvAddr, uint8_t regAddr, uint8_t numBytes, ui
     return 0;
 }
 
+int32_t mpu9250WriteBytesFreeLength(uint8_t slvAddr, uint8_t regAddr, uint8_t numBytes, uint8_t *dataPtr)
+{
+	int len;
+	while(numBytes > 0)
+	{
+		len = (regAddr/8 + 1)*8 - regAddr;
+		if(len <= numBytes)
+		{
+			numBytes -= len;
+
+		}
+		else
+		{
+			len = numBytes;
+			numBytes = 0;
+		}
+		if(mpu9250WriteBytes(EEPROM_SLV_ADDR,regAddr,len,dataPtr) == -1)
+		{
+			return -1;
+		}
+		dataPtr+=len;
+		regAddr += len;
+		Task_sleep(10);
+	}
+	return 0;
+}
+
 /*****************************************************************************
  * 函数名称: int32_t mpu9250ReadBytes(uint8_t slvAddr,uint8_t regAddr, uint8_t numBytes, uint8_t *dataPtr)
  * 函数说明: mpu9250的IIC读取函数

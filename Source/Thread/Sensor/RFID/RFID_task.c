@@ -118,7 +118,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			/*
 			 * 每读到一个新的EPC值，都存入EEPROM
 			 */
-			if(mpu9250WriteBytes(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,&m_rawrfid) == -1)
+			if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,&m_rawrfid) == -1)
 			{
 				LogPrintf("EEPROM: fail to save EPC\n");
 			}
