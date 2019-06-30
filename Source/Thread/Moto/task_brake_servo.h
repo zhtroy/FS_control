@@ -14,6 +14,7 @@
 #define MODBUS_ACK_LOOPERR      (5)
 #define MODBUS_ACK_SENDERR      (6)
 
+#define UNKNOWNRAIL (0)
 #define LEFTRAIL    (1)
 #define RIGHTRAIL   (2)
 

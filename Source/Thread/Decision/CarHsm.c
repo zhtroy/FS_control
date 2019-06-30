@@ -27,6 +27,7 @@
 #include "Sensor/RFID/RFID_task.h"
 #include "Sensor/ZCP/V2V.h"
 #include "Message/InternalEvtCode.h"
+#include "Message/Message.h"
 #include "stdio.h"
 #include "Sensor/CellCommunication/CellCommunication.h"
 
@@ -377,20 +378,27 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 					{
 
 					}
-					else   //其他路径点都需要进入变轨流程
+					else
 					{
-						/*
-						 * 根据路径中WS域来决定是否要变轨
-						 */
-						if(ROUTE_WS_OUTA == RouteGetNodeWS(curNode)
-							&& RailGetRailState() == LEFTRAIL)
+						if(RailGetRailState() == UNKNOWNRAIL)
 						{
-							RailStartChangeRoutine();
+							Message_postError(ERROR_UNKNOWN_RAILSTATE);
 						}
-						else if(ROUTE_WS_INA == RouteGetNodeWS(curNode)
-								&& RailGetRailState() == RIGHTRAIL)
+						else
 						{
-							RailStartChangeRoutine();
+							/*
+							 * 根据路径中WS域来决定是否要变轨
+							 */
+							if(ROUTE_WS_OUTA == RouteGetNodeWS(curNode)
+								&& RailGetRailState() == LEFTRAIL)
+							{
+								RailStartChangeRoutine();
+							}
+							else if(ROUTE_WS_INA == RouteGetNodeWS(curNode)
+									&& RailGetRailState() == RIGHTRAIL)
+							{
+								RailStartChangeRoutine();
+							}
 						}
 					}
 				}
@@ -529,31 +537,39 @@ Msg const * RunningSeperate(car_hsm_t * me, Msg * msg)
 			g_fbData.FSMstate =running_seperate;
 			myepc = RFIDGetEpc();
 			frontepc = V2VGetFrontCarEpc();
-			//如果没有前车
-			if(V2VGetFrontCarId() == V2V_ID_NONE)
+
+			if(RailGetRailState() == UNKNOWNRAIL)
 			{
-				V2CAskFrontID();
+				Message_postError(ERROR_UNKNOWN_RAILSTATE);
 			}
-			//如果前车不在同一轨道上
-			if(V2VGetFrontCarId() != V2V_ID_NONE &&
-			   !EPCinSameRoad(&frontepc, &myepc) )
+			else
 			{
-				V2CAskFrontID();
-			}
-			//如果在同一轨道，前车不在分离区
-			if(V2VGetFrontCarId() != V2V_ID_NONE &&
-			   EPCinSameRoad(&frontepc, &myepc) &&
-			   frontepc.funcType != EPC_FUNC_SEPERATE )
-			{
-				V2CAskFrontID();
-			}
-			//如果前车在同一轨道分离区，但距离在40米以上
-			if(V2VGetFrontCarId() != V2V_ID_NONE &&
-			   EPCinSameRoad(&frontepc, &myepc) &&
-			   frontepc.funcType == EPC_FUNC_SEPERATE &&
-			   V2VGetDistanceToFrontCar() > 400)
-			{
-				V2CAskFrontID();
+				//如果没有前车
+				if(V2VGetFrontCarId() == V2V_ID_NONE)
+				{
+					V2CAskFrontID();
+				}
+				//如果前车不在同一轨道上
+				if(V2VGetFrontCarId() != V2V_ID_NONE &&
+				   !EPCinSameRoad(&frontepc, &myepc) )
+				{
+					V2CAskFrontID();
+				}
+				//如果在同一轨道，前车不在分离区
+				if(V2VGetFrontCarId() != V2V_ID_NONE &&
+				   EPCinSameRoad(&frontepc, &myepc) &&
+				   frontepc.funcType != EPC_FUNC_SEPERATE )
+				{
+					V2CAskFrontID();
+				}
+				//如果前车在同一轨道分离区，但距离在40米以上
+				if(V2VGetFrontCarId() != V2V_ID_NONE &&
+				   EPCinSameRoad(&frontepc, &myepc) &&
+				   frontepc.funcType == EPC_FUNC_SEPERATE &&
+				   V2VGetDistanceToFrontCar() > 400)
+				{
+					V2CAskFrontID();
+				}
 			}
 			return 0;
 		}

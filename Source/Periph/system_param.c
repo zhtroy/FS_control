@@ -4,6 +4,9 @@
 #include <ti/sysbios/BIOS.h>
 #include <xdc/runtime/System.h>
 #include <xdc/std.h>
+#include "Moto/task_moto.h"
+
+extern fbdata_t g_fbData;
 
 systemParameter_t sysParam ={
         .carID = 0,
@@ -15,6 +18,12 @@ systemParameter_t sysParam ={
 static void ParamInitTask(UArg arg0, UArg arg1)
 {
     mpu9250ReadBytes(EEPROM_PHY_ADDR,128, sizeof(systemParameter_t), (uint8_t*)(&sysParam));
+
+    /*
+     * 回传
+     */
+    g_fbData.myID = sysParam.carID;
+
 }
 
 void ParamInit()

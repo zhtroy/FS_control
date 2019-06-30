@@ -957,7 +957,7 @@ static void ServoChangeRailTask(void)
             regv = TTLRead();
 
             if((RailGetRailState() == LEFTRAIL && (regv & 0x03) == RIGHTRAIL) ||
-                (RailGetRailState() == RIGHTRAIL && (regv & 0x03) == LEFTRAIL))
+                (RailGetRailState() != LEFTRAIL && (regv & 0x03) == LEFTRAIL))
             {
                 RailSetRailState(regv & 0x03);		/* 更新轨道状态 */
                 changerail_timeout_cnt = 0;		/* 超时计数器清零 */

@@ -139,7 +139,7 @@ typedef struct{
  	uint32_t forwardCarRPM;
  	uint16_t frontCarID;
  	uint8_t rfid[12];
-
+ 	uint16_t myID;
 }fbdata_t;
 
 /*无错误*/
@@ -216,6 +216,9 @@ typedef struct{
 
 /*前车失联*/
 #define ERROR_FRONT_CAR_TIMEOUT         (24)
+
+/*轨道状态未知*/
+#define ERROR_UNKNOWN_RAILSTATE   		(25)
 
 
 #define DIFF_RPM_UPSCALE (4000)

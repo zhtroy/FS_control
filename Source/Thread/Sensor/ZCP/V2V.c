@@ -316,7 +316,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
 {
-	const uint32_t TIMEOUT = 1000;
+	const uint32_t TIMEOUT = 200;
 	const int RETRY_NUM = 5;
 
 	ZCPUserPacket_t sendPacket;
