@@ -44,7 +44,8 @@ void EPCfromByteArray(epc_t * epc, uint8_t array[])
 	epc->thirdNo = array[4];
 	epc->fourthNo = array[5];
 	epc->ab = BF_GET(array[6],7,1);
-	epc->areaType = BF_GET(array[6],0,7);
+	epc->adjustAreaNo = BF_GET(array[6],2,5);
+	epc->areaType = BF_GET(array[6],0,2);
 	epc->funcType = BF_GET(array[7],6,2);
 	epc->changePoint = BF_GET(array[7],5,1);
 	epc->roadFeature = BF_GET(array[7],0,5);

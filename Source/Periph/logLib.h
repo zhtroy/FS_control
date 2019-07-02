@@ -41,6 +41,8 @@ int LogMsg(const char *fmt, ...);
 void LogPuts(char *txBuffer, int numBytesToWrite);
 void LogPrintf(char *fmt, ...);
 
+#define LogDebug(fmt,...)  LogMsg("%s(%d)-<%s>: "##fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
+
 #ifdef __cplusplus
 }
 #endif

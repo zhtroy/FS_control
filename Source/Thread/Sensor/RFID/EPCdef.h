@@ -89,6 +89,8 @@ typedef struct epc_tag
 	uint8_t fourthNo;
 	//AB
 	uint8_t ab;
+	//调整区编号
+	uint8_t adjustAreaNo;
 	//路段类型
 	uint8_t areaType;
 	//功能区

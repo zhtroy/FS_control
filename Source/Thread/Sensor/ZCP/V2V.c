@@ -22,6 +22,7 @@
 #include "Sensor/RFID/RFID_task.h"
 #include "Sensor/SonicRadar/SonicRadar.h"
 #include <ti/sysbios/knl/Clock.h>
+#include "logLib.h"
 
 #define V2V_ZCP_UART_DEV_NUM    (1)
 #define V2V_ZCP_DEV_NUM (0)
@@ -137,8 +138,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		{
 			m_distanceToFrontCar = SonicGetDistance()/100;
 		}
-		else
-
+		else  //普通区距离
 		{
 			if(m_param.frontId == V2V_ID_NONE)
 			{
@@ -168,7 +168,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 						m_distanceToFrontCar = distanceDiff;
 					}
 				}
-				else
+				else  //不在同一条路
 				{
 					if(myepc.funcType == EPC_FUNC_NORMAL)
 					{
@@ -176,7 +176,22 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 					}
 					else
 					{
-					    if(0 == memcmp(&m_frontCarStatus.epc[1],&m_param.leftRoadID,sizeof(roadID_t)) &&
+						if( (myepc.funcType == EPC_FUNC_LADJUST || myepc.funcType == EPC_FUNC_RADJUST)
+						   && (frontepc.funcType == EPC_FUNC_LADJUST || frontepc.funcType == EPC_FUNC_RADJUST)
+						   && myepc.adjustAreaNo == frontepc.adjustAreaNo)
+						{
+							//如果和前车在同一调整区，距离不翻转
+							if(m_frontCarStatus.distance < MotoGetCarDistance())
+							{
+								m_distanceToFrontCar = 0;
+							}
+							else
+							{
+								m_distanceToFrontCar = m_frontCarStatus.distance - MotoGetCarDistance();
+							}
+
+						}
+						else if(0 == memcmp(&m_frontCarStatus.epc[1],&m_param.leftRoadID,sizeof(roadID_t)) &&
 					            EPC_AB_B == frontepc.ab)
 					    {
 					        /*
@@ -411,6 +426,7 @@ void V2VHandShakeFrontCar()
 
 void V2VSetDeltaDistance(int32_t delta)
 {
+	LogDebug("Delta distance: %d", delta);
 	m_deltaDistance = delta;
 }
 

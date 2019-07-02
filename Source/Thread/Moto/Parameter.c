@@ -15,7 +15,7 @@ parameter_t g_param = {
 		.StateRPM = {0},
 		.KSP = 0,
 		.KSI = 0,
-		.station_addr = 0
+		.station_addr = 0x5001
 
 };
 
