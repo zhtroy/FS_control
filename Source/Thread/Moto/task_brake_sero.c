@@ -778,6 +778,7 @@ static void TaskChangeRailRoutine()
 		Semaphore_pend(sem_startChangeRail, BIOS_WAIT_FOREVER);
 		startPos = MotoGetCarDistance();
 		lastRailState = RailGetRailState();
+		outofdistance = 0;
 
 		/*
 		 * 等待经过光电对管
