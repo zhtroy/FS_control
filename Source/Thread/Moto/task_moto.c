@@ -228,6 +228,7 @@ static void MotoUpdateDistanceTask(void)
     uint8_t size = 0;
     uint32_t calibrationPoint = 0;
     uint8_t calibFlag = 0;
+    uint8_t lastbSection = 0;
     uint8_t bSection = 0;
     int32_t deltaDist = 0;
     float step = 0;
@@ -289,7 +290,7 @@ static void MotoUpdateDistanceTask(void)
                 (calibrationQueue[0].byte[9] << 8) +
                 calibrationQueue[0].byte[10];
 
-        if(lastDistance < calibrationPoint && m_distance >= calibrationPoint)
+        if(lastDistance < calibrationPoint && m_distance >= calibrationPoint && calibFlag == 0)
         {
             /*
              * 到达校准点
@@ -336,12 +337,15 @@ static void MotoUpdateDistanceTask(void)
         /*
          * 检测到光电对管
          */
+        lastbSection = bSection;
         bSection = calibrationQueue[0].byte[6] >> 7;
 
-
-        if(bSection)
+        if(lastbSection == 0 && bSection == 1)
         {
-            memcpy(&deltaDist,&calibrationQueue[0].byte[14],sizeof(int32_t));
+            deltaDist = (calibrationQueue[0].byte[14] << 24) +
+                        (calibrationQueue[0].byte[15] << 16) +
+                        (calibrationQueue[0].byte[16] << 8) +
+                        calibrationQueue[0].byte[17] ;
             V2VSetDeltaDistance(deltaDist);
             m_distance = calibrationPoint + deltaDist;
             LogMsg("Calibration(B) End:%d\r\n",calibrationPoint);

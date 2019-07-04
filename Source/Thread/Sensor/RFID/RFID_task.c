@@ -241,6 +241,19 @@ void taskCreateRFID(UArg a0, UArg a1)
              * 生成RFID，发送消息，并删除当前RFID
              */
             EPCfromByteArray(&epc,rfidQueue[0].byte);
+
+            m_lastlastepc = m_lastepc;
+            m_lastepc = epc;
+            memcpy(m_rawrfid, rfidQueue[0].byte, EPC_SIZE);
+
+            /*
+             * 每读到一个新的EPC值，都存入EEPROM
+             */
+            if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,&m_rawrfid) == -1)
+            {
+                LogPrintf("EEPROM: fail to save EPC\n");
+            }
+
             msg = Message_getEmpty();
             msg->type = rfid;
             memcpy(msg->data, &epc, sizeof(epc_t));
