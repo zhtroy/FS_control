@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "Test_config.h"
+#include "Sensor/RFID/EPCdef.h"
 
 /*
  * 轮子周长,轨道总长
@@ -143,6 +144,9 @@ typedef struct{
  	uint8_t orderState;
 }fbdata_t;
 
+typedef struct{
+    uint8_t byte[18];
+}calibrationPoint_t;
 /*无错误*/
 #define ERROR_NONE                  (0) 
 
@@ -221,7 +225,10 @@ typedef struct{
 /*轨道状态未知*/
 #define ERROR_UNKNOWN_RAILSTATE   		(25)
 
-
+/*
+ * 超出校准点
+ */
+#define ERROR_CALIBRATION_OUTRANGE         (26)
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
@@ -282,5 +289,6 @@ uint16_t MotoGetRpm();
 uint8_t MotoGetCarMode();
 uint32_t MotoGetCarDistance();
 float MotoGetSpeed();
-
+void MotoSetCarDistance(uint32_t dist);
+void MotoUpdateCalibrationPoint(rfidPoint_t * calib);
 #endif

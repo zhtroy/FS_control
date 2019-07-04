@@ -108,6 +108,9 @@ typedef struct
     uint8_t byte[5];
 }roadID_t;
 
+typedef struct{
+    uint8_t byte[18];
+}rfidPoint_t;
 
 extern void EPCfromByteArray(epc_t * epc, uint8_t array[]);
 extern uint8_t EPCequal(epc_t * a, epc_t * b);

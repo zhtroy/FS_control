@@ -27,6 +27,7 @@
 #include <ti/sysbios/knl/Mailbox.h>
 #include "mpu9250_drv.h"
 #include "logLib.h"
+#include "Lib/vector.h"
 
 
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
@@ -201,6 +202,64 @@ Void taskRFID(UArg a0, UArg a1)
 
 	}
 
+}
+
+
+static rfidPoint_t *rfidQueue=0;
+
+void taskCreateRFID(UArg a0, UArg a1)
+{
+    uint8_t size = 0;
+    uint32_t carPos = 0;
+    uint32_t lastPos = 0;
+    uint32_t rfidDist = 0;
+    epc_t epc;
+    p_msg_t msg;
+    while(1)
+    {
+        Task_sleep(100);
+
+        size = vector_size(rfidQueue);
+        if(size == 0)
+        {
+            /*
+             * 队列为空，无法产生RFID;
+             */
+            continue;
+        }
+        lastPos = carPos;
+        carPos = MotoGetCarDistance();
+
+        rfidDist = (rfidQueue[0].byte[8] << 16) +
+                (rfidQueue[0].byte[9] << 8) +
+                rfidQueue[0].byte[10];
+
+        if((lastPos <= carPos && lastPos <= rfidDist && rfidDist <= carPos) ||
+                ((lastPos > carPos && (lastPos <= rfidDist || rfidDist <= carPos))))
+        {
+            /*
+             * 生成RFID，发送消息，并删除当前RFID
+             */
+            EPCfromByteArray(&epc,rfidQueue[0].byte);
+            msg = Message_getEmpty();
+            msg->type = rfid;
+            memcpy(msg->data, &epc, sizeof(epc_t));
+            msg->dataLen = sizeof(epc_t);
+            Message_post(msg);
+
+            LogMsg("Create RFID %02x02x%02x02x%02x02x%02x02x%02x02x%02x02x\r\n",
+                    rfidQueue[0].byte[0],rfidQueue[0].byte[1],rfidQueue[0].byte[2],rfidQueue[0].byte[3],
+                    rfidQueue[0].byte[4],rfidQueue[0].byte[5],rfidQueue[0].byte[6],rfidQueue[0].byte[7],
+                    rfidQueue[0].byte[8],rfidQueue[0].byte[9],rfidQueue[0].byte[10],rfidQueue[0].byte[11]);
+            vector_erase(rfidQueue,0);
+        }
+
+    }
+}
+
+void RFIDUpdateQueue(rfidPoint_t *rfidQ)
+{
+    rfidQueue = rfidQ;
 }
 
 uint8_t * RFIDGetRaw()

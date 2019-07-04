@@ -18,6 +18,7 @@
 #include "Message/Message.h"
 
 Semaphore_Handle g_sem_photoelectric;
+Semaphore_Handle photoCalib;
 static Mailbox_Handle rxDataMbox = NULL;
 
 
@@ -55,6 +56,7 @@ static void InitSem()
 	semParams.mode = Semaphore_Mode_BINARY;
 	g_sem_photoelectric = Semaphore_create(0, &semParams, NULL);
 
+	photoCalib = Semaphore_create(0, &semParams, NULL);
     Mailbox_Params mboxParams;
     
     /* 初始化接收邮箱 */
@@ -119,6 +121,7 @@ void taskPhotoElectric()
         		 * 这种跨模块之间共享信号量的方式不好，造成模块耦合
         		 */
         		Semaphore_post(g_sem_photoelectric);
+        		Semaphore_post(photoCalib);
         		levelState = 0;
         	}
         	break;

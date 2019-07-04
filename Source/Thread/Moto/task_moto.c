@@ -19,6 +19,7 @@
 #include "Zigbee/Zigbee.h"
 #include "Sensor/RFID/RFID_task.h"
 #include "Sensor/ZCP/V2V.h"
+#include "Lib/vector.h"
 
 /* 宏定义 */
 #define RX_MBOX_DEPTH (32)
@@ -44,6 +45,7 @@ static uint8_t frontValid = 0;
 static uint8_t rearValid = 0;
 static uint16_t recvCircle = 0;
 static uint32_t m_distance = 0;
+static uint32_t lastDistance = 0;
 static uint16_t maxSafeDistance = MAX_SAFE_DISTANCE;
 static uint16_t minSafeDistance = MIN_SAFE_DISTANCE;
 /********************************************************************************/
@@ -65,7 +67,7 @@ static moto_ctrl_t m_motoCtrl = {
 		.PidOn = 0
 };
 
-
+extern Semaphore_Handle photoCalib;
 /********************************************************************************/
 /*          外部CAN0的用户中断Handler                                                   */
 /*                                                                              */
@@ -210,85 +212,154 @@ static void MotoSendTask(void)
 /*
  * 根据RFID和轮子圈数，计算距离
  */
+static rfidPoint_t *calibrationQueue;
+
+/*
+ * 最大校准误差10m
+ */
+#define MAX_CALIBRATION_DISTANCE (100)
+
 static void MotoUpdateDistanceTask(void)
 {
-    Mailbox_Handle RFIDV2vMbox;
-    epc_t epc;
-    uint16_t lastCircleNum;
-    uint16_t curCircleNum;
+    uint16_t lastCircleNum = 0;
+    uint16_t curCircleNum = 0;
     uint16_t circleDiff = 0;
-    epc_t lastEpc;
-
-    float step;
+    p_msg_t msg;
+    uint8_t size = 0;
+    uint32_t calibrationPoint = 0;
+    uint8_t calibFlag = 0;
+    uint8_t bSection = 0;
+    int32_t deltaDist = 0;
+    float step = 0;
     const int UPDATE_INTERVAL = 100;
-
 
     while(1)
     {
     	/*
-    	 * 等待邮箱被初始化
+    	 * 100ms更新一次距离
     	 */
-        RFIDV2vMbox = RFIDGetV2vMailbox();
-    	if(RFIDV2vMbox == NULL)
-		{
-			Task_sleep(100);
-			continue;
-		}
-    	//读到RFID
-    	if(TRUE == Mailbox_pend(RFIDV2vMbox,(Ptr *)&epc,UPDATE_INTERVAL))
-		{
-			/*
-			 * 进入B段，计算deltaS
-			 */
-			if(EPC_AB_A == lastEpc.ab && EPC_AB_B == epc.ab)
-			{
-				V2VSetDeltaDistance((int32_t)(epc.distance)-(int32_t)m_distance);
-			}
+        Task_sleep(UPDATE_INTERVAL);
+        lastDistance = m_distance;
 
-    		//校正距离
-    		lastCircleNum = MotoGetCircles();
-			m_distance = epc.distance;
+        /*
+         * 根据车轮圈数更新距离
+         */
+        curCircleNum = MotoGetCircles();
+        if(lastCircleNum > curCircleNum)
+        {
+            circleDiff = 65535 -lastCircleNum + curCircleNum;
+        }
+        else
+        {
+            circleDiff = curCircleNum - lastCircleNum;
+        }
 
-			lastEpc = epc;
-		}
-    	else
-    	{
-    		curCircleNum = MotoGetCircles();
-    		if(lastCircleNum > curCircleNum)
-    		{
-				circleDiff = 65535 -lastCircleNum + curCircleNum;
-			}
-			else
-			{
-				circleDiff = curCircleNum - lastCircleNum;
-			}
+        lastCircleNum = curCircleNum;
+        /*
+         * 过滤掉CAN传输出错的圈数数据
+         * 圈数差每100ms不超过20圈
+         */
+        if(circleDiff<20)
+        {
+            step = circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+            if(GEAR_REVERSE == MotoGetGear())
+            {
+                if(m_distance > step)
+                    m_distance -= step;
+                else
+                    m_distance = TOTAL_DISTANCE - step + m_distance;
+            }
+            else
+            {
+                m_distance += step;
+            }
+        }
 
-    		lastCircleNum = curCircleNum;
-    		/*
-    		 * 过滤掉CAN传输出错的圈数数据
-    		 * 圈数差每100ms不超过20圈
-    		 */
-    		if(circleDiff<20)
-    		{
-    		    step = circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
-    			if(GEAR_REVERSE == MotoGetGear())
-    			{
-    			    if(m_distance > step)
-    			        m_distance -= step;
-    			    else
-    			        m_distance = TOTAL_DISTANCE - step + m_distance;
-    			}
-    			else
-    			{
-    				m_distance += step;
-    			}
-    		}
+        size = vector_size(calibrationQueue);
+        if(size == 0)
+        {
+            /*
+             * 无校准点
+             */
+            g_fbData.distance = m_distance;
+            continue;
+        }
 
-    	}
-    	g_fbData.distance = m_distance;
+        calibrationPoint = (calibrationQueue[0].byte[8] << 16) +
+                (calibrationQueue[0].byte[9] << 8) +
+                calibrationQueue[0].byte[10];
 
+        if(lastDistance < calibrationPoint && m_distance >= calibrationPoint)
+        {
+            /*
+             * 到达校准点
+             * 设置校准启动标志，并清除光电对管信号量
+             */
+            calibFlag = 1;
+            Semaphore_pend(photoCalib,BIOS_NO_WAIT);
+            LogMsg("Calibration Start:%d\r\n",calibrationPoint);
+        }
+
+        if(calibFlag == 0)
+        {
+            /*
+             * 尚未到达校准点
+             */
+            g_fbData.distance = m_distance;
+            continue;
+        }
+
+        if(FALSE == Semaphore_pend(photoCalib,BIOS_NO_WAIT))
+        {
+            /*
+             * 尚未检测到光电对管,且超出校准范围
+             * TODO:尚未考虑环形翻转
+             */
+            if((m_distance - calibrationPoint) > MAX_CALIBRATION_DISTANCE)
+            {
+                /*
+                *超出校准点，清除该校准点，并发送错误
+                */
+                calibFlag = 0;
+                vector_erase(calibrationQueue,0);
+
+                msg = Message_getEmpty();
+                msg->type = error;
+                msg->data[0] = ERROR_CALIBRATION_OUTRANGE;
+                msg->dataLen = 1;
+                Message_post(msg);
+            }
+            g_fbData.distance = m_distance;
+            continue;
+        }
+
+        /*
+         * 检测到光电对管
+         */
+        bSection = calibrationQueue[0].byte[6] >> 7;
+
+
+        if(bSection)
+        {
+            memcpy(&deltaDist,&calibrationQueue[0].byte[14],sizeof(int32_t));
+            V2VSetDeltaDistance(deltaDist);
+            m_distance = calibrationPoint + deltaDist;
+            LogMsg("Calibration(B) End:%d\r\n",calibrationPoint);
+        }
+        else
+        {
+            m_distance = calibrationPoint;
+            LogMsg("Calibration(A) End:%d\r\n",calibrationPoint);
+        }
+
+        /*
+         * 校准结束，清除校准点
+         */
+        calibFlag = 0;
+        vector_erase(calibrationQueue,0);
     }
 }
+
 #define VOL_LOW_THRESHOLD (65.0)
 static void MotoRecvTask(void)
 {
@@ -960,4 +1031,18 @@ uint8_t MotoGetCarMode()
 uint32_t MotoGetCarDistance()
 {
 	return m_distance;
+}
+
+/*
+ * 设置车辆在轨道上的绝对位置
+ */
+void MotoSetCarDistance(uint32_t dist)
+{
+    m_distance = dist;
+    lastDistance = dist;
+}
+
+void MotoUpdateCalibrationPoint(rfidPoint_t * calib)
+{
+    calibrationQueue = calib;
 }

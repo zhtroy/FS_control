@@ -12,6 +12,7 @@
 #include "Sensor/RFID/EPCdef.h"
 #include <ti/sysbios/knl/Mailbox.h>
 
+
 extern uint8_t * RFIDGetRaw();
 extern epc_t RFIDGetEpc();
 extern epc_t RFIDGetLastEpc();

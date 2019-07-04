@@ -52,7 +52,7 @@
 
 
 
-extern Void taskRFID(UArg a0, UArg a1);
+extern Void taskCreateRFID(UArg a0, UArg a1);
 /*
  * 全局变量
  */
@@ -415,7 +415,7 @@ void testZigbeeControlHSM_init()
 	taskParams.priority = 3;
 	taskParams.stackSize = 2048;
 	taskParams.arg0 = 0;
-	task = Task_create(taskRFID, &taskParams, &eb);
+	task = Task_create(taskCreateRFID, &taskParams, &eb);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
