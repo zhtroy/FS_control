@@ -18,6 +18,7 @@ extern epc_t RFIDGetEpc();
 extern epc_t RFIDGetLastEpc();
 extern uint64_t RFIDGetNID();
 Mailbox_Handle RFIDGetV2vMailbox();
+extern void RFIDUpdateQueue(rfidPoint_t *rfidQ);
 
 
 #endif /* RFID_TASK_H_ */

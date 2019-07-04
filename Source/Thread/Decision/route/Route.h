@@ -29,6 +29,7 @@ typedef struct {
 #pragma STRUCT_ALIGN(packet_routenode_t, 8)
 
 void RouteUpdate(packet_routenode_t * vnode);
+void RouteUpdateCopy(packet_routenode_t * vnode);
 packet_routenode_t RoutePop();
 packet_routenode_t RoutePeek();
 uint8_t RouteHasOngoing();

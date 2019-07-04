@@ -227,6 +227,7 @@ static void MotoUpdateDistanceTask(void)
     p_msg_t msg;
     uint8_t size = 0;
     uint32_t calibrationPoint = 0;
+    uint32_t calibrationPointMin = 0;
     uint8_t calibFlag = 0;
     uint8_t lastbSection = 0;
     uint8_t bSection = 0;
@@ -273,6 +274,10 @@ static void MotoUpdateDistanceTask(void)
             else
             {
                 m_distance += step;
+                if(m_distance >TOTAL_DISTANCE )
+                {
+                	m_distance -= TOTAL_DISTANCE;
+                }
             }
         }
 
@@ -289,8 +294,9 @@ static void MotoUpdateDistanceTask(void)
         calibrationPoint = (calibrationQueue[0].byte[8] << 16) +
                 (calibrationQueue[0].byte[9] << 8) +
                 calibrationQueue[0].byte[10];
+        calibrationPointMin = calibrationPoint - (MAX_CALIBRATION_DISTANCE/2);
 
-        if(lastDistance < calibrationPoint && m_distance >= calibrationPoint && calibFlag == 0)
+        if(lastDistance < calibrationPointMin && m_distance >= calibrationPointMin && calibFlag == 0)
         {
             /*
              * 到达校准点
@@ -316,7 +322,7 @@ static void MotoUpdateDistanceTask(void)
              * 尚未检测到光电对管,且超出校准范围
              * TODO:尚未考虑环形翻转
              */
-            if((m_distance - calibrationPoint) > MAX_CALIBRATION_DISTANCE)
+            if((m_distance - calibrationPointMin) > MAX_CALIBRATION_DISTANCE)
             {
                 /*
                 *超出校准点，清除该校准点，并发送错误
@@ -1048,5 +1054,13 @@ void MotoSetCarDistance(uint32_t dist)
 
 void MotoUpdateCalibrationPoint(rfidPoint_t * calib)
 {
-    calibrationQueue = calib;
+	uint8_t size;
+	uint8_t i;
+	size = vector_size(calib);
+	vector_free(calibrationQueue);
+	calibrationQueue =0;
+	for(i=0;i<size;i++)
+	{
+		vector_push_back(calibrationQueue,calib[i]);
+	}
 }

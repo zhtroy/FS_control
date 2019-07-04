@@ -417,7 +417,8 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 			{
 				if(!g_param.cycleRoute)
 				{
-					V2CEnterStation();
+					//为了测F码，暂时不请求站台
+//					V2CEnterStation();
 				}
 			}
 

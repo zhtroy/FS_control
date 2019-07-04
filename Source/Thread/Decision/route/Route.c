@@ -23,7 +23,8 @@ void RouteShow(packet_routenode_t * vnode)
 	/*
 	 * 将收到的路径打印出来
 	 */
-	LogMsg("current route:\n====================\n");
+	LogMsg("\n current route (%d):\n====================\n",vector_size(vnode));
+
 	if(RouteHasOngoing())
 	{
 		size_t i;
@@ -55,6 +56,22 @@ void RouteUpdate(packet_routenode_t * vnode)
 {
 	RouteFree();
 	m_vnode = vnode;
+
+	RouteShow(m_vnode);
+}
+
+/*
+ * 更新路径（拷贝的方式）
+ */
+void RouteUpdateCopy(packet_routenode_t * vnode)
+{
+	size_t i;
+
+	RouteFree();
+	for(i = 0;i< vector_size(vnode);i++)
+	{
+		vector_push_back( m_vnode , vnode[i]);
+	}
 
 	RouteShow(m_vnode);
 }

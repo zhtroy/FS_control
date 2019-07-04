@@ -28,6 +28,7 @@
 #include "Sensor/SonicRadar/SonicRadar.h"
 #include "stdio.h"
 #include "Sensor/CellCommunication/CellCommunication.h"
+#include "Command/Command.h"
 
 
 #define REMOTE_CMD_MODE          1
@@ -448,4 +449,7 @@ void testZigbeeControlHSM_init()
 
 	//cell
 	CellCommunicationInit();
+
+	//F码接口
+	CommandInit();
 }

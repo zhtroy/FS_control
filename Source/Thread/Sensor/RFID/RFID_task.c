@@ -234,8 +234,8 @@ void taskCreateRFID(UArg a0, UArg a1)
                 (rfidQueue[0].byte[9] << 8) +
                 rfidQueue[0].byte[10];
 
-        if((lastPos <= carPos && lastPos <= rfidDist && rfidDist <= carPos) ||
-                ((lastPos > carPos && (lastPos <= rfidDist || rfidDist <= carPos))))
+        if((lastPos <= carPos && lastPos <= rfidDist && rfidDist <= carPos)) //||
+                //((lastPos > carPos && (lastPos <= rfidDist || rfidDist <= carPos))))
         {
             /*
              * 生成RFID，发送消息，并删除当前RFID
@@ -253,6 +253,8 @@ void taskCreateRFID(UArg a0, UArg a1)
             {
                 LogPrintf("EEPROM: fail to save EPC\n");
             }
+			//将读到的RFID反馈
+			memcpy(g_fbData.rfid, m_rawrfid, EPC_SIZE);
 
             msg = Message_getEmpty();
             msg->type = rfid;
@@ -260,7 +262,7 @@ void taskCreateRFID(UArg a0, UArg a1)
             msg->dataLen = sizeof(epc_t);
             Message_post(msg);
 
-            LogMsg("Create RFID %02x02x%02x02x%02x02x%02x02x%02x02x%02x02x\r\n",
+            LogMsg("Create RFID %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\r\n",
                     rfidQueue[0].byte[0],rfidQueue[0].byte[1],rfidQueue[0].byte[2],rfidQueue[0].byte[3],
                     rfidQueue[0].byte[4],rfidQueue[0].byte[5],rfidQueue[0].byte[6],rfidQueue[0].byte[7],
                     rfidQueue[0].byte[8],rfidQueue[0].byte[9],rfidQueue[0].byte[10],rfidQueue[0].byte[11]);
@@ -272,7 +274,15 @@ void taskCreateRFID(UArg a0, UArg a1)
 
 void RFIDUpdateQueue(rfidPoint_t *rfidQ)
 {
-    rfidQueue = rfidQ;
+	uint8_t size;
+	uint8_t i;
+	size = vector_size(rfidQ);
+	vector_free(rfidQueue);
+	rfidQueue =0;
+	for(i=0;i<size;i++)
+	{
+		vector_push_back(rfidQueue,rfidQ[i]);
+	}
 }
 
 uint8_t * RFIDGetRaw()
