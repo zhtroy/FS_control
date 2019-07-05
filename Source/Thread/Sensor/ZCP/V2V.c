@@ -342,6 +342,8 @@ static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
     {
     	Semaphore_pend(m_sem_handshakefrontcar_start,BIOS_WAIT_FOREVER);
 
+    	Semaphore_reset(m_sem_handshakefrontcar_resp,0);
+
 		retryNum = RETRY_NUM;
 		do
 		{

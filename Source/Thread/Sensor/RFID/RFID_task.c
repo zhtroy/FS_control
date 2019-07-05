@@ -193,6 +193,7 @@ Void taskRFID(UArg a0, UArg a1)
     else
     {
     	EPCfromByteArray(&m_lastepc, m_rawrfid);
+		Mailbox_post(RFIDV2vMbox,(Ptr*)&m_lastepc,BIOS_NO_WAIT);
     }
 
 	while(1)
