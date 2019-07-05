@@ -94,11 +94,37 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
         case RFID_EVT:
         {
             evt_rfid_t* p = EVT_CAST(msg, evt_rfid_t);
-			epc_t lastEpc;
 
-            if(EPC_AREATYPE_LEFTEND == p->epc.areaType)
+            if(EPC_ROADBREAK_LEFT_AHEAD == p->epc.roadBreak)
             {
                 if(LEFTRAIL == RailGetRailState() && (GEAR_DRIVE == MotoGetGear() || GEAR_LOW == MotoGetGear()))
+                {
+                    MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
+                    STATE_TRAN(me, &me->forcebrake);
+                }
+            }
+
+            if(EPC_ROADBREAK_RIGHT_AHEAD == p->epc.roadBreak)
+            {
+                if(RIGHTRAIL == RailGetRailState() && (GEAR_DRIVE == MotoGetGear() || GEAR_LOW == MotoGetGear()))
+                {
+                    MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
+                    STATE_TRAN(me, &me->forcebrake);
+                }
+            }
+
+            if(EPC_ROADBREAK_LEFT_BEHIND == p->epc.roadBreak)
+            {
+                if(LEFTRAIL == RailGetRailState() && GEAR_REVERSE == MotoGetGear() )
+                {
+                    MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
+                    STATE_TRAN(me, &me->forcebrake);
+                }
+            }
+
+            if(EPC_ROADBREAK_RIGHT_BEHIND == p->epc.roadBreak)
+            {
+                if(RIGHTRAIL == RailGetRailState() && GEAR_REVERSE == MotoGetGear() )
                 {
                     MotoSetErrorCode(ERROR_OUT_SAFE_TRACK);
                     STATE_TRAN(me, &me->forcebrake);

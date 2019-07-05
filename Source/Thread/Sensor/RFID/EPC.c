@@ -53,7 +53,7 @@ void EPCfromByteArray(epc_t * epc, uint8_t array[])
 
 	epc->distance = array[8]*65536 + array[9]*256 + array[10];
 
-
+	epc->roadBreak = BF_GET(array[11], 5,3 );
 
 
 }

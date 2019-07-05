@@ -58,8 +58,14 @@ typedef enum{
  */
 #define EPC_AREATYPE_NORMAL 	(0)
 #define EPC_AREATYPE_STATION 	(1)
-#define EPC_AREATYPE_LEFTEND 	(2)
-#define EPC_AREATYPE_RIGHTEND 	(3)
+
+/*
+ * 断头路类型
+ */
+#define EPC_ROADBREAK_LEFT_AHEAD 	(1)
+#define EPC_ROADBREAK_LEFT_BEHIND 	(2)
+#define EPC_ROADBREAK_RIGHT_AHEAD 	(3)
+#define EPC_ROADBREAK_RIGHT_BEHIND 	(4)
 
 /*
  * 功能区
@@ -101,6 +107,8 @@ typedef struct epc_tag
 	uint8_t roadFeature;
 	//距起始位置距离
 	uint32_t distance;
+	//断头路信息
+	uint8_t roadBreak;
 }epc_t;
 
 typedef struct
