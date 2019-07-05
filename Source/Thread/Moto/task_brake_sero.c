@@ -673,7 +673,6 @@ void ServoBrakeTask(void *param)
 #define BRAKE_MAX (255)
 
 #define BRAKE_SLOTS (1000)
-#define REVERSE_FORCE (100)
 
 static void BrakeCanIntrHandler(int32_t devsNum,int32_t event)
 {
@@ -727,14 +726,14 @@ void ServoBrakeTask(void *param)
     	    /*2.3-2.4机车刹车方向*/
     	    brakeforce =  BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
     	    if(brakeforce <= 0)
-    	        brakeforce = - REVERSE_FORCE;
+    	        brakeforce = - sysParam.brakeReverseRatio * 10;  //按百分比设置反向力矩 (10 = 1000/ 100)
     	}
     	else
     	{
     	    /*2.1机车刹车方向*/
     	    brakeforce =  -BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
     	    if(brakeforce >= 0)
-    	        brakeforce = REVERSE_FORCE;
+    	        brakeforce = sysParam.brakeReverseRatio * 10;  //按百分比设置反向力矩 (10 = 1000/ 100)
     	}
 
     	canData.Data[5] = brakeforce & 0xFF;
