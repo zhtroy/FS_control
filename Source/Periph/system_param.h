@@ -13,6 +13,7 @@ typedef struct{
     uint8_t brakeDirection;
     uint8_t brakeOffset;
     uint8_t maxtThrottle;
+    uint8_t brakeReverseRatio;
 }systemParameter_t;
 
 #define EEPROM_PHY_ADDR (0x50)

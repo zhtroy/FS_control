@@ -36,6 +36,9 @@
 #define V2C_RECV_TASK_PRIO 		(5)
 #define V2C_SESSION_TASK_PRIO   (V2C_RECV_TASK_PRIO + 1)
 
+#define TIMEOUT (200)  //发送间隔
+#define RETRY_NUM (10)  //重发次数
+
 static ZCPInstance_t v2cInst;
 
 static uint8_t m_openOrCloseDoor = 0;
@@ -160,8 +163,6 @@ static void V2CSendTask(UArg arg0, UArg arg1)
 
 static void V2COpenDoorTask(UArg arg0, UArg arg1)
 {
-	const uint32_t TIMEOUT = 1000;
-	const int RETRY_NUM = 2;
     ZCPUserPacket_t sendPacket, recvPacket;
     v2c_resp_opendoor_t resp;
     Bool pendResult;
@@ -216,8 +217,6 @@ static void V2COpenDoorTask(UArg arg0, UArg arg1)
 
 static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 {
-	const uint32_t TIMEOUT = 200;
-	const int RETRY_NUM = 5;
     ZCPUserPacket_t sendPacket, recvPacket;
     v2c_req_forward_id_t req;
     v2c_resp_forward_id_t resp;
@@ -228,6 +227,14 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
     while(1)
     {
     	Semaphore_pend(m_sem_askfrontid,BIOS_WAIT_FOREVER);
+
+		/*
+		 * 先清除邮箱
+		 */
+		for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_forcarid);i++)
+		{
+			Mailbox_pend(m_mb_forcarid, (Ptr)&recvPacket, BIOS_NO_WAIT);
+		}
 
 		retryNum = RETRY_NUM;
 		do
@@ -244,13 +251,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_FRONTCARID;
 			sendPacket.len = sizeof(req);
 
-			/*
-			 * 先清除邮箱
-			 */
-			for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_forcarid);i++)
-			{
-				Mailbox_pend(m_mb_forcarid, (Ptr)&recvPacket, BIOS_NO_WAIT);
-			}
+
 			/*
 			 * 发送请求
 			 */
@@ -286,8 +287,6 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 
 static void V2CEnterStationTask(UArg arg0, UArg arg1)
 {
-	const uint32_t TIMEOUT = 1000;
-	const int RETRY_NUM = 2;
     ZCPUserPacket_t sendPacket, recvPacket;
     v2c_req_enterstation_t req;
     v2c_resp_enterstation_t resp;
@@ -300,6 +299,15 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
     while(1)
     {
     	Semaphore_pend(m_sem_enterstation,BIOS_WAIT_FOREVER);
+
+
+		/*
+		 * 先清除邮箱
+		 */
+		for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_enterstation);i++)
+		{
+			Mailbox_pend(m_mb_enterstation, (Ptr)&recvPacket, BIOS_NO_WAIT);
+		}
 
 		retryNum = RETRY_NUM;
 		do
@@ -321,13 +329,7 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
 			sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_ENTERSTATION;
 			sendPacket.len = sizeof(req);
 
-			/*
-			 * 先清除邮箱
-			 */
-			for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_enterstation);i++)
-			{
-				Mailbox_pend(m_mb_enterstation, (Ptr)&recvPacket, BIOS_NO_WAIT);
-			}
+
 			/*
 			 * 发送请求
 			 */
@@ -368,8 +370,6 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
 
 static void V2CLeaveStationTask(UArg arg0, UArg arg1)
 {
-	const uint32_t TIMEOUT = 1000;
-	const int RETRY_NUM = 2;
     ZCPUserPacket_t sendPacket, recvPacket;
     v2c_req_leavestation_t req;
     Bool pendResult;
@@ -380,6 +380,14 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
     while(1)
     {
     	Semaphore_pend(m_sem_leavestation,BIOS_WAIT_FOREVER);
+
+		/*
+		 * 先清除邮箱
+		 */
+		for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_leavestation);i++)
+		{
+			Mailbox_pend(m_mb_leavestation, (Ptr)&recvPacket, BIOS_NO_WAIT);
+		}
 
 		retryNum = RETRY_NUM;
 		do
@@ -401,13 +409,7 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
 			sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_LEAVESTATION;
 			sendPacket.len = sizeof(req);
 
-			/*
-			 * 先清除邮箱
-			 */
-			for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_leavestation);i++)
-			{
-				Mailbox_pend(m_mb_leavestation, (Ptr)&recvPacket, BIOS_NO_WAIT);
-			}
+
 			/*
 			 * 发送请求
 			 */

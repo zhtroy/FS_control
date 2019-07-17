@@ -332,7 +332,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
 {
 	const uint32_t TIMEOUT = 200;
-	const int RETRY_NUM = 5;
+	const int RETRY_NUM = 10;
 
 	ZCPUserPacket_t sendPacket;
     Bool pendResult;
@@ -341,6 +341,8 @@ static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
     while(1)
     {
     	Semaphore_pend(m_sem_handshakefrontcar_start,BIOS_WAIT_FOREVER);
+
+    	Semaphore_reset(m_sem_handshakefrontcar_resp,0);
 
 		retryNum = RETRY_NUM;
 		do
