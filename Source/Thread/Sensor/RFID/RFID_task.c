@@ -28,6 +28,8 @@
 #include "mpu9250_drv.h"
 #include "logLib.h"
 #include "Lib/vector.h"
+#include "CarState.h"
+#include "Parameter.h"
 
 
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
@@ -89,7 +91,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 	p_msg_t msg;
 	epc_t epc;
 	int32_t timeMs;
-
+	car_mode_t mode = Manual;
 
 	switch(type)
 	{
@@ -112,6 +114,18 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			{
 				break;
 			}
+
+			/*
+			 * 物理RFID发送条件
+			 * 1.非自动模式 或
+			 * 2.出轨点
+			 */
+			mode = MotoGetCarMode();
+			if(mode == Auto && epc.roadBreak == 0)
+			{
+			    break;
+			}
+
 			m_lastlastepc = m_lastepc;
 			m_lastepc = epc;
 			memcpy(m_rawrfid, &data[2], EPC_SIZE);
@@ -119,7 +133,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			/*
 			 * 每读到一个新的EPC值，都存入EEPROM
 			 */
-			if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,&m_rawrfid) == -1)
+			if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
 			{
 				LogPrintf("EEPROM: fail to save EPC\n");
 			}
@@ -130,7 +144,6 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			{
 				circleNum++;
 			}
-			lastrfid = data[2];
 			g_fbData.circleNum = circleNum;
 
 			Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
@@ -187,7 +200,7 @@ Void taskRFID(UArg a0, UArg a1)
     /*
      * 从EEPROM中读取上次关机前的EP
      */
-    if(mpu9250ReadBytes(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,&m_rawrfid) == -1)
+    if(mpu9250ReadBytes(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
     {
     	LogPrintf("EEPROM: fail to load EPC\n");
     }
@@ -214,29 +227,65 @@ void taskCreateRFID(UArg a0, UArg a1)
     uint32_t carPos = 0;
     uint32_t lastPos = 0;
     uint32_t rfidDist = 0;
+    car_mode_t mode = Manual;
+    car_mode_t modeOld = Manual;
+    enum motoGear gear = GEAR_NONE;
+    rfidPoint_t virtualRfid;
     epc_t epc;
     p_msg_t msg;
     while(1)
     {
         Task_sleep(100);
 
-        size = vector_size(rfidQueue);
-        if(size == 0)
-        {
-            /*
-             * 队列为空，无法产生RFID;
-             */
-            continue;
-        }
+        /*
+         * 更新车辆位置信息
+         */
         lastPos = carPos;
         carPos = MotoGetCarDistance();
 
+        /*
+         * 队列为空，无法产生RFID;
+         */
+        size = vector_size(rfidQueue);
+        if(size == 0)
+        {
+            continue;
+        }
+
+        /*
+         * 车辆从自动模式跳出
+         */
+        modeOld = mode;
+        mode = MotoGetCarMode();
+        if(mode != Auto)
+        {
+            if(modeOld == Auto)
+            {
+                /*
+                 * 从自动模式跳出，清除队列
+                 */
+                vector_free(rfidQueue);
+                rfidQueue = 0;
+            }
+
+            /*
+             * 非自动模式采用物理RFID
+             */
+            continue;
+        }
+
+
+        /*
+         * 获取队首的距离信息
+         *
+         */
         rfidDist = (rfidQueue[0].byte[8] << 16) +
                 (rfidQueue[0].byte[9] << 8) +
                 rfidQueue[0].byte[10];
 
-        if((lastPos <= carPos && lastPos <= rfidDist && rfidDist <= carPos)) //||
-                //((lastPos > carPos && (lastPos <= rfidDist || rfidDist <= carPos))))
+        gear = MotoGetGear();
+
+        if(gear == GEAR_DRIVE && lastPos <= rfidDist && rfidDist <= carPos)
         {
             /*
              * 生成RFID，发送消息，并删除当前RFID
@@ -250,7 +299,7 @@ void taskCreateRFID(UArg a0, UArg a1)
             /*
              * 每读到一个新的EPC值，都存入EEPROM
              */
-            if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,&m_rawrfid) == -1)
+            if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
             {
                 LogPrintf("EEPROM: fail to save EPC\n");
             }
@@ -263,11 +312,31 @@ void taskCreateRFID(UArg a0, UArg a1)
             msg->dataLen = sizeof(epc_t);
             Message_post(msg);
 
+            if(epc.distance == 0)
+            {
+                circleNum++;
+            }
+            g_fbData.circleNum = circleNum;
+
             LogMsg("Create RFID %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\r\n",
                     rfidQueue[0].byte[0],rfidQueue[0].byte[1],rfidQueue[0].byte[2],rfidQueue[0].byte[3],
                     rfidQueue[0].byte[4],rfidQueue[0].byte[5],rfidQueue[0].byte[6],rfidQueue[0].byte[7],
                     rfidQueue[0].byte[8],rfidQueue[0].byte[9],rfidQueue[0].byte[10],rfidQueue[0].byte[11]);
-            vector_erase(rfidQueue,0);
+
+            if(g_param.cycleRoute == 1)
+            {
+                /*
+                 * 循环路线，将路线压入队尾
+                 */
+                virtualRfid = rfidQueue[0];
+                vector_erase(rfidQueue,0);
+                vector_push_back(rfidQueue,virtualRfid);
+            }
+            else
+            {
+                vector_erase(rfidQueue,0);
+            }
+
         }
 
     }

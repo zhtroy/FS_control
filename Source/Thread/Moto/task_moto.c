@@ -232,8 +232,13 @@ static void MotoUpdateDistanceTask(void)
     uint8_t lastbSection = 0;
     uint8_t bSection = 0;
     int32_t deltaDist = 0;
+    rfidPoint_t calibRfid;
+    car_mode_t mode = Manual;
     float step = 0;
     const int UPDATE_INTERVAL = 100;
+    Mailbox_Handle RFIDV2vMbox = 0;
+    epc_t epc;
+    epc_t lastEpc;
 
     while(1)
     {
@@ -279,6 +284,39 @@ static void MotoUpdateDistanceTask(void)
                 	m_distance -= TOTAL_DISTANCE;
                 }
             }
+        }
+
+        mode = MotoGetCarMode();
+        /*
+         * 非Auto模式下，采用物理RFID校准距离
+         */
+        if(mode != Auto)
+        {
+            RFIDV2vMbox = RFIDGetV2vMailbox();
+            if(RFIDV2vMbox == NULL)
+            {
+                Task_sleep(100);
+                continue;
+            }
+            //读到RFID
+            if(TRUE == Mailbox_pend(RFIDV2vMbox,(Ptr *)&epc,UPDATE_INTERVAL))
+            {
+                /*
+                 * 进入B段，计算deltaS
+                 */
+                if(EPC_AB_A == lastEpc.ab && EPC_AB_B == epc.ab)
+                {
+                    V2VSetDeltaDistance((int32_t)(epc.distance)-(int32_t)m_distance);
+                }
+
+                //校正距离
+                lastCircleNum = MotoGetCircles();
+                m_distance = epc.distance;
+
+                lastEpc = epc;
+            }
+            g_fbData.distance = m_distance;
+            continue;
         }
 
         size = vector_size(calibrationQueue);
@@ -328,7 +366,17 @@ static void MotoUpdateDistanceTask(void)
                 *超出校准点，清除该校准点，并发送错误
                 */
                 calibFlag = 0;
-                vector_erase(calibrationQueue,0);
+                if(g_param.cycleRoute == 1)
+                {
+                    calibRfid = calibrationQueue[0];
+                    vector_erase(calibrationQueue,0);
+                    vector_push_back(calibrationQueue,calibRfid);
+                }
+                else
+                {
+                    vector_erase(calibrationQueue,0);
+                }
+
 
                 msg = Message_getEmpty();
                 msg->type = error;
@@ -366,7 +414,18 @@ static void MotoUpdateDistanceTask(void)
          * 校准结束，清除校准点
          */
         calibFlag = 0;
-        vector_erase(calibrationQueue,0);
+        g_fbData.distance = m_distance;
+
+        if(g_param.cycleRoute == 1)
+        {
+            calibRfid = calibrationQueue[0];
+            vector_erase(calibrationQueue,0);
+            vector_push_back(calibrationQueue,calibRfid);
+        }
+        else
+        {
+            vector_erase(calibrationQueue,0);
+        }
     }
 }
 
