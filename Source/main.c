@@ -27,6 +27,7 @@
 #include "TL6748.h"
 #include "fpga_periph_def.h"
 #include "mpu9250_drv.h"
+#include "signal.h"
 
 void PeriphInit()
 {
@@ -78,6 +79,7 @@ void PeriphInit()
     CanHardIntEnable ();
     CanTableInit();
     TTLInit();
+    SignalInit();
 
 }
 

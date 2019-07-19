@@ -17,6 +17,7 @@ static void GPIOBank6Pin13PinMuxSetup(void);
 static void GPIOBank6Pin10PinMuxSetup(void);
 static void GPIOBank0Pin0PinMuxSetup(void);
 static void GPIOBank0Pin1PinMuxSetup(void);
+static void GPIOBank0Pin5PinMuxSetup(void);
 static void GPIOBank2Pin15PinMuxSetup(void);
 /* FPGA DONE信号*/
 static void GPIOBank8Pin10PinMuxSetup(void);
@@ -37,6 +38,7 @@ static void GPIOBankPinInterruputInit(void)
 	GPIOIntTypeSet(SOC_GPIO_0_REGS, GPIO_MPU9250_INT, GPIO_INT_TYPE_FALLEDGE);
     GPIOIntTypeSet(SOC_GPIO_0_REGS, GPIO_UART_INT, GPIO_INT_TYPE_RISEDGE);
     GPIOIntTypeSet(SOC_GPIO_0_REGS, GPIO_CAN_INT, GPIO_INT_TYPE_RISEDGE);
+    GPIOIntTypeSet(SOC_GPIO_0_REGS, GPIO_SIGNAL_INT, GPIO_INT_TYPE_RISEDGE);
     /* Enable interrupts for Bank*/
     GPIOBankIntEnable(SOC_GPIO_0_REGS, 6);
     GPIOBankIntEnable(SOC_GPIO_0_REGS, 0);
@@ -56,6 +58,7 @@ static void GPIOBankPinMuxSet(void)
     GPIOBank6Pin10PinMuxSetup(); //MPU9250 int
     GPIOBank0Pin0PinMuxSetup();  //uart int
     GPIOBank0Pin1PinMuxSetup();  //can int
+    GPIOBank0Pin5PinMuxSetup();  //Signal int
     /* FPGA DONE信号 */
     GPIOBank8Pin10PinMuxSetup();
     //4G 模块复位 调试时为了restart后不用等4G上电，先屏蔽，等后面再加入
@@ -77,6 +80,7 @@ static void GPIOBankPinInit(void)
     GPIODirModeSet(SOC_GPIO_0_REGS, GPIO_MPU9250_INT, GPIO_DIR_INPUT);
     GPIODirModeSet(SOC_GPIO_0_REGS, GPIO_UART_INT, GPIO_DIR_INPUT);
     GPIODirModeSet(SOC_GPIO_0_REGS, GPIO_CAN_INT, GPIO_DIR_INPUT);
+    GPIODirModeSet(SOC_GPIO_0_REGS, GPIO_SIGNAL_INT, GPIO_DIR_INPUT);
     GPIODirModeSet(SOC_GPIO_0_REGS, GPIO_FPGA_DONE, GPIO_DIR_INPUT);
 
     //4G 模块复位 调试时为了restart后不用等4G上电，先屏蔽，等后面再加入
@@ -218,6 +222,22 @@ static void GPIOBank0Pin1PinMuxSetup(void)
     /* Setting the pins corresponding to GP0[1] in PINMUX1 register.*/
     HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(1)) =
         (PINMUX1_GPIO0_1_ENABLE | savePinmux);
+}
+
+static void GPIOBank0Pin5PinMuxSetup(void)
+{
+    unsigned int savePinmux = 0;
+
+    /*
+     ** Clearing the bit in context and retaining the other bit values
+     ** in PINMUX1 register.
+     */
+    savePinmux = (HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(1)) &
+                  ~(SYSCFG_PINMUX1_PINMUX1_11_8));
+
+    /* Setting the pins corresponding to GP0[0] in PINMUX1 register.*/
+    HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(1)) =
+        (PINMUX1_GPIO0_5_ENABLE | savePinmux);
 }
 
 static void GPIOBank8Pin10PinMuxSetup(void)

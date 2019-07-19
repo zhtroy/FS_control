@@ -14,9 +14,11 @@
 #include "gpio.h"
 #include "soc_C6748.h"
 #include "canModule.h"
+#include "signal.h"
 
-#define GPIO_UART_INT 1
-#define GPIO_CAN_INT  2
+#define GPIO_UART_INT (1)
+#define GPIO_CAN_INT  (2)
+#define GPIO_SIGNAL_INT (6)
 void HWI_4_Isr(void)
 {
 
@@ -56,6 +58,15 @@ void HWI_4_Isr(void)
                 CanIsr(DeviceIndex);
         }
         
+    }
+
+    if(GPIOPinIntStatus(SOC_GPIO_0_REGS, GPIO_SIGNAL_INT) == GPIO_INT_PEND)
+    {
+
+        GPIOPinIntClear(SOC_GPIO_0_REGS, GPIO_SIGNAL_INT);
+        IntStatus = SignalGetHardIntStatus();
+        SignalCallBack(IntStatus);
+
     }
 	// 使能 GPIO BANK 0 中断 */
     GPIOBankIntEnable(SOC_GPIO_0_REGS, 0);
