@@ -1089,6 +1089,24 @@ float MotoGetSpeed()
 	return MotoGetGear() == GEAR_REVERSE ? -speed : speed;
 }
 
+/*
+ * 速度单位(m/s)
+ * 转速单位(圈/s)
+ */
+uint16_t RPMfromSpeed(float speed)
+{
+	return  (uint16_t) (speed * WHEEL_SPEED_RATIO / (WHEEL_PERIMETER / 10.0));
+}
+
+/*
+ * 速度单位(m/s)
+ * 转速单位(圈/s)
+ */
+float SpeedfromRPM(uint16_t rpm)
+{
+	return (float)rpm / WHEEL_SPEED_RATIO * (WHEEL_PERIMETER / 10.0);
+}
+
 uint8_t MotoGetCarMode()
 {
     return g_fbData.mode;

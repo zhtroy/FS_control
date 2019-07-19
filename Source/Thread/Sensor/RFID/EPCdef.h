@@ -101,10 +101,8 @@ typedef struct epc_tag
 	uint8_t areaType;
 	//功能区
 	uint8_t funcType;
-	//变轨点
-	uint8_t changePoint;
-	//道路特性
-	uint8_t roadFeature;
+	//路段速度(km/h)
+	uint8_t roadSpeed;
 	//距起始位置距离
 	uint32_t distance;
 	//断头路信息

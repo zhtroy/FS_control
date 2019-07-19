@@ -364,7 +364,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =running;
 			m_isInStation = 0;  //一旦开始运行，就认为不在站点
-			MotoSetGoalRPM(g_param.StateRPM[EPC_FEAT_CRUISING]);
+			MotoSetGoalRPM(RPMfromSpeed(2));   //固定以2m/s启动
 			return 0;
 		}
 
@@ -432,7 +432,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 			/*
 			 * 再根据rfid的路段特性来调整速度
 			 */
-			MotoSetGoalRPM(g_param.StateRPM[pEvt->epc.roadFeature]);
+			MotoSetGoalRPM(RPMfromSpeed(pEvt->epc.roadSpeed / 3.6f));
 
 			/*
 			 * 进入站台段
@@ -443,8 +443,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 			{
 				if(!g_param.cycleRoute)
 				{
-					//为了测F码，暂时不请求站台
-//					V2CEnterStation();
+					V2CEnterStation();
 				}
 			}
 
