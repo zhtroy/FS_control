@@ -242,6 +242,30 @@ void taskCreateRFID(UArg a0, UArg a1)
          */
         lastPos = carPos;
         carPos = MotoGetCarDistance();
+        /*
+         * 车辆从自动模式跳出
+         */
+        modeOld = mode;
+        mode = MotoGetCarMode();
+        if(mode != Auto)
+        {
+#if 0
+            if(modeOld == Auto)
+            {
+                /*
+                 * 从自动模式跳出，清除队列
+                 */
+                vector_free(rfidQueue);
+                rfidQueue = 0;
+            }
+#endif
+
+            /*
+             * 非自动模式采用物理RFID
+             */
+            continue;
+        }
+
 
         /*
          * 队列为空，无法产生RFID;
@@ -252,27 +276,7 @@ void taskCreateRFID(UArg a0, UArg a1)
             continue;
         }
 
-        /*
-         * 车辆从自动模式跳出
-         */
-        modeOld = mode;
-        mode = MotoGetCarMode();
-        if(mode != Auto)
-        {
-            if(modeOld == Auto)
-            {
-                /*
-                 * 从自动模式跳出，清除队列
-                 */
-                vector_free(rfidQueue);
-                rfidQueue = 0;
-            }
 
-            /*
-             * 非自动模式采用物理RFID
-             */
-            continue;
-        }
 
 
         /*
