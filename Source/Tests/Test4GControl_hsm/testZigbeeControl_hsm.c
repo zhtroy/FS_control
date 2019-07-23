@@ -29,6 +29,7 @@
 #include "stdio.h"
 #include "Sensor/CellCommunication/CellCommunication.h"
 #include "Command/Command.h"
+#include "Sensor/RFID/RFID_task.h"
 
 
 #define REMOTE_CMD_MODE          1
@@ -417,6 +418,12 @@ void testZigbeeControlHSM_init()
 	taskParams.stackSize = 2048;
 	taskParams.arg0 = 0;
 	task = Task_create(taskCreateRFID, &taskParams, &eb);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
+
+	task = Task_create(taskRFID, &taskParams, &eb);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);

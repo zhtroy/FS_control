@@ -74,7 +74,7 @@ void V2VSendTask(UArg arg0, UArg arg1)
             }
             circleNums = sMotoCircle;
 
-            carSts.distance += circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+            carSts.distance += circleDiff * sysParam.wheelPerimeter / WHEEL_SPEED_RATIO;
             if(carSts.distance > TOTAL_DISTANCE)
             {
                 carSts.distance = carSts.distance - TOTAL_DISTANCE;
@@ -162,7 +162,7 @@ void V2VRecvTask(UArg arg0, UArg arg1)
         {
             circleDiff = rMotoCircle - sMotoCircle;
         }
-        dis = carSts.distance + circleDiff* WHEEL_PERIMETER;
+        dis = carSts.distance + circleDiff* sysParam.wheelPerimeter;
         if(dis > TOTAL_DISTANCE)
         {
             dis = dis - TOTAL_DISTANCE;

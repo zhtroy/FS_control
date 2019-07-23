@@ -11,7 +11,7 @@
  */
 #define WHEEL_PERIMETER (11.78)
 #define WHEEL_SPEED_RATIO (3.286)
-#define TOTAL_DISTANCE (2775)
+#define TOTAL_DISTANCE (2810)
 
 
 //MOTO F CAN ID

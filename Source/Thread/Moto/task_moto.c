@@ -44,8 +44,8 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi);
 static uint8_t frontValid = 0;
 static uint8_t rearValid = 0;
 static uint16_t recvCircle = 0;
-static uint32_t m_distance = 0;
-static uint32_t lastDistance = 0;
+static float m_distance = 0;
+static float lastDistance = 0;
 static uint16_t maxSafeDistance = MAX_SAFE_DISTANCE;
 static uint16_t minSafeDistance = MIN_SAFE_DISTANCE;
 /********************************************************************************/
@@ -268,7 +268,7 @@ static void MotoUpdateDistanceTask(void)
          */
         if(circleDiff<20)
         {
-            step = circleDiff * WHEEL_PERIMETER / WHEEL_SPEED_RATIO;
+            step = circleDiff * (sysParam.wheelPerimeter/100.0) / WHEEL_SPEED_RATIO;
             if(GEAR_REVERSE == MotoGetGear())
             {
                 if(m_distance > step)
@@ -1084,27 +1084,27 @@ uint16_t MotoGetRpm()
  */
 float MotoGetSpeed()
 {
-	float speed = (float)MotoGetRpm() / WHEEL_SPEED_RATIO * (WHEEL_PERIMETER / 10.0);
+	float speed = (float)MotoGetRpm() / WHEEL_SPEED_RATIO * (sysParam.wheelPerimeter / 1000.0);
 
 	return MotoGetGear() == GEAR_REVERSE ? -speed : speed;
 }
 
 /*
  * 速度单位(m/s)
- * 转速单位(圈/s)
+ * 转速单位(圈/min)
  */
 uint16_t RPMfromSpeed(float speed)
 {
-	return  (uint16_t) (speed * WHEEL_SPEED_RATIO / (WHEEL_PERIMETER / 10.0));
+	return  (uint16_t) (speed * WHEEL_SPEED_RATIO / (sysParam.wheelPerimeter / 1000.0) * 60.0);
 }
 
 /*
  * 速度单位(m/s)
- * 转速单位(圈/s)
+ * 转速单位(圈/min)
  */
 float SpeedfromRPM(uint16_t rpm)
 {
-	return (float)rpm / WHEEL_SPEED_RATIO * (WHEEL_PERIMETER / 10.0);
+	return (float)rpm / 60.0 / WHEEL_SPEED_RATIO * (sysParam.wheelPerimeter / 1000.0);
 }
 
 uint8_t MotoGetCarMode()

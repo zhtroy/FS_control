@@ -162,6 +162,10 @@ void CommandDriverInit()
 	uartRecvMbox = Mailbox_create (sizeof (uartDataObj_t),32, NULL, NULL);
 	packetRecvMbox = Mailbox_create (sizeof (command_packet_t),32, NULL, NULL);
 
+	/*初始化FPGA串口*/
+	UartNs550Init(COMMAND_UART_NUM, CommandUartIntrHandler);
+	UartNs550Recv(COMMAND_UART_NUM, uartRxData.buffer, UART_REC_BUFFER_SIZE);
+
 	//task
 	Task_Params_init(&taskParams);
 	taskParams.priority = 5;
@@ -173,9 +177,7 @@ void CommandDriverInit()
 	}
 
 
-	/*初始化FPGA串口*/
-	UartNs550Init(COMMAND_UART_NUM, CommandUartIntrHandler);
-	UartNs550Recv(COMMAND_UART_NUM, uartRxData.buffer, UART_REC_BUFFER_SIZE);
+
 }
 
 

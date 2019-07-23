@@ -13,7 +13,7 @@
 #include "stdint.h"
 #include <xdc/std.h>
 
-#define COMMAND_UART_NUM (0)
+#define COMMAND_UART_NUM (5)
 
 #define COMMAND_PACKET_HEAD_0 (0xFF)
 #define COMMAND_PACKET_HEAD_1 (0xAA)

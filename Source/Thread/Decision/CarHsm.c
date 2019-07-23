@@ -364,7 +364,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate =running;
 			m_isInStation = 0;  //一旦开始运行，就认为不在站点
-			MotoSetGoalRPM(RPMfromSpeed(2));   //固定以2m/s启动
+			MotoSetGoalRPM(RPMfromSpeed(0.5));   //固定以0.5m/s启动
 			return 0;
 		}
 
