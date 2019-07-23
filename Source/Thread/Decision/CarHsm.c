@@ -432,7 +432,10 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 			/*
 			 * 再根据rfid的路段特性来调整速度
 			 */
-			MotoSetGoalRPM(RPMfromSpeed(pEvt->epc.roadSpeed / 3.6f));
+			if(pEvt->epc.roadBreak == 0)
+			{
+				MotoSetGoalRPM(RPMfromSpeed(pEvt->epc.roadSpeed / 3.6f));
+			}
 
 			/*
 			 * 进入站台段

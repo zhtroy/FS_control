@@ -103,6 +103,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 				if(routeLen ==  vector_size(vmap))
 				{
+					CommandSend("route_recved");
 					RFIDUpdateQueue(vmap);
 					LogMsg("map List\n");
 					ShowRFIDPointList(vmap);
@@ -140,6 +141,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 				if(calibLen ==  vector_size(vcalib))
 				{
+					CommandSend("calib_recved");
 					MotoUpdateCalibrationPoint(vcalib);
 					LogMsg("calib List\n");
 					ShowRFIDPointList(vcalib);
@@ -154,7 +156,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 			case COMMAND_TYPE_GO:
 			{
-
+				CommandSend("GO_recved");
 				LogMsg("COMMMAD: go\n");
 				Message_postEvent(cell,CELL_MSG_ENTERAUTOMODE);
 				Message_postEvent(cell,CELL_MSG_STARTRUN);

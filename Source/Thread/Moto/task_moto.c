@@ -68,6 +68,7 @@ static moto_ctrl_t m_motoCtrl = {
 };
 
 extern Semaphore_Handle photoCalib;
+extern Mailbox_Handle bSecMbox;
 /********************************************************************************/
 /*          外部CAN0的用户中断Handler                                                   */
 /*                                                                              */
@@ -319,6 +320,14 @@ static void MotoUpdateDistanceTask(void)
             continue;
         }
 
+        if(bSecMbox != NULL && Mailbox_pend(bSecMbox,&deltaDist,BIOS_NO_WAIT))
+		{
+        	/*
+        	 * B段距离校准
+        	 */
+        	m_distance = m_distance + deltaDist;
+		}
+
         size = vector_size(calibrationQueue);
         if(size == 0)
         {
@@ -391,6 +400,7 @@ static void MotoUpdateDistanceTask(void)
         /*
          * 检测到光电对管
          */
+#if 0
         lastbSection = bSection;
         bSection = calibrationQueue[0].byte[6] >> 7;
 
@@ -405,6 +415,7 @@ static void MotoUpdateDistanceTask(void)
             LogMsg("Calibration(B) End:%d\r\n",calibrationPoint);
         }
         else
+#endif
         {
             m_distance = calibrationPoint;
             LogMsg("Calibration(A) End:%d\r\n",calibrationPoint);

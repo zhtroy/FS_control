@@ -190,6 +190,10 @@ Bool CommandRecv(command_packet_t * packet,UInt timeout)
 	return ret;
 }
 
+void CommandSend(char data[])
+{
+	UartNs550Send(COMMAND_UART_NUM,data,sizeof(data));
+}
 
 
 

@@ -44,6 +44,7 @@ static Mailbox_Handle RFIDV2vMbox;
 static uint8_t m_rawrfid[12];
 static epc_t m_lastepc = {0};
 static epc_t m_lastlastepc = {0};
+Mailbox_Handle bSecMbox;
 
 static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 {
@@ -99,8 +100,6 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			Clock_setTimeout(clock_rfid_heart,3000);
 			Clock_start(clock_rfid_heart);
 
-			//将读到的RFID反馈
-			memcpy(g_fbData.rfid, &data[2], EPC_SIZE);
 			//epc 从第2字节开始，长度12字节
 			EPCfromByteArray(&epc, &data[2]);
 
@@ -126,6 +125,10 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			    break;
 			}
 
+
+			//将读到的RFID反馈
+			memcpy(g_fbData.rfid, &data[2], EPC_SIZE);
+
 			m_lastlastepc = m_lastepc;
 			m_lastepc = epc;
 			memcpy(m_rawrfid, &data[2], EPC_SIZE);
@@ -146,7 +149,10 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			}
 			g_fbData.circleNum = circleNum;
 
-			Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
+			if(epc.roadBreak == 0)
+			{
+				Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
+			}
 
 			msg = Message_getEmpty();
 			msg->type = rfid;
@@ -233,6 +239,9 @@ void taskCreateRFID(UArg a0, UArg a1)
     rfidPoint_t virtualRfid;
     epc_t epc;
     p_msg_t msg;
+    int32_t deltaDist = 0;
+
+    bSecMbox = Mailbox_create (sizeof (int32_t),4, NULL, NULL);
     while(1)
     {
         Task_sleep(100);
@@ -289,7 +298,8 @@ void taskCreateRFID(UArg a0, UArg a1)
 
         gear = MotoGetGear();
 
-        if(gear == GEAR_DRIVE && lastPos <= rfidDist && rfidDist <= carPos)
+        if(gear == GEAR_DRIVE &&
+        		( (lastPos <= rfidDist && rfidDist <= carPos) || (lastPos>carPos && (rfidDist <= carPos || rfidDist >=lastPos)) )  )
         {
             /*
              * 生成RFID，发送消息，并删除当前RFID
@@ -297,6 +307,17 @@ void taskCreateRFID(UArg a0, UArg a1)
             EPCfromByteArray(&epc,rfidQueue[0].byte);
 
             m_lastlastepc = m_lastepc;
+            if(EPC_AB_A == m_lastepc.ab && EPC_AB_B == epc.ab)
+			{
+            	/*
+            	 * 进入B段，发送B段长度
+            	 */
+                deltaDist = (rfidQueue[0].byte[14] << 24) +
+                            (rfidQueue[0].byte[15] << 16) +
+                            (rfidQueue[0].byte[16] << 8) +
+                            rfidQueue[0].byte[17] ;
+				Mailbox_post(bSecMbox,&deltaDist,BIOS_NO_WAIT);
+			}
             m_lastepc = epc;
             memcpy(m_rawrfid, rfidQueue[0].byte, EPC_SIZE);
 
@@ -326,6 +347,8 @@ void taskCreateRFID(UArg a0, UArg a1)
                     rfidQueue[0].byte[0],rfidQueue[0].byte[1],rfidQueue[0].byte[2],rfidQueue[0].byte[3],
                     rfidQueue[0].byte[4],rfidQueue[0].byte[5],rfidQueue[0].byte[6],rfidQueue[0].byte[7],
                     rfidQueue[0].byte[8],rfidQueue[0].byte[9],rfidQueue[0].byte[10],rfidQueue[0].byte[11]);
+
+
 
             if(g_param.cycleRoute == 1)
             {

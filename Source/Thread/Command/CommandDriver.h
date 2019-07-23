@@ -47,7 +47,8 @@ typedef struct{
 }command_packet_t;
 
 extern void CommandDriverInit();
-Bool CommandRecv(command_packet_t * packet,UInt timeout);
+extern Bool CommandRecv(command_packet_t * packet,UInt timeout);
+extern void CommandSend(char data[]);
 
 
 #endif /* COMMAND_H_ */
