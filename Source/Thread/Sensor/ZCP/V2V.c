@@ -120,7 +120,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		}
 
 		/*
-		 * 定时计算前车距离，如果在站台区内用毫米波，其他用V2V数据
+		 * 定时计算前车距离
 		 */
 		myepc=RFIDGetEpc();
 
@@ -134,11 +134,13 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 			MotoSetSafeDistance(MIN_SAFE_DISTANCE,MAX_SAFE_DISTANCE);
 		}
 
+		/*
 		if(myepc.areaType == EPC_AREATYPE_STATION)
 		{
 			m_distanceToFrontCar = SonicGetDistance()/100;
 		}
 		else  //普通区距离
+		*/
 		{
 			if(m_param.frontId == V2V_ID_NONE)
 			{

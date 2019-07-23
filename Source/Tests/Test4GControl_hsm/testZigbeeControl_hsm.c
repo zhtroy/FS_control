@@ -440,16 +440,15 @@ void testZigbeeControlHSM_init()
 		BIOS_exit(0);
 	}
 
+	/*
 	//超声波雷达
 	task = Task_create(taskSonicRadar, &taskParams, &eb);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
+	*/
 
-
-	//ZCP
-	//V2VZCPInit();
 
 	V2CInit();
 	V2VInit();
