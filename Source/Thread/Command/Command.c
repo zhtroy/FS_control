@@ -20,6 +20,7 @@
 #include "Message/Message.h"
 #include "Decision/route/Route.h"
 
+extern uint8_t g_calibFlag;
 
 static void ShowRFIDPointList(rfidPoint_t * list)
 {
@@ -157,6 +158,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 			case COMMAND_TYPE_GO:
 			{
 				CommandSend("GO_recved");
+				g_calibFlag = 0;
 				LogMsg("COMMMAD: go\n");
 				Message_postEvent(cell,CELL_MSG_ENTERAUTOMODE);
 				Message_postEvent(cell,CELL_MSG_STARTRUN);

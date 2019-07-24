@@ -28,6 +28,7 @@
 /********************************************************************************/
 /*          外部全局变量                                                              */
 /********************************************************************************/
+uint8_t g_calibFlag = 0;
 
 #if 1
 fbdata_t g_fbData;
@@ -229,7 +230,7 @@ static void MotoUpdateDistanceTask(void)
     uint8_t size = 0;
     uint32_t calibrationPoint = 0;
     uint32_t calibrationPointMin = 0;
-    uint8_t calibFlag = 0;
+
     uint8_t lastbSection = 0;
     uint8_t bSection = 0;
     int32_t deltaDist = 0;
@@ -326,6 +327,7 @@ static void MotoUpdateDistanceTask(void)
         	 * B段距离校准
         	 */
         	m_distance = m_distance + deltaDist;
+        	V2VSetDeltaDistance(deltaDist);
 		}
 
         size = vector_size(calibrationQueue);
@@ -343,18 +345,18 @@ static void MotoUpdateDistanceTask(void)
                 calibrationQueue[0].byte[10];
         calibrationPointMin = calibrationPoint - (MAX_CALIBRATION_DISTANCE/2);
 
-        if(lastDistance < calibrationPointMin && m_distance >= calibrationPointMin && calibFlag == 0)
+        if(lastDistance < calibrationPointMin && m_distance >= calibrationPointMin && g_calibFlag == 0)
         {
             /*
              * 到达校准点
              * 设置校准启动标志，并清除光电对管信号量
              */
-            calibFlag = 1;
+            g_calibFlag = 1;
             Semaphore_pend(photoCalib,BIOS_NO_WAIT);
             LogMsg("Calibration Start:%d\r\n",calibrationPoint);
         }
 
-        if(calibFlag == 0)
+        if(g_calibFlag == 0)
         {
             /*
              * 尚未到达校准点
@@ -374,7 +376,7 @@ static void MotoUpdateDistanceTask(void)
                 /*
                 *超出校准点，清除该校准点，并发送错误
                 */
-                calibFlag = 0;
+                g_calibFlag = 0;
                 if(g_param.cycleRoute == 1)
                 {
                     calibRfid = calibrationQueue[0];
@@ -424,7 +426,7 @@ static void MotoUpdateDistanceTask(void)
         /*
          * 校准结束，清除校准点
          */
-        calibFlag = 0;
+        g_calibFlag = 0;
         g_fbData.distance = m_distance;
 
         if(g_param.cycleRoute == 1)

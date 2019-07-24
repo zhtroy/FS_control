@@ -29,7 +29,10 @@ void IICSendBytes(IICObj_t *insPtr,uint8_t regAddr,uint8_t *bufPtr,uint8_t numBy
     insPtr->regAddr = regAddr;
 	insPtr->sendBuffer.nextBytePtr = bufPtr;
     
-    while(I2CMasterBusBusy(insPtr->baseAddr));
+    if(I2CMasterBusBusy(insPtr->baseAddr))
+    {
+    	return;
+    }
 
     I2CMasterSlaveAddrSet(insPtr->baseAddr, insPtr->slaveAddr);
     
@@ -48,7 +51,10 @@ void IICRecvBytes(IICObj_t *insPtr,uint8_t *bufPtr,uint8_t numBytes)
 	insPtr->recvBuffer.remainingBytes = numBytes;
 	insPtr->recvBuffer.nextBytePtr = bufPtr;
     
-    while(I2CMasterBusBusy(insPtr->baseAddr));
+    if(I2CMasterBusBusy(insPtr->baseAddr))
+    {
+    	return;
+    }
     
     I2CMasterSlaveAddrSet(insPtr->baseAddr, insPtr->slaveAddr);
 
