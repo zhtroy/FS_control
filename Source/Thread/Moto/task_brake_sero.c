@@ -733,6 +733,38 @@ void ServoBrakeRecvTask()
 
 }
 
+static void TaskCheckBrakeStatus()
+{
+	uint16_t lastRPM, curRPM;
+	int count = 0;
+
+	while(1)
+	{
+		Task_sleep(500);
+
+		curRPM = MotoGetRealRPM();
+
+		if(BrakeGetBrake()>200)
+		{
+			if(curRPM>lastRPM)
+			{
+				count++;
+			}
+			else
+			{
+				count = 0;
+			}
+			if(count > 5)
+			{
+				Message_postError(ERROR_BRAKE_NO_ERR_CODE);
+				count = 0;
+			}
+		}
+
+		lastRPM = curRPM;
+	}
+}
+
 void ServoBrakeTask(void *param)
 {
 	canDataObj_t canData;
@@ -806,7 +838,7 @@ void RailStartChangeRoutine()
 }
 
 #define WAIT_PHOTON_TIMEOUT (100)
-#define WAIT_PHOTON_DISTANCE (50) // 5m
+#define WAIT_PHOTON_DISTANCE (100) // 10m
 #define WAIT_CHANGERAIL_TIMEOUT (3000)
 static void TaskChangeRailRoutine()
 {
@@ -1261,6 +1293,13 @@ void ServoTaskInit()
 	   System_printf("Task_create() failed!\n");
 	   BIOS_exit(0);
 	}
+
+    task = Task_create(TaskCheckBrakeStatus, &taskParams, NULL);
+	if (task == NULL) {
+	   System_printf("Task_create() failed!\n");
+	   BIOS_exit(0);
+	}
+
 
 }
 

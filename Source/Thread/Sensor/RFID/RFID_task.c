@@ -298,8 +298,9 @@ void taskCreateRFID(UArg a0, UArg a1)
 
         gear = MotoGetGear();
 
+        //特殊处理用于0点翻转
         if(gear == GEAR_DRIVE &&
-        		( (lastPos <= rfidDist && rfidDist <= carPos) || (lastPos>carPos && (rfidDist <= carPos || rfidDist >=lastPos)) )  )
+        		( (lastPos <= rfidDist && rfidDist <= carPos) || (lastPos>carPos && (rfidDist <= 100 || rfidDist >=TOTAL_DISTANCE-100)) )  )
         {
             /*
              * 生成RFID，发送消息，并删除当前RFID

@@ -229,6 +229,9 @@ typedef struct{
  * 超出校准点
  */
 #define ERROR_CALIBRATION_OUTRANGE         (26)
+/*刹车故障，控制器无错误代码*/
+#define ERROR_BRAKE_NO_ERR_CODE				(27)
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
