@@ -67,6 +67,8 @@ static Mailbox_Handle m_mb_leavestation;
 static Task_Handle m_task_askForwardId = NULL;
 static Task_Handle m_task_enterStation = NULL;
 
+static uint8_t m_isAskingFrontCar = 0;
+
 /*
  * 启动一个Task，如果task正在运行，则不启动Task
  */
@@ -135,6 +137,12 @@ static void V2CSendTask(UArg arg0, UArg arg1)
 	while(1)
 	{
 		Task_sleep(INTERVAL);
+
+		//如果正在请求前车，则不发送状态
+		if(m_isAskingFrontCar)
+		{
+			continue;
+		}
 		/*
 		 * send status
 		 */
@@ -237,6 +245,8 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 		}
 
 		retryNum = RETRY_NUM;
+
+		m_isAskingFrontCar = 1;
 		do
 		{
 			/*
@@ -244,7 +254,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			 */
 
 			req.railpos = RailGetRailState();
-			req.distance = MotoGetCarDistance();
+			req.distance = RFIDGetEpc().distance;
 			memcpy(req.rfid, RFIDGetRaw(), EPC_SIZE);
 			memcpy(sendPacket.data, &req, sizeof(req));
 			sendPacket.addr = g_param.station_addr;
@@ -261,6 +271,9 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			retryNum --;
 		}
 		while(retryNum>0 && pendResult==FALSE);
+
+		//请求结束
+		m_isAskingFrontCar = 0;
 
 		if(pendResult == FALSE) //发送后没收到响应
 		{
