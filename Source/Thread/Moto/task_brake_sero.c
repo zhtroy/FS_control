@@ -7,12 +7,14 @@
 #include <ti/sysbios/knl/Mailbox.h>
 #include <xdc/runtime/System.h>
 #include <xdc/runtime/Error.h>
+#include <xdc/runtime/Timestamp.h>
 #include <ti/sysbios/BIOS.h>
 #include "Message/Message.h"
 #include "common.h"
 #include "fpga_ttl.h"
 #include "canModule.h"
 #include "Sensor/PhotoElectric/PhotoElectric.h"
+#include "logLib.h"
 
 extern uint16_t getRPM(void);
 
@@ -834,6 +836,7 @@ void RailChangeStart()
  */
 void RailStartChangeRoutine()
 {
+	LogMsg("changerail post time: %d\n",Timestamp_get32());
 	Semaphore_post(sem_startChangeRail);
 }
 
@@ -853,6 +856,8 @@ static void TaskChangeRailRoutine()
 		lastRailState = RailGetRailState();
 		outofdistance = 0;
 
+		LogMsg("changerail start time: %d\n",Timestamp_get32());
+		LogMsg("changerail start dis = %d\n",startPos);
 		/*
 		 * 等待经过光电对管
 		 */

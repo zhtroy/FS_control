@@ -19,6 +19,7 @@ static packet_routenode_t * m_vnode = 0;
  */
 void RouteShow(packet_routenode_t * vnode)
 {
+#if 0
 	char outputbuff[100];
 	/*
 	 * 将收到的路径打印出来
@@ -43,6 +44,8 @@ void RouteShow(packet_routenode_t * vnode)
 		LogMsg("EMPTY\n");
 	}
 	LogMsg("=====================\n");
+
+#endif
 }
 /*
  * API

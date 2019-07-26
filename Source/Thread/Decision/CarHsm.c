@@ -30,6 +30,7 @@
 #include "Message/Message.h"
 #include "stdio.h"
 #include "Sensor/CellCommunication/CellCommunication.h"
+#include "logLib.h"
 
 
 
@@ -419,11 +420,13 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 								&& RailGetRailState() == LEFTRAIL)
 							{
 								RailStartChangeRoutine();
+								LogMsg("changerail RFID: 0x%x\n",pEvt->epc.distance);
 							}
 							else if(ROUTE_WS_INA == RouteGetNodeWS(curNode)
 									&& RailGetRailState() == RIGHTRAIL)
 							{
 								RailStartChangeRoutine();
+								LogMsg("changerail RFID: 0x%x\n",pEvt->epc.distance);
 							}
 						}
 					}

@@ -136,10 +136,10 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			/*
 			 * 每读到一个新的EPC值，都存入EEPROM
 			 */
-			if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
-			{
-				LogPrintf("EEPROM: fail to save EPC\n");
-			}
+//			if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
+//			{
+//				LogPrintf("EEPROM: fail to save EPC\n");
+//			}
 
 			//g_fbData.distance = epc.distance;
 			/*记录圈数*/
@@ -325,10 +325,10 @@ void taskCreateRFID(UArg a0, UArg a1)
             /*
              * 每读到一个新的EPC值，都存入EEPROM
              */
-            if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
-            {
-                LogPrintf("EEPROM: fail to save EPC\n");
-            }
+//            if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
+//            {
+//                LogMsg("EEPROM: fail to save EPC\n");
+//            }
 			//将读到的RFID反馈
 			memcpy(g_fbData.rfid, m_rawrfid, EPC_SIZE);
 
