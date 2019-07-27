@@ -36,6 +36,9 @@
 
 extern fbdata_t g_fbData;
 static uint8_t m_isInStation;
+
+extern uint8_t g_calibFlag;
+
 /*
  * 状态机
  */
@@ -342,6 +345,7 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 		case REMOTE_AUTO_START_EVT:
 		{
 			STATE_TRAN(me, &me->automode_running);
+			g_calibFlag = 0;           /*清除上一次的校准过程*/
 			return 0;
 		}
 	}
