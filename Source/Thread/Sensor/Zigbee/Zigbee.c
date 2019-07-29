@@ -98,6 +98,7 @@ Void taskZigbee(UArg a0, UArg a1)
 	int recvLen = 0;
 	int dataLen;
 	uartDataObj_t buffObj;
+	uint8_t dataBuff[MSGSIZE];
 
 	ZigbeeInit();
 
@@ -145,17 +146,14 @@ Void taskZigbee(UArg a0, UArg a1)
 				case 3://接收长度
 				{
 					recvLen = 0;
-					pMsg = Message_getEmpty();
-					pMsg->type = zigbee;
-					memset(pMsg->data,0,MSGSIZE);
-
 					dataLen = c;
+					memset(dataBuff,0,MSGSIZE);
 					state = 4;
 					break;
 				}
 				case 4:  //接收命令
 				{
-					pMsg->data[recvLen++] = c;
+					dataBuff[recvLen++] = c;
 					if(recvLen>=dataLen)
 					{
 						state = 5;
@@ -170,6 +168,10 @@ Void taskZigbee(UArg a0, UArg a1)
 					if(0x0D == c)
 					{
 						System_printf("zigbee recv cmd:%d\n", pMsg->data[0]);
+
+						pMsg = Message_getEmpty();
+						pMsg->type = zigbee;
+						memcpy(pMsg->data,dataBuff, recvLen);
 						pMsg->dataLen = recvLen;
 
 						Message_post(pMsg);
