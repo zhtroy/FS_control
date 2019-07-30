@@ -217,34 +217,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 	}
 }
-static Clock_Handle clock_front_car;
 
-static xdc_Void FrontCarDisconnected(xdc_UArg arg)
-{
-    p_msg_t msg;
-    /*
-    * 前车连接超时，发送错误消息到主线程
-    */
-    if(m_param.frontId != 0)
-    {
-        /*
-         * 有前车，超时异常
-         */
-        msg = Message_getEmpty();
-        msg->type = error;
-        msg->data[0] = ERROR_FRONT_CAR_TIMEOUT;
-        msg->dataLen = 1;
-        Message_post(msg);
-    }
-    else
-    {
-        /*
-         * 无前车，则重新设置定时器
-         */
-        Clock_setTimeout(clock_front_car,TIMEOUT_FRONT_CAR_DISCONNECT);
-        Clock_start(clock_front_car);
-    }
-}
 static void InitTimer()
 {
     Clock_Params clockParams;
@@ -254,7 +227,7 @@ static void InitTimer()
     clockParams.period = 0;       // one shot
     clockParams.startFlag = FALSE;
 
-    clock_front_car = Clock_create(FrontCarDisconnected, TIMEOUT_FRONT_CAR_DISCONNECT, &clockParams, NULL);
+
 }
 
 static void V2VRecvTask(UArg arg0, UArg arg1)
@@ -294,11 +267,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 			{
 				Semaphore_post(m_sem_handshakefrontcar_resp);
 
-				/*
-                 * 收到前车报文，重启定时器
-                 */
-                Clock_setTimeout(clock_front_car,TIMEOUT_FRONT_CAR_DISCONNECT);
-                Clock_start(clock_front_car);
+
 				break;
 			}
 
@@ -320,11 +289,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 				}
 				lastFrontEpc = frontEpc;
 
-				/*
-                 * 收到前车报文，重启定时器
-                 */
-                Clock_setTimeout(clock_front_car,TIMEOUT_FRONT_CAR_DISCONNECT);
-                Clock_start(clock_front_car);
+
 				break;
 			}
 		}
