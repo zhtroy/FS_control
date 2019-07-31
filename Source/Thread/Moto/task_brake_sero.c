@@ -731,6 +731,9 @@ void ServoBrakeRecvTask()
 			Message_post(msg);
 	    }
 
+		g_fbData.brakeErrorCode = errorCode;
+
+
 	}
 
 }

@@ -142,6 +142,7 @@ typedef struct{
  	uint8_t rfid[12];
  	uint16_t myID;
  	uint8_t orderState;
+ 	uint8_t brakeErrorCode;
 }fbdata_t;
 
 typedef struct{
