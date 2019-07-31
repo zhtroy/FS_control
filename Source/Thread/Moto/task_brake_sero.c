@@ -80,9 +80,12 @@ static void ServorUartIntrHandler(void *callBackRef, u32 event, unsigned int eve
 
 	if (event == XUN_EVENT_RECV_TIMEOUT || event == XUN_EVENT_RECV_DATA) {
 
-        brakeUartDataObj.length = eventData;
-        Mailbox_post(recvMbox, (Ptr *)&brakeUartDataObj, BIOS_NO_WAIT);
-        UartNs550Recv(UartDeviceNum, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+	    if(eventData > 0)
+	    {
+            brakeUartDataObj.length = eventData;
+            Mailbox_post(recvMbox, (Ptr *)&brakeUartDataObj, BIOS_NO_WAIT);
+            UartNs550Recv(UartDeviceNum, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+	    }
 	}
 
 
@@ -149,7 +152,6 @@ static uint16_t ServoCrcCheck(uint8_t *data, uint8_t length)
 
 static uint8_t ServoModbusWriteReg(uint8_t id,uint16_t addr,uint16_t data)
 {
-	uint16_t udelay;
     modbusCmd_t sendData;
 
     Semaphore_pend(sem_modbus,BIOS_WAIT_FOREVER);   
@@ -189,27 +191,14 @@ static uint8_t ServoModbusWriteReg(uint8_t id,uint16_t addr,uint16_t data)
     }
 
     /*关闭RS485发送*/
-    for(udelay = 3000;udelay>0;udelay--);           //延时等待最后一个串口数据被驱动到总线上
+    Task_sleep(1);
     UartNs550RS485TxDisable(SERVOR_MOTOR_UART);
 
-    /*等待电机响应*/
-    if(FALSE == Semaphore_pend(sem_rxData,10))   //丢弃MAX3160发送时，回传的数据
-    {
-        /*
-         * 环回数据超时
-         *
-         */
-        ackStatus = MODBUS_ACK_LOOPERR;
-        Semaphore_post(sem_modbus);
-        return ackStatus;
-    }
-
     
-    if(FALSE  == Semaphore_pend(sem_rxData,10))    //电机ACK超时时间：100ms
+    if(FALSE  == Semaphore_pend(sem_rxData,10))    //电机ACK超时时间：10ms
     {
     	ackStatus = MODBUS_ACK_TIMEOUT;
     }
-
 
     Semaphore_post(sem_modbus);
     return ackStatus;
@@ -258,21 +247,8 @@ static uint8_t ServoModbusReadReg(uint8_t id,uint16_t addr,uint16_t *data)
     }
 
     /*关闭RS485发送*/
-    for(udelay = 3000;udelay>0;udelay--);           //延时等待最后一个串口数据被驱动到总线上
+    Task_sleep(1);//延时，等待最后一个字节发送出去
     UartNs550RS485TxDisable(SERVOR_MOTOR_UART);
-
-    /*等待电机响应*/
-    if(FALSE == Semaphore_pend(sem_rxData,10))   //丢弃MAX3160发送时，回传的数据
-    {
-        /*
-         * 环回数据超时
-         *
-         */
-        ackStatus = MODBUS_ACK_LOOPERR;
-        Semaphore_post(sem_modbus);
-        return ackStatus;
-    }
-
     
     if(FALSE  == Semaphore_pend(sem_rxData,10))    //电机ACK超时时间：10ms
     	ackStatus = MODBUS_ACK_TIMEOUT;
@@ -323,8 +299,9 @@ static void ServoRecvDataTask(void)
  * 1:伺服转矩模式
  * 2:直流电机模式
  * 3:直流电机(CAN)
+ * 4:直流电机(485)
  */
-#define SERVO_MODE (3)
+#define SERVO_MODE (4)
 
 #if SERVO_MODE == 0
 void ServoBrakeTask(void *param)
@@ -819,7 +796,55 @@ void ServoBrakeTask(void *param)
     	CanWrite(CAN_DEV_BRAKE, &canData);
     }
 }
+#elif SERVO_MODE == 4
+#define BRAKE_MAX (255)
 
+#define BRAKE_SLOTS (300)
+#define REVERSE_FORCE (30)
+
+#define REG_MAX_LOAD_CURRENT (0x006B)
+#define REG_REVERSE_FREQUENCE   (0x0043)
+
+#define POSITIVE_FREQUENCE  (6000)
+#define NEGITIVE_FREQUENCE  (-6000)
+void ServoBrakeTask(UArg arg0, UArg arg1)
+{
+    int16_t brakeforce;
+
+    while(1)
+    {
+        Task_sleep(BRAKETIME);
+
+        /*计算力矩*/
+        if(sysParam.brakeDirection == 0)
+        {
+            /*2.3-2.4机车刹车方向*/
+            brakeforce =  BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
+            if(brakeforce <= 0)
+                brakeforce = - REVERSE_FORCE;
+        }
+        else
+        {
+            /*2.1机车刹车方向*/
+            brakeforce =  -BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
+            if(brakeforce >= 0)
+                brakeforce = REVERSE_FORCE;
+        }
+
+        if(brakeforce >= 0)
+        {
+            ServoModbusWriteReg(0x02,REG_MAX_LOAD_CURRENT,brakeforce);
+            ServoModbusWriteReg(0x02,REG_REVERSE_FREQUENCE,NEGITIVE_FREQUENCE);
+        }
+        else
+        {
+            ServoModbusWriteReg(0x02,REG_MAX_LOAD_CURRENT,(-brakeforce));
+            ServoModbusWriteReg(0x02,REG_REVERSE_FREQUENCE,POSITIVE_FREQUENCE);
+        }
+
+    }
+
+}
 #endif
 void RailChangeStart()
 {
@@ -858,6 +883,7 @@ static void TaskChangeRailRoutine()
 
 		LogMsg("changerail start time: %d\n",Timestamp_get32());
 		LogMsg("changerail start dis = %d\n",startPos);
+
 		/*
 		 * 等待经过光电对管
 		 */
@@ -1253,7 +1279,7 @@ void ServoTaskInit()
 	UartNs550Init(SERVOR_MOTOR_UART,ServorUartIntrHandler);
 	UartNs550RS485TxDisable(SERVOR_MOTOR_UART);
 
-    UartNs550Recv(SERVOR_MOTOR_UART, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+    UartNs550Recv(SERVOR_MOTOR_UART, brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 
 
     /* 初始化接收邮箱 */

@@ -18,32 +18,8 @@
 /* 串口接收Buffer的大小 */
 #define UART_REC_BUFFER_SIZE (32)
 
-/* 串口设备硬件复位 */
-#define UartNs550HardReset(deviceNum) do {\
-    /* 串口控制器硬件复位 */ \
-        *(volatile uint16_t *) (UART_RESET_ADDR) = (1 << deviceNum); \
-        *(volatile uint16_t *) (UART_RESET_ADDR) = 0; \
-    }while(0)
-
-/* 串口设备硬件中断全局使能 */
-#define UartNs550HardIntEnable() \
-    (*(volatile uint16_t *) (UART_INT_ENABLE_ADDR) = 1)
-
-/* 串口设备硬件中断全局关闭 */
-#define UartNs550HardIntDisable() \
-    (*(volatile uint16_t *) (UART_INT_ENABLE_ADDR) = 0)
-
-/* 串口设备硬件中断全局Mask */
-#define UartNs550HardIntMaskAll() \
-    (*(volatile uint16_t *) (UART_INT_MASK_ADDR) = 0xff)
-
-/* 串口设备硬件中断全局取消Mask */
-#define UartNs550HardIntUnMaskAll() \
-    (*(volatile uint16_t *) (UART_INT_MASK_ADDR) = 0)
-
-/* 串口设备中断状态：返回产生中断的设备 */
-#define UartNs550GetHardIntStatus() \
-    (*(volatile uint16_t *) (UART_INT_STATUS_ADDR))
+#define UART_DEV_232_NUMS (6)
+#define UART_DEV_485_NUMS (4)
 
 /* 数据类型定义 */
 /* 串口配置表 */
@@ -82,6 +58,12 @@ uint32_t UartNs550Puts(uint16_t deviceNum,int8_t *pTxBuffer, int32_t numBytesToW
 uint32_t UartNs550SendBlock(uint16_t deviceNum,int8_t *pcBuf, uint32_t numBytesToWrite);
 uint32_t UartNs550RecvBlock(uint16_t deviceNum,int8_t *recvBuf, uint32_t numBytesToRecv);
 uint32_t UartNs550DeviceIsExist(uint16_t deviceNum);
+void UartNs550HardReset(uint16_t deviceNum);
+void UartNs550HardIntEnable();
+void UartNs550HardIntDisable();
+void UartNs550HardIntMaskAll();
+void UartNs550HardIntUnMaskAll();
+uint16_t UartNs550GetHardIntStatus();
 #endif
 
 

@@ -76,7 +76,51 @@ uartCfgTable_t uartCfgTable[] = {
          XUN_OPTION_DATA_INTR | XUN_OPTION_FIFOS_ENABLE,
          /*FIFO触发深度*/
          XUN_FIFO_TRIGGER_08
-    }
+    },
+    /*设备6资源配置*/
+    {
+         /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
+         6,FPGA_RS485_DEV0,80000000,
+         /*波特率,数据长度,校验位,ֹͣ停止位*/
+         {9600,XUN_FORMAT_8_BITS,XUN_FORMAT_EVEN_PARITY,XUN_FORMAT_1_STOP_BIT},
+         /*设备OPTIONS*/
+         XUN_OPTION_DATA_INTR | XUN_OPTION_FIFOS_ENABLE,
+         /*FIFO触发深度*/
+         XUN_FIFO_TRIGGER_08
+    },
+    /*设备7资源配置*/
+    {
+         /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
+         7,FPGA_RS485_DEV1,80000000,
+         /*波特率,数据长度,校验位,ֹͣ停止位*/
+         {9600,XUN_FORMAT_8_BITS,XUN_FORMAT_EVEN_PARITY,XUN_FORMAT_1_STOP_BIT},
+         /*设备OPTIONS*/
+         XUN_OPTION_DATA_INTR | XUN_OPTION_FIFOS_ENABLE,
+         /*FIFO触发深度*/
+         XUN_FIFO_TRIGGER_08
+    },
+    /*设备8资源配置*/
+    {
+         /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
+         8,FPGA_RS485_DEV2,80000000,
+         /*波特率,数据长度,校验位,ֹͣ停止位*/
+         {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_NO_PARITY,XUN_FORMAT_1_STOP_BIT},
+         /*设备OPTIONS*/
+         XUN_OPTION_DATA_INTR | XUN_OPTION_FIFOS_ENABLE,
+         /*FIFO触发深度*/
+         XUN_FIFO_TRIGGER_08
+    },
+    /*设备9资源配置*/
+    {
+         /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
+         9,FPGA_RS485_DEV3,80000000,
+         /*波特率,数据长度,校验位,ֹͣ停止位*/
+         {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_NO_PARITY,XUN_FORMAT_1_STOP_BIT},
+         /*设备OPTIONS*/
+         XUN_OPTION_DATA_INTR | XUN_OPTION_FIFOS_ENABLE,
+         /*FIFO触发深度*/
+         XUN_FIFO_TRIGGER_08
+    },
 };
 
 /*获取设备数量*/
@@ -227,8 +271,16 @@ void UartNs550IntrHandler(uint16_t deviceNum)
 void UartNs550HardIntMask(uint16_t deviceNum)
 {
     uint8_t Reg;
-    Reg = *(volatile uint16_t *) (UART_INT_MASK_ADDR);
-    *(volatile uint16_t *) (UART_INT_MASK_ADDR) =  Reg | (1 << deviceNum);
+    if(deviceNum < UART_DEV_232_NUMS)
+    {
+        Reg = *(volatile uint16_t *) (FPGA_RS232_INT_MASK);
+        *(volatile uint16_t *) (FPGA_RS232_INT_MASK) =  Reg | (1 << deviceNum);
+    }
+    else
+    {
+        Reg = *(volatile uint16_t *) (FPGA_RS485_INT_MASK);
+        *(volatile uint16_t *) (FPGA_RS485_INT_MASK) =  Reg | (1 << (deviceNum-UART_DEV_232_NUMS));
+    }
 }
 
 /*****************************************************************************
@@ -243,8 +295,16 @@ void UartNs550HardIntMask(uint16_t deviceNum)
 void UartNs550HardIntUnmask(uint16_t deviceNum)
 {
     uint8_t Reg;
-    Reg = *(volatile uint16_t *) (UART_INT_MASK_ADDR);
-    *(volatile uint16_t *) (UART_INT_MASK_ADDR) =  Reg & (~(1 << deviceNum));
+    if(deviceNum < UART_DEV_232_NUMS)
+    {
+        Reg = *(volatile uint16_t *) (FPGA_RS232_INT_MASK);
+        *(volatile uint16_t *) (FPGA_RS232_INT_MASK) =  Reg & (~(1 << deviceNum));
+    }
+    else
+    {
+        Reg = *(volatile uint16_t *) (FPGA_RS232_INT_MASK);
+        *(volatile uint16_t *) (FPGA_RS232_INT_MASK) =  Reg & (~(1 << (deviceNum-UART_DEV_232_NUMS)));
+    }
 }
 
 /*****************************************************************************
@@ -415,6 +475,7 @@ uint32_t UartNs550DeviceIsExist(uint16_t deviceNum)
     
 void UartNs550RS485TxDisable(uint16_t deviceNum)
 {
+#if 0
     uint8_t mcrRegister;
     XUartNs550 * instancePtr = &(uartCfgTable[deviceNum].instance);
 
@@ -423,10 +484,15 @@ void UartNs550RS485TxDisable(uint16_t deviceNum)
     
     XUartNs550_WriteReg(instancePtr->BaseAddress, XUN_MCR_OFFSET,
 			 	mcrRegister | XUN_MCR_RTS);
+#endif
+    uint16_t reg;
+    reg = *(volatile uint16_t *) (FPGA_RS485_DE);
+    *(volatile uint16_t *) (FPGA_RS485_DE) = reg & (~(1 << (deviceNum - UART_DEV_232_NUMS)));
 }
 
 void UartNs550RS485TxEnable(uint16_t deviceNum)
 {
+#if 0
     uint8_t mcrRegister;
     XUartNs550 * instancePtr = &(uartCfgTable[deviceNum].instance);
 
@@ -435,5 +501,64 @@ void UartNs550RS485TxEnable(uint16_t deviceNum)
     
     XUartNs550_WriteReg(instancePtr->BaseAddress, XUN_MCR_OFFSET,
 			 	mcrRegister &(~XUN_MCR_RTS) );
+#endif
+    uint16_t reg;
+    reg = *(volatile uint16_t *) (FPGA_RS485_DE);
+    *(volatile uint16_t *) (FPGA_RS485_DE) = reg | (1 << (deviceNum - UART_DEV_232_NUMS));
+}
+
+void UartNs550HardReset(uint16_t deviceNum)
+{
+    if(deviceNum < UART_DEV_232_NUMS)
+    {
+        *(volatile uint16_t *) (FPGA_RS232_RESET) = (1 << deviceNum);
+        *(volatile uint16_t *) (FPGA_RS232_RESET) = 0;
+    }
+    else
+    {
+        *(volatile uint16_t *) (FPGA_RS485_RESET) = (1 << (deviceNum-UART_DEV_232_NUMS));
+        *(volatile uint16_t *) (FPGA_RS485_RESET) = 0;
+    }
+}
+
+/* 串口设备硬件中断全局使能 */
+void UartNs550HardIntEnable()
+{
+    *(volatile uint16_t *) (FPGA_RS232_INT_ENB) = 1;
+    *(volatile uint16_t *) (FPGA_RS485_INT_ENB) = 1;
+}
+
+/* 串口设备硬件中断全局关闭 */
+void UartNs550HardIntDisable()
+{
+    *(volatile uint16_t *) (FPGA_RS232_INT_ENB) = 0;
+    *(volatile uint16_t *) (FPGA_RS485_INT_ENB) = 0;
+}
+
+/* 串口设备硬件中断全局Mask */
+void UartNs550HardIntMaskAll()
+{
+    *(volatile uint16_t *) (FPGA_RS232_INT_MASK) = 0xff;
+    *(volatile uint16_t *) (FPGA_RS485_INT_MASK) = 0xff;
+}
+
+/* 串口设备硬件中断全局取消Mask */
+void UartNs550HardIntUnMaskAll()
+{
+    *(volatile uint16_t *) (FPGA_RS232_INT_MASK) = 0;
+    *(volatile uint16_t *) (FPGA_RS485_INT_MASK) = 0;
+}
+
+/* 串口设备中断状态：返回产生中断的设备 */
+uint16_t UartNs550GetHardIntStatus()
+{
+    uint16_t status;
+    uint16_t status232;
+    uint16_t status485;
+
+    status232 = *(volatile uint16_t *) (FPGA_RS232_INT);
+    status485 = *(volatile uint16_t *) (FPGA_RS485_INT);
+    status = status232 | (status485 << UART_DEV_232_NUMS);
+    return status;
 }
 

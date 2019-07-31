@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include "Test_config.h"
 
-#define UART_DEV_2 (2)
-#define SERVOR_MOTOR_UART UART_DEV_2
+#define UART_485_DEV1 (6)
+#define SERVOR_MOTOR_UART UART_485_DEV1
 
 #define MODBUS_ACK_OK           (0)
 #define MODBUS_ACK_NOTOK        (1)

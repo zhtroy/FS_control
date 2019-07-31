@@ -16,13 +16,16 @@
 #include "canModule.h"
 #include "signal.h"
 
+
 #define GPIO_UART_INT (1)
 #define GPIO_CAN_INT  (2)
 #define GPIO_SIGNAL_INT (6)
+#define GPIO_UART485_INT (3)
+
 void HWI_4_Isr(void)
 {
 
-    unsigned char IntStatus,DeviceIndex;
+    unsigned short IntStatus,DeviceIndex;
 	//Disable UART 中断
 	UartNs550HardIntDisable ();
     CanHardIntDisable();
@@ -38,7 +41,7 @@ void HWI_4_Isr(void)
 
 		GPIOPinIntClear(SOC_GPIO_0_REGS, GPIO_UART_INT);
         IntStatus = UartNs550GetHardIntStatus();
-        for(DeviceIndex = 0;DeviceIndex < 6;DeviceIndex++)
+        for(DeviceIndex = 0;DeviceIndex < (UART_DEV_232_NUMS);DeviceIndex++)
         {
             if(IntStatus & (1 << DeviceIndex))
                 UartNs550IntrHandler(DeviceIndex);
@@ -46,6 +49,18 @@ void HWI_4_Isr(void)
 
     }
 
+    if(GPIOPinIntStatus(SOC_GPIO_0_REGS, GPIO_UART485_INT) == GPIO_INT_PEND)   //uart
+    {
+
+        GPIOPinIntClear(SOC_GPIO_0_REGS, GPIO_UART485_INT);
+        IntStatus = UartNs550GetHardIntStatus();
+        for(DeviceIndex = UART_DEV_232_NUMS;DeviceIndex < (UART_DEV_232_NUMS + UART_DEV_485_NUMS);DeviceIndex++)
+        {
+            if(IntStatus & (1 << DeviceIndex))
+                UartNs550IntrHandler(DeviceIndex);
+        }
+
+    }
 
     if(GPIOPinIntStatus(SOC_GPIO_0_REGS, GPIO_CAN_INT) == GPIO_INT_PEND)
     {
