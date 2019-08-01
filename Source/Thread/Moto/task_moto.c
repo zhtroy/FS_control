@@ -20,6 +20,8 @@
 #include "Sensor/RFID/RFID_task.h"
 #include "Sensor/ZCP/V2V.h"
 #include "Lib/vector.h"
+#include "Lib/bitop.h"
+#include "logLib.h"
 
 /* 宏定义 */
 #define RX_MBOX_DEPTH (32)
@@ -462,6 +464,11 @@ static void MotoRecvTask(void)
     int volLowCount = 0;
 	float voltage;
 
+	int frontReverseCount  = 0;
+	int rearReverseCount = 0;
+
+	const int REVERSE_THR = 20;  //1s
+
 	g_fbData.motorDataF.MotoId = MOTO_FRONT;
 	g_fbData.motorDataR.MotoId = MOTO_REAR;
 	
@@ -482,6 +489,23 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataF.RPMH       = (uint8_t)canRecvData.Data[5];
     			g_fbData.motorDataF.MotoTemp   = (uint8_t)canRecvData.Data[6] - 40;
     			g_fbData.motorDataF.DriverTemp = (uint8_t)canRecvData.Data[7] - 40;
+
+    			if( BF_GET(g_fbData.motorDataF.MotoMode,4,1) == 1)
+    			{
+    				frontReverseCount++;
+    			}
+    			else
+    			{
+    				frontReverseCount = 0;
+    			}
+
+    			if(frontReverseCount > REVERSE_THR)
+    			{
+    				frontReverseCount = 0;
+    				Message_postError(ERROR_REVERSING);
+    			}
+
+    			LogMsg("moto turn front : %d\n", BF_GET(g_fbData.motorDataF.MotoMode,4,1));
     			/*
     			 * 计算前轮转速
     			 */
@@ -545,6 +569,23 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataR.MotoTemp       = (uint8_t)canRecvData.Data[6] - 40;
     			g_fbData.motorDataR.DriverTemp     = (uint8_t)canRecvData.Data[7] - 40;
 
+
+    			if( BF_GET(g_fbData.motorDataR.MotoMode,4,1) == 1)
+    			{
+    				rearReverseCount++;
+    			}
+    			else
+    			{
+    				rearReverseCount = 0;
+    			}
+
+    			if(rearReverseCount > REVERSE_THR)
+    			{
+    				rearReverseCount = 0;
+    				Message_postError(ERROR_REVERSING);
+    			}
+
+    			LogMsg("moto turn rear : %d\n", BF_GET(g_fbData.motorDataR.MotoMode,4,1));
     			/*
                  * 计算后轮转速
                  */
