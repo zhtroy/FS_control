@@ -233,6 +233,8 @@ typedef struct{
 /*刹车故障，控制器无错误代码*/
 #define ERROR_BRAKE_NO_ERR_CODE				(27)
 
+#define ERROR_REVERSING   				(28)
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
