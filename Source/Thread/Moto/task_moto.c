@@ -505,7 +505,7 @@ static void MotoRecvTask(void)
     				Message_postError(ERROR_REVERSING);
     			}
 
-    			LogMsg("moto turn front : %d\n", BF_GET(g_fbData.motorDataF.MotoMode,4,1));
+    			//LogMsg("moto turn front : %d\n", BF_GET(g_fbData.motorDataF.MotoMode,4,1));
     			/*
     			 * 计算前轮转速
     			 */
@@ -585,7 +585,7 @@ static void MotoRecvTask(void)
     				Message_postError(ERROR_REVERSING);
     			}
 
-    			LogMsg("moto turn rear : %d\n", BF_GET(g_fbData.motorDataR.MotoMode,4,1));
+    			//LogMsg("moto turn rear : %d\n", BF_GET(g_fbData.motorDataR.MotoMode,4,1));
     			/*
                  * 计算后轮转速
                  */
