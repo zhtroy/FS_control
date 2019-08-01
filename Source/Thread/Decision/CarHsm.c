@@ -73,6 +73,8 @@ Msg const *Top(car_hsm_t * me, Msg * msg)
 			/*回传数据*/
 			g_fbData.mode = pEvt->mode;
 
+			MotoSetErrorCode(ERROR_NONE);
+
 			switch(pEvt->mode)
 			{
 				case 0:

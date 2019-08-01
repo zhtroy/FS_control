@@ -729,9 +729,11 @@ void ServoBrakeRecvTask()
 			msg->data[0] = ERROR_BRAKE_ERROR;
 			msg->dataLen = 1;
 			Message_post(msg);
+
+			g_fbData.brakeErrorCode = errorCode;
 	    }
 
-		g_fbData.brakeErrorCode = errorCode;
+
 
 
 	}
