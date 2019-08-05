@@ -11,7 +11,7 @@
 #include <ti/sysbios/knl/Queue.h>
 #include "Message/InternalEvtCode.h"
 
-#define NUMMSGS 64 /* number of messages */
+#define NUMMSGS 256 /* number of messages */
 #define MSGSIZE (128)
 
 typedef enum{
