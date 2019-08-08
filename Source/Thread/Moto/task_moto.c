@@ -642,7 +642,7 @@ static void MotoRecvTask(void)
 		         * 限定最大油门
 		         */
 		        recvRpm = (frontRpm + rearRpm)/2;
-		        maxThrottle = sysParam.maxtThrottle/2;
+		        maxThrottle = sysParam.maxtThrottle;
 		        recvCircle = (rearCircle + frontCircle)/2;
 
 		        /*
