@@ -46,5 +46,5 @@ extern uint16_t V2VGetFrontCarSpeed();
 extern epc_t V2VGetFrontCarEpc();
 extern void V2VSetDeltaDistance(int32_t delta);
 extern void V2VSetLeftRoadID(roadID_t raodID);
-
+uint8_t V2VIsSameAdjustArea();
 #endif /* V2V_H_ */

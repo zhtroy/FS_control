@@ -45,7 +45,7 @@ static uint32_t m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
 static int32_t m_deltaDistance;
 //ZCP驱动实例
 static ZCPInstance_t v2vInst;
-
+static uint8_t isSameAdjustArea = 0;
 /*
  * task
  */
@@ -142,6 +142,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		else  //普通区距离
 		*/
 		{
+		    isSameAdjustArea = 0;
 			if(m_param.frontId == V2V_ID_NONE)
 			{
 				m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
@@ -182,6 +183,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 						   && (frontepc.funcType == EPC_FUNC_LADJUST || frontepc.funcType == EPC_FUNC_RADJUST)
 						   && myepc.adjustAreaNo == frontepc.adjustAreaNo)
 						{
+						    isSameAdjustArea = 1;
 							//如果和前车在同一调整区，距离不翻转
 							if(m_frontCarStatus.distance < MotoGetCarDistance())
 							{
@@ -210,6 +212,14 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 				}
 			}
 
+		}
+
+		if(myepc.areaType != EPC_AREATYPE_STATION && isSameAdjustArea == 0 && m_distanceToFrontCar < 50)
+		{
+		    /*
+		     * 非调整区，非站台区，安全距离太近
+		     */
+		    Message_postError(ERROR_SAFE_DISTANCE);
 		}
 
 		g_fbData.forwardCarDistance = m_distanceToFrontCar;
@@ -434,4 +444,7 @@ epc_t V2VGetFrontCarEpc()
 	return epc;
 }
 
-
+uint8_t V2VIsSameAdjustArea()
+{
+    return isSameAdjustArea;
+}
