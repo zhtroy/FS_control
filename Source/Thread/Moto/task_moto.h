@@ -143,6 +143,7 @@ typedef struct{
  	uint16_t myID;
  	uint8_t orderState;
  	uint8_t brakeErrorCode;
+ 	uint16_t ds;
 }fbdata_t;
 
 typedef struct{

@@ -920,6 +920,7 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
         ds = maxSafeDistance;
     }
 
+    g_fbData.ds = ds;
     /*
      * 根据安全距离调整车辆目标速度
      * di: 车辆距离
