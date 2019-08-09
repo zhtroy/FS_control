@@ -15,8 +15,8 @@
 #define MODBUS_ACK_SENDERR      (6)
 
 #define UNKNOWNRAIL (0)
-#define LEFTRAIL    (1)
-#define RIGHTRAIL   (2)
+#define LEFTRAIL    (2)
+#define RIGHTRAIL   (1)
 
 #define SLEEPTIME 3
 
