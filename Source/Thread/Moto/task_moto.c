@@ -51,6 +51,8 @@ static float m_distance = 0;
 static float lastDistance = 0;
 static uint16_t maxSafeDistance = MAX_SAFE_DISTANCE;
 static uint16_t minSafeDistance = MIN_SAFE_DISTANCE;
+static float kap = 0.02;
+static float kai = 0.08;
 /********************************************************************************/
 /*          静态全局变量                                                              */
 /********************************************************************************/
@@ -683,9 +685,11 @@ static void MotoRecvTask(void)
              *  a)根据加速曲线，拟合目标速度(goalRPM)，输出计算速度(calcRPM)
              *  b)根据calcRPM，进行PID调节
              */
+
+            vg = MotoGoalSpeedGen(recvRpm, g_param.KSP, g_param.KSI);
+
             if( MotoGetPidOn()  )
             {
-                vg = MotoGoalSpeedGen(recvRpm, g_param.KSP, g_param.KSI);
 
                 /*
                  * 拟合加速曲线（当前为固定加速度曲线）
@@ -778,6 +782,7 @@ void MotoSetSafeDistance(uint16_t minValue,uint16_t maxValue)
     maxSafeDistance = maxValue;
     minSafeDistance = minValue;
 }
+#if 0
 static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
 {
     uint16_t ds;
@@ -881,6 +886,107 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
     }
     return vg;
 }
+#else
+/*
+ * 修改：
+ * 1.删除远离距离；
+ * 2.由位置PID改为增量式PID模式；
+ * 3.增加调整区的特殊处理：采用另外一组参数；
+ */
+static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
+{
+    uint16_t ds;
+    uint16_t vf;
+    uint32_t di;
+    uint16_t vgs;
+    static uint16_t vg;
+    static int32_t dis = 0;
+    static int32_t disOld = 0;
+    int32_t disDelta = 0;
+    int32_t vt;
+    float vd = 0;
+    static float vdTmp = 0;
+    const float KS = 0.02;
+
+    /*
+     * 根据车速计算安全距离
+     * ds: 安全距离
+     * ks: 比例系数-安全距离
+     * vc: 车辆速度
+     */
+    ds = minSafeDistance + KS*vc;
+    if(ds > maxSafeDistance)
+    {
+        ds = maxSafeDistance;
+    }
+
+    /*
+     * 根据安全距离调整车辆目标速度
+     * di: 车辆距离
+     * dis: 车辆距离-安全距离
+     * disDelta: 相邻两帧dis的差值
+     * ksp: 距离PID比例系数(p)
+     * ksi: 距离PID积分系数(i)
+     * vf: 前车速度
+     * vg: 目标速度
+     * vgs: 设定的目标速度
+     * vt: 临时速度变量
+     */
+    vf = V2VGetFrontCarSpeed();
+    di = V2VGetDistanceToFrontCar();
+    vgs = MotoGetGoalRPM();
+
+    /*
+     * 限定车辆之间的最大距离-200m
+     */
+    if(di > 2000)
+        di = 2000;
+
+    disOld = dis;
+    dis = (int) di - (int) ds;
+    disDelta = dis - disOld;
+
+    if(V2VIsSameAdjustArea())
+    {
+        /*
+         * 车辆处于同一调整区
+         */
+        vd = vdTmp + kap*disDelta + kai*dis;
+    }
+    else
+    {
+        vd = vdTmp + ksp*disDelta + ksi*dis;
+    }
+
+    vt = vf+vd;
+
+    if(vt > vgs)
+    {
+        /*
+         *积分正向饱和
+         */
+        vg = vgs;
+    }
+    else if(vt < 0)
+    {
+        /*
+         *积分负向饱和
+         */
+        vg = 0;
+    }
+    else
+    {
+        /*
+         * 积分未饱和，记录变化量
+         */
+        vdTmp = vd;
+        vg = vt;
+    }
+
+    return vg;
+}
+
+#endif
 
 void MotoSendFdbkToCellTask()
 {
@@ -1194,4 +1300,10 @@ void MotoUpdateCalibrationPoint(rfidPoint_t * calib)
 	{
 		vector_push_back(calibrationQueue,calib[i]);
 	}
+}
+
+void MotoSetAdjustPIDParameter(float kp,float ki)
+{
+    kap = kp;
+    kai = ki;
 }

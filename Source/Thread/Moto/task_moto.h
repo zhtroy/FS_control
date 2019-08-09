@@ -235,6 +235,8 @@ typedef struct{
 
 #define ERROR_REVERSING   				(28)
 
+#define ERROR_SAFE_DISTANCE                 (29)
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
