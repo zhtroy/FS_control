@@ -899,14 +899,14 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
     uint16_t vf;
     uint32_t di;
     uint16_t vgs;
-    static uint16_t vg;
+    static int16_t vg;
     static int32_t dis = 0;
     static int32_t disOld = 0;
     int32_t disDelta = 0;
     int32_t vt;
     float vd = 0;
     static float vdTmp = 0;
-    const float KS = 0.02;
+    const float KS = 0.2;
 
     /*
      * 根据车速计算安全距离
@@ -943,6 +943,12 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
     if(di > 2000)
         di = 2000;
 
+    if(di>maxSafeDistance)
+    {
+    	vg = vgs;
+    	return vg;
+    }
+
     disOld = dis;
     dis = (int) di - (int) ds;
     disDelta = dis - disOld;
@@ -952,23 +958,23 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
         /*
          * 车辆处于同一调整区
          */
-        vd = vdTmp + kap*disDelta + kai*dis;
+        vd = kap*disDelta + kai*dis;
     }
     else
     {
-        vd = vdTmp + ksp*disDelta + ksi*dis;
+        vd =  ksp*disDelta + ksi*dis;
     }
 
-    vt = vf+vd;
+    vg = vg+vd;
 
-    if(vt > vgs)
+    if(vg > vgs)
     {
         /*
          *积分正向饱和
          */
         vg = vgs;
     }
-    else if(vt < 0)
+    else if(vg < 0)
     {
         /*
          *积分负向饱和
@@ -978,10 +984,9 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
     else
     {
         /*
-         * 积分未饱和，记录变化量
+         * 积分未饱和
          */
-        vdTmp = vd;
-        vg = vt;
+
     }
 
     return vg;
@@ -1303,8 +1308,12 @@ void MotoUpdateCalibrationPoint(rfidPoint_t * calib)
 	}
 }
 
-void MotoSetAdjustPIDParameter(float kp,float ki)
+void MotoSetAdjustKAP(float kp)
 {
     kap = kp;
-    kai = ki;
+}
+
+void MotoSetAdjustKAI(float ki)
+{
+	kai = ki;
 }

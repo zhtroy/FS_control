@@ -260,7 +260,8 @@ typedef struct{
  */
 #define MIN_SAFE_DISTANCE (200)
 #define MAX_SAFE_DISTANCE (400)
-#define SAFE_DISTANCE_STATION (30)
+#define SAFE_DISTANCE_STATION (50)
+#define DANGER_DISTANCE   (80)
 /*
  * 远离距离范围定义,单位(10cm)
  */
@@ -302,5 +303,7 @@ void MotoSetCarDistance(uint32_t dist);
 void MotoUpdateCalibrationPoint(rfidPoint_t * calib);
 uint16_t RPMfromSpeed(float speed);
 float SpeedfromRPM(uint16_t rpm);
+void MotoSetAdjustKAP(float kp);
+void MotoSetAdjustKAI(float ki);
 
 #endif

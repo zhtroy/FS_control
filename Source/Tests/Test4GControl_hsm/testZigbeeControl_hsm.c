@@ -51,6 +51,8 @@
 #define REMOTE_CMD_HEARTBEAT     17
 #define REMOTE_CMD_ROUTENODE     18
 #define REMOTE_CMD_NEWROUTE      19
+#define REMOTE_CMD_KAP           20
+#define REMOTE_CMD_KAI           21
 
 
 
@@ -230,6 +232,22 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 					case REMOTE_CMD_KSI:
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSI_EVT);
+						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
+
+						break;
+					}
+
+					case REMOTE_CMD_KAP:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KAP_EVT);
+						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
+
+						break;
+					}
+
+					case REMOTE_CMD_KAI:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KAI_EVT);
 						memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
 
 						break;

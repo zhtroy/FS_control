@@ -214,10 +214,11 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 		}
 
-		if(myepc.areaType != EPC_AREATYPE_STATION && isSameAdjustArea == 0 && m_distanceToFrontCar < 50)
+		if(myepc.areaType != EPC_AREATYPE_STATION && isSameAdjustArea == 0 && m_distanceToFrontCar < DANGER_DISTANCE
+				&& MotoGetCarMode() == Auto)
 		{
 		    /*
-		     * 非调整区，非站台区，安全距离太近
+		     * 自动模式，非调整区，非站台区，安全距离太近
 		     */
 		    Message_postError(ERROR_SAFE_DISTANCE);
 		}

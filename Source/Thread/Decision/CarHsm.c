@@ -244,6 +244,18 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 			return 0;
 		}
 
+		case REMOTE_SET_KAP_EVT:
+		{
+			MotoSetAdjustKAP( EVT_CAST(msg, evt_remote_set_float_param_t)->value );
+			return 0;
+		}
+
+		case REMOTE_SET_KAI_EVT:
+		{
+			MotoSetAdjustKAI( EVT_CAST(msg, evt_remote_set_float_param_t)->value );
+			return 0;
+		}
+
 		case REMOTE_SET_STATION_ADDR:
 		{
 			g_param.station_addr = EVT_CAST(msg, evt_remote_set_u16_param_t)->value;
