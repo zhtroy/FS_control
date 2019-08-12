@@ -41,6 +41,7 @@ static uint8_t g_connectStatus = 1;
 #endif
 static Clock_Handle clockMotoRearHeart;
 static Clock_Handle clockMotoFrontHeart;
+static Clock_Handle clockThrottle;
 
 static float MotoPidCalc(int16_t expRpm,int16_t realRpm,float kp,float ki, float ku,uint8_t clear);
 static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi);
@@ -141,6 +142,13 @@ static xdc_Void MotoFrontConnectClosed(xdc_UArg arg)
 	//LogMsg("Moto Front Connect Failed!!\r\n");
 }
 
+static xdc_Void ThrottleTimeout(xdc_UArg arg)
+{
+	if(MotoGetCarMode() == Manual)
+	{
+		m_motoCtrl.Throttle = 0;
+	}
+}
 
 static void MotoInitTimer()
 {
@@ -150,6 +158,7 @@ static void MotoInitTimer()
 	clockParams.startFlag = FALSE;
 	clockMotoRearHeart = Clock_create(MotoRearConnectClosed, 3000, &clockParams, NULL);
 	clockMotoFrontHeart = Clock_create(MotoFrontConnectClosed, 3000, &clockParams, NULL);
+	clockThrottle = Clock_create(ThrottleTimeout, 2000, &clockParams, NULL);
 	Clock_start(clockMotoRearHeart);
 	Clock_start(clockMotoFrontHeart);
 }
@@ -1070,6 +1079,8 @@ void MototaskInit()
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
+
+
 }
 
 uint16_t MotoGetRealRPM(void)
@@ -1211,6 +1222,10 @@ enum motoGear MotoGetGear()
 void MotoSetThrottle(uint8_t thr)
 {
 	m_motoCtrl.Throttle = thr;
+	if(MotoGetCarMode() == Manual)
+	{
+		Clock_start(clockThrottle);
+	}
 }
 uint8_t MotoGetThrottle()
 {
