@@ -260,7 +260,8 @@ typedef struct{
  */
 #define MIN_SAFE_DISTANCE (100)
 #define MAX_SAFE_DISTANCE (300)
-#define SAFE_DISTANCE_STATION (35)
+#define MIN_SAFE_DISTANCE_STATION (50)
+#define MAX_SAFE_DISTANCE_STATION (100)
 #define DANGER_DISTANCE   (80)
 /*
  * 远离距离范围定义,单位(10cm)

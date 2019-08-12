@@ -126,7 +126,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 		if(myepc.areaType == EPC_AREATYPE_STATION)
 		{
-			MotoSetSafeDistance(SAFE_DISTANCE_STATION,SAFE_DISTANCE_STATION);
+			MotoSetSafeDistance(MIN_SAFE_DISTANCE_STATION,MAX_SAFE_DISTANCE_STATION);
 		}
 
 		if(myepc.areaType == EPC_AREATYPE_NORMAL)
