@@ -239,10 +239,11 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 		/*
 		 * 先清除邮箱
 		 */
-		for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_forcarid);i++)
+		do
 		{
 			Mailbox_pend(m_mb_forcarid, (Ptr)&recvPacket, BIOS_NO_WAIT);
 		}
+		while(Mailbox_getNumPendingMsgs(m_mb_forcarid)!=0 );
 
 		retryNum = RETRY_NUM;
 
@@ -317,10 +318,12 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
 		/*
 		 * 先清除邮箱
 		 */
-		for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_enterstation);i++)
+		do
 		{
 			Mailbox_pend(m_mb_enterstation, (Ptr)&recvPacket, BIOS_NO_WAIT);
 		}
+		while(Mailbox_getNumPendingMsgs(m_mb_enterstation)!=0 );
+
 
 		retryNum = RETRY_NUM;
 		do
@@ -397,10 +400,11 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
 		/*
 		 * 先清除邮箱
 		 */
-		for(i=0; i<Mailbox_getNumPendingMsgs(m_mb_leavestation);i++)
+		do
 		{
 			Mailbox_pend(m_mb_leavestation, (Ptr)&recvPacket, BIOS_NO_WAIT);
 		}
+		while(Mailbox_getNumPendingMsgs(m_mb_leavestation)!=0 );
 
 		retryNum = RETRY_NUM;
 		do
