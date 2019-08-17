@@ -323,6 +323,10 @@ static void MotoUpdateDistanceTask(void)
                 {
                     V2VSetDeltaDistance((int32_t)(epc.distance)-(int32_t)m_distance);
                 }
+                else if(EPC_AB_A == epc.ab)
+                {
+                    V2VSetDeltaDistance(0);
+                }
 
                 //校正距离
                 lastCircleNum = MotoGetCircles();
@@ -340,7 +344,7 @@ static void MotoUpdateDistanceTask(void)
         	 * B段距离校准
         	 */
         	m_distance = m_distance + deltaDist;
-        	V2VSetDeltaDistance(deltaDist);
+        	//V2VSetDeltaDistance(deltaDist);
 		}
 
         size = vector_size(calibrationQueue);
