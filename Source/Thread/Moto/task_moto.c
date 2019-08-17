@@ -1003,14 +1003,49 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
 
 #endif
 
+/*****************************************************************************
+ * 函数名称: static uint8_t crc8Calc(uint8_t *pData, uint8_t len)
+ * 函数说明: CRC-8计算
+ * 输入参数:
+ *          pData:数据指针地址
+ *          len:长度
+ * 输出参数: 无
+ * 返 回 值: 无
+ * 备注: 多项式(x8+x5+x4+1)
+*****************************************************************************/
+static uint8_t crc8Calc(uint8_t *pData, uint8_t len)
+{
+    uint8_t i,j;
+    uint8_t crc;
+    crc = 0xff;
+
+    for(j=0; j<len; j++)
+    {
+        crc = *pData ^ crc;  /* 每次先与需要计算的数据异或,计算完指向下一数据 */
+
+        for (i=0; i<8; i++)
+        {
+            if (crc & 0x01)
+                crc = (crc >> 1) ^ 0x8C;
+            else
+                crc = (crc >> 1);
+        }
+
+        pData++;
+    }
+
+
+    return (crc);
+
+}
 void MotoSendFdbkToCellTask()
 {
 	/*
-	 * 反馈数据包格式为 包头(0xAA 0x42 0x55) + 长度 + 数据 + 包尾(0x0D)
+	 * 反馈数据包格式为 包头(0xAA 0x42 0x55) + 长度 + 数据 + CRC8 + 包尾(0x0D)
 	 */
 	uint8_t  sendbuff[512];
 	int32_t tms;
-	int bufflen = sizeof(g_fbData)+5;
+	int bufflen = sizeof(g_fbData)+6;
 
 	sendbuff[0] = 0xAA;
 	sendbuff[1] = 0x42;
@@ -1030,11 +1065,19 @@ void MotoSendFdbkToCellTask()
 		userGetMS(&tms);
 		g_fbData.rfidReadTime = tms;
 		memcpy(sendbuff+4,(char*) &g_fbData, sizeof(g_fbData) );
+
+		/*
+		 * 插入CRC8
+		 */
+		sendbuff[bufflen-2] = crc8Calc(sendbuff,bufflen-2);
+
 		ZigbeeSend(sendbuff, bufflen);
 
 		Task_sleep(100);
 	}
 }
+
+
 void MototaskInit()
 {
 	Task_Handle task;
