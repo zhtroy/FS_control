@@ -1054,17 +1054,19 @@ static uint8_t crc8Calc(uint8_t *pData, uint8_t len)
 void MotoSendFdbkToCellTask()
 {
 	/*
-	 * 反馈数据包格式为 包头(0xAA 0x42 0x55) + 长度 + 数据 + CRC8 + 包尾(0x0D)
+	 * 反馈数据包格式为 包头(0xAA 0x42 0x55) + 长度 + 数据 + CRC8 + 包尾(0x0D 0x99 0xCC)
 	 */
 	uint8_t  sendbuff[512];
 	int32_t tms;
-	int bufflen = sizeof(g_fbData)+6;
+	int bufflen = sizeof(g_fbData)+8;
 
 	sendbuff[0] = 0xAA;
 	sendbuff[1] = 0x42;
 	sendbuff[2] = 0x55;
 	sendbuff[3] = sizeof(g_fbData);
-	sendbuff[bufflen-1] = 0x0D;
+	sendbuff[bufflen-3] = 0x0D;
+	sendbuff[bufflen-2] = 0x99;
+	sendbuff[bufflen-1] = 0xCC;
 
 	while(1){
 		/*
@@ -1082,7 +1084,7 @@ void MotoSendFdbkToCellTask()
 		/*
 		 * 插入CRC8
 		 */
-		sendbuff[bufflen-2] = crc8Calc(&sendbuff[4],sizeof(g_fbData));
+		sendbuff[bufflen-4] = crc8Calc(&sendbuff[4],sizeof(g_fbData));
 
 		ZigbeeSend(sendbuff, bufflen);
 
