@@ -344,7 +344,7 @@ static void MotoUpdateDistanceTask(void)
         	 * B段距离校准
         	 */
         	m_distance = m_distance + deltaDist;
-        	//V2VSetDeltaDistance(deltaDist);
+        	V2VSetDeltaDistance(deltaDist);
 		}
 
         size = vector_size(calibrationQueue);
@@ -1073,7 +1073,7 @@ void MotoSendFdbkToCellTask()
 		/*
 		 * 插入CRC8
 		 */
-		sendbuff[bufflen-2] = crc8Calc(sendbuff,bufflen-2);
+		sendbuff[bufflen-2] = crc8Calc(&sendbuff[4],sizeof(g_fbData));
 
 		ZigbeeSend(sendbuff, bufflen);
 

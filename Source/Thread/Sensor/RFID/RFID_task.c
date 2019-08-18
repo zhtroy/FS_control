@@ -318,7 +318,6 @@ void taskCreateRFID(UArg a0, UArg a1)
                             (rfidQueue[0].byte[15] << 16) +
                             (rfidQueue[0].byte[16] << 8) +
                             rfidQueue[0].byte[17] ;
-                V2VSetDeltaDistance(deltaDist);
 				Mailbox_post(bSecMbox,&deltaDist,BIOS_NO_WAIT);
 			}
             else if(EPC_AB_A == epc.ab)
