@@ -897,10 +897,14 @@ static void TaskChangeRailRoutine()
 		Task_sleep(WAIT_CHANGERAIL_TIMEOUT);
 
 		//检测是否变轨成功
-		if(RailGetRailState() == lastRailState)
+		if( (lastRailState == LEFTRAIL && RailGetRailState() == RIGHTRAIL)
+			|| (lastRailState == RIGHTRAIL && RailGetRailState() == LEFTRAIL) )
+		{
+			//变轨成功
+		}
+		else   //变轨超时，失败
 		{
 			Message_postError(ERROR_MERGE_FAILED);
-			continue;
 		}
 
 	}
