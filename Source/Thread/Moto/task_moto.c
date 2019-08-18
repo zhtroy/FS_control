@@ -476,6 +476,8 @@ static void MotoRecvTask(void)
     canDataObj_t canRecvData;
     uint16_t vg = 0;
     p_msg_t msg;
+    uint8_t pidMode = 0;
+    uint8_t pidModeOld = 0;
     int volLowCount = 0;
 	float voltage;
 
@@ -701,9 +703,11 @@ static void MotoRecvTask(void)
 
             vg = MotoGoalSpeedGen(recvRpm, g_param.KSP, g_param.KSI);
 
-            if( MotoGetPidOn()  )
-            {
+            pidModeOld = pidMode;
+            pidMode = MotoGetPidOn();
 
+            if( pidMode  )
+            {
                 /*
                  * 拟合加速曲线（当前为固定加速度曲线）
                  */
@@ -779,6 +783,11 @@ static void MotoRecvTask(void)
                 calcRpm=0;
                 hisThrottle = 0;
                 MotoPidCalc(0,0,0,0,0,1);
+                if(pidModeOld)
+                {
+                    MotoSetThrottle(0);
+                    BrakeSetBrake(0);
+                }
             }
 
             /*

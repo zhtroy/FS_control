@@ -312,7 +312,7 @@ Msg const * TopAutoMode(car_hsm_t * me, Msg* msg)
 		}
 		case ENTRY_EVT:
 		{
-			MotoSetPidOn(1);
+
 			MotoSetGear(GEAR_DRIVE);    /*前进档*/
 			return 0;
 		}
@@ -349,6 +349,7 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 	{
 		case ENTRY_EVT:
 		{
+            MotoSetPidOn(0);
 			g_fbData.FSMstate =idle;
 			return 0;
 		}
@@ -381,6 +382,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 		}
 		case ENTRY_EVT:
 		{
+            MotoSetPidOn(1);
 			g_fbData.FSMstate =running;
 			m_isInStation = 0;  //一旦开始运行，就认为不在站点
 			MotoSetGoalRPM(RPMfromSpeed(1.4));   //固定以1.4m/s启动
