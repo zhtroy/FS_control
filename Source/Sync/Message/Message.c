@@ -12,14 +12,20 @@
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Queue.h>
 #include <xdc/runtime/System.h>
+#include <ti/sysbios/knl/Task.h>
+#include <ti/sysbios/hal/Hwi.h>
 
 #include "stdint.h"
 #include "Message/Message.h"
+#include "logLib.h"
 
 
 static Semaphore_Handle sem_msg;
 static Queue_Handle msgQueue;
 static Queue_Handle freeQueue;
+
+static int freesize = NUMMSGS;
+static int postedsize;
 
 static char * typeToName[]= {
 		"rfid",
@@ -31,6 +37,15 @@ static char * typeToName[]= {
 		"Empty"
 };
 
+uint32_t Message_getFreeNum()
+{
+	return freesize;
+}
+
+uint32_t Message_getPostedNum()
+{
+	return postedsize;
+}
 
 void Message_init(){
 
@@ -38,6 +53,8 @@ void Message_init(){
 	Int i;
 	p_msg_t msg;
 	Error_Block eb;
+	Task_Handle task;
+	Task_Params taskParams;
 
     // 创建一个信号量
     Semaphore_Params semParams;
@@ -70,17 +87,33 @@ p_msg_t Message_getEmpty()
 {
 	p_msg_t msg;
 
+	uint32_t key;
+
+	key = Hwi_disable();
+
 	msg = Queue_get(freeQueue);
 	/* fill in value */
 	msg->type = Empty;
+
+	freesize --;
+
+	Hwi_restore(key);
 
 	return msg;
 }
 
 void Message_recycle(p_msg_t msg)
 {
+	uint32_t key;
+
+	key = Hwi_disable();
+
 	/* put message */
 	Queue_put(freeQueue, (Queue_Elem *) msg);
+
+	freesize ++;
+
+	Hwi_restore(key);
 }
 
 //等待一条消息
@@ -88,9 +121,18 @@ p_msg_t Message_pend()
 {
 	p_msg_t msg;
 
+	uint32_t key;
+
 	Semaphore_pend(sem_msg, BIOS_WAIT_FOREVER);
+
+	key = Hwi_disable();
+
 	/* get message */
 	msg = Queue_get(msgQueue);
+
+	postedsize--;
+
+	Hwi_restore(key);
 
 	return msg;
 }
@@ -98,8 +140,17 @@ p_msg_t Message_pend()
 //post 一条消息
 void Message_post(p_msg_t msg)
 {
+	uint32_t key;
+
+	key = Hwi_disable();
+
 	/* put message */
 	Queue_put(msgQueue, (Queue_Elem *) msg);
+
+	postedsize++;
+
+	Hwi_restore(key);
+
 	/* post semaphore */
 	Semaphore_post(sem_msg);
 }
