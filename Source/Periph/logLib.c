@@ -9,7 +9,7 @@
 #include "logLib.h"
 
 /* 宏定义 */
-#define MAILBOX_DEPTH	(32)	           	 	/* 邮箱深度 */
+#define MAILBOX_DEPTH	(64)	           	 	/* 邮箱深度 */
 #define MAX_CHAR_NUMS	(256)					/* 单次打印的最大字符数 */
 
 /* 静态全局变量声明 */

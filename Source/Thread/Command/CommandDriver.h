@@ -20,22 +20,38 @@
 
 //1.     设置起始点
 #define COMMAND_TYPE_SET_START_POINT  (1)
+#define COMMAND_TYPE_SET_START_POINT_RESPONSE  (0x11)
 //2.     更新路线开始
 #define COMMAND_TYPE_ROUTE_START  (2)
 //3.     路线节点
 #define COMMAND_TYPE_ROUTE_NODE  (3)
 //4.     更新路线结束
 #define COMMAND_TYPE_ROUTE_END  (4)
+#define COMMAND_TYPE_ROUTE_RESPONSE (0x14)
 //5.     更新距离校准点开始
 #define COMMAND_TYPE_CALIB_START  (5)
 //6.     距离校准点节点
 #define COMMAND_TYPE_CALIB_NODE  (6)
 //7.     更新距离校准点结束
 #define COMMAND_TYPE_CALIB_END  (7)
+#define COMMAND_TYPE_CALIB_RESPONSE (0x17)
 
 //10.  启动
-#define COMMAND_TYPE_GO  (10)
+#define COMMAND_TYPE_GO  (0x0A)
+#define COMMAND_TYPE_GO_RESPONSE   (0x1A)
 
+//设置循环路线
+#define COMMAND_TYPE_SETLOOP   (0x0B)
+#define COMMAND_TYPE_SETLOOP_RESPONSE (0x1B)
+
+//车门动作
+#define COMMAND_TYPE_DOOR     (0x0C)
+#define COMMAND_TYPE_DOOR_RESPONSE     (0x1C)
+
+//车辆信息回传
+#define COMMAND_TYPE_CAR_INFO (0x80)
+//路线运行结束
+#define COMMAND_TYPE_ROUTE_FINISH (0x81)
 
 #define COMMAND_PACKET_MAX_LEN (144)
 
@@ -48,7 +64,7 @@ typedef struct{
 
 extern void CommandDriverInit();
 extern Bool CommandRecv(command_packet_t * packet,UInt timeout);
-extern void CommandSend(char data[]);
+extern void CommandSend(char data[], int datalen, uint8_t type);
 
 
 #endif /* COMMAND_H_ */

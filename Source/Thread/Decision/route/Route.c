@@ -19,7 +19,7 @@ static packet_routenode_t * m_vnode = 0;
  */
 void RouteShow(packet_routenode_t * vnode)
 {
-#if 0
+#if 1
 	char outputbuff[100];
 	/*
 	 * 将收到的路径打印出来
@@ -31,8 +31,8 @@ void RouteShow(packet_routenode_t * vnode)
 		size_t i;
 		for(i=0; i<vector_size(vnode); i++)
 		{
-			LogMsg("nid: %llu\t NT:%d\t WS:%d\n",
-					vnode[i].nid,
+			LogMsg("nid: 0x%x\t NT:%d\t WS:%d\n",
+					BF_GET(vnode[i].nid,0,24),
 					BF_GET(vnode[i].flag,4,4),
 					BF_GET(vnode[i].flag,0,4));
 

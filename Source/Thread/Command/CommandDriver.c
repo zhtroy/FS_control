@@ -13,10 +13,12 @@
 #include <xdc/std.h>
 #include "uartns550.h"
 #include "Command/CommandDriver.h"
+#include "string.h"
 
 static uartDataObj_t uartRxData;
 static Mailbox_Handle uartRecvMbox;
 static Mailbox_Handle packetRecvMbox;
+static 	command_packet_t m_sendPacket;
 
 typedef enum{
 	//等待head
@@ -190,9 +192,21 @@ Bool CommandRecv(command_packet_t * packet,UInt timeout)
 	return ret;
 }
 
-void CommandSend(char data[])
+void CommandSend(char* data, int datalen, uint8_t type)
 {
-	UartNs550Send(COMMAND_UART_NUM,data,sizeof(data));
+	m_sendPacket.head[0] = COMMAND_PACKET_HEAD_0;
+	m_sendPacket.head[1] = COMMAND_PACKET_HEAD_1;
+	m_sendPacket.len = datalen + 2;
+	m_sendPacket.type = type;
+
+	memset(m_sendPacket.data,0,COMMAND_PACKET_MAX_LEN);
+	if(datalen>0)
+	{
+		memcpy(m_sendPacket.data, data, datalen );
+	}
+
+
+	UartNs550Send(COMMAND_UART_NUM,&m_sendPacket,datalen+4);  //加上包头，len, type
 }
 
 

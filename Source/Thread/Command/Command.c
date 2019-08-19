@@ -19,6 +19,11 @@
 #include "CellCommunication/CellCommunication.h"
 #include "Message/Message.h"
 #include "Decision/route/Route.h"
+#include "Lib/bitop.h"
+#include "Moto/task_moto.h"
+#include "Moto/task_brake_servo.h"
+#include "Sensor/RFID/RFID_task.h"
+#include "Thread/Moto/Parameter.h"
 
 
 
@@ -46,6 +51,71 @@ static void ShowRFIDPointList(rfidPoint_t * list)
 		LogMsg("EMPTY\n");
 	}
 	LogMsg("============\n");
+}
+
+static void CommandSendTask(UArg arg0, UArg arg1)
+{
+	const int SEND_INTERVAL = 500;
+	int packetLen = 0;
+	char packetBuff[256];
+
+	uint32_t distance;
+	float speed;
+	uint8_t railstate;
+	uint8_t errorcode;
+	uint8_t throttle;
+	uint8_t brake;
+	uint8_t mode;
+	uint8_t * rfidArray;
+
+	while(1)
+	{
+		Task_sleep(SEND_INTERVAL);
+
+		packetLen = 0;
+		//车辆位置
+		distance = htonl(MotoGetCarDistance());
+		memcpy(&packetBuff[packetLen],&distance,sizeof(uint32_t));
+		packetLen += sizeof(uint32_t);
+
+		//车辆速度
+		speed = htonf(SpeedfromRPM(MotoGetRealRPM()) * 3.6f );
+		memcpy(&packetBuff[packetLen],&speed,sizeof(float));
+		packetLen += sizeof(float);
+
+		//轨道状态
+		railstate = RailGetRailState();
+		memcpy(&packetBuff[packetLen],&railstate,sizeof(uint8_t));
+		packetLen += sizeof(uint8_t);
+
+		//当前RFID
+		rfidArray = RFIDGetRaw();
+		memcpy(&packetBuff[packetLen],rfidArray,EPC_SIZE);
+		packetLen += EPC_SIZE;
+
+		//故障代码
+		errorcode = g_fbData.ErrorCode;
+		memcpy(&packetBuff[packetLen],&errorcode, sizeof(uint8_t));
+		packetLen += sizeof(uint8_t);
+
+		//油门
+		throttle = MotoGetThrottle();
+		memcpy(&packetBuff[packetLen],&throttle, sizeof(uint8_t));
+		packetLen += sizeof(uint8_t);
+
+		//刹车
+		brake = BrakeGetBrake();
+		memcpy(&packetBuff[packetLen],&brake, sizeof(uint8_t));
+		packetLen += sizeof(uint8_t);
+
+		//模式
+		mode = g_fbData.mode;
+		memcpy(&packetBuff[packetLen],&mode, sizeof(uint8_t));
+		packetLen += sizeof(uint8_t);
+
+		CommandSend(packetBuff, packetLen, COMMAND_TYPE_CAR_INFO );
+
+	}
 }
 
 static void CommandHandleTask(UArg arg0, UArg arg1)
@@ -100,11 +170,13 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 			case COMMAND_TYPE_ROUTE_END:
 			{
 				uint16_t routeLen;
+				uint8_t success;
 				routeLen = packet.data[0] * 256 + packet.data[1];
 
 				if(routeLen ==  vector_size(vmap))
 				{
-					CommandSend("route_recved");
+					success = 1;
+
 					RFIDUpdateQueue(vmap);
 					LogMsg("map List\n");
 					ShowRFIDPointList(vmap);
@@ -113,9 +185,11 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 				}
 				else
 				{
+					success = 0;
 					LogMsg("Update map error recved :%d should be %d\n",vector_size(vmap),routeLen );
 				}
 
+				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_ROUTE_RESPONSE);
 				break;
 			}
 
@@ -138,27 +212,34 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 			case COMMAND_TYPE_CALIB_END:
 			{
 				uint16_t calibLen;
+				uint8_t success;
 				calibLen = packet.data[0] * 256 + packet.data[1];
 
 				if(calibLen ==  vector_size(vcalib))
 				{
-					CommandSend("calib_recved");
+					success = 1;
 					MotoUpdateCalibrationPoint(vcalib);
 					LogMsg("calib List\n");
 					ShowRFIDPointList(vcalib);
 				}
 				else
 				{
+					success = 0;
 					LogMsg("Update calib error recved :%d should be %d\n",vector_size(vcalib),calibLen );
 				}
+
+				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_CALIB_RESPONSE);
 
 				break;
 			}
 
 			case COMMAND_TYPE_GO:
 			{
-				CommandSend("GO_recved");
+				uint8_t success = 1;
+
 				LogMsg("COMMMAD: go\n");
+				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_GO_RESPONSE);
+
 				Message_postEvent(cell,CELL_MSG_ENTERAUTOMODE);
 				Message_postEvent(cell,CELL_MSG_STARTRUN);
 
@@ -168,6 +249,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 			case COMMAND_TYPE_SET_START_POINT:
 			{
 				uint32_t startDis;
+				uint8_t success = 1;
 
 
 				startDis = (packet.data[0]<<24) \
@@ -179,8 +261,29 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 				MotoSetCarDistance(startDis);
 
+				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_SET_START_POINT_RESPONSE);
+
+
 				break;
 			}
+
+			case COMMAND_TYPE_SETLOOP:
+			{
+				uint8_t success = 1;
+
+				g_param.cycleRoute = packet.data[0];
+				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_SETLOOP_RESPONSE);
+				break;
+			}
+
+			case COMMAND_TYPE_DOOR:
+			{
+				uint8_t success = 0;
+
+				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_DOOR_RESPONSE);
+				break;
+			}
+
 			default:break;
 		}
 	}
@@ -204,6 +307,12 @@ void CommandInit()
 	taskParams.priority = 5;
 	taskParams.stackSize = 2048;
 	task = Task_create(CommandHandleTask, &taskParams, NULL);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
+
+	task = Task_create(CommandSendTask, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);

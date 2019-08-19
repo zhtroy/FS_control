@@ -31,6 +31,7 @@
 #include "stdio.h"
 #include "Sensor/CellCommunication/CellCommunication.h"
 #include "logLib.h"
+#include "Command/CommandDriver.h"
 
 
 
@@ -964,6 +965,7 @@ Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
 				m_isInStation = 1;
 
 				//发送消息给CellHsm
+				CommandSend(0, 0, COMMAND_TYPE_ROUTE_FINISH);
 				CellHsmPost(carhsm_arrived);
 				STATE_TRAN(me, &me->automode_idle);
 				return 0;

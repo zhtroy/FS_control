@@ -69,6 +69,15 @@ inline double htond(double a)
 	return *((double*)(&temp));
 }
 
+inline float htonf(float a)
+{
+	uint32_t temp;
+
+	temp = htonl(*((uint32_t*) (&a)));
+
+	return *((float*)(&temp));
+}
+
 #define ntohl(a) htonl(a)
 #define ntohs(a) htons(a)
 #define ntohll(a) htonll(a)
