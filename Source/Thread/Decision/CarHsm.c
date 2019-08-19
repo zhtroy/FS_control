@@ -350,6 +350,8 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 		case ENTRY_EVT:
 		{
             MotoSetPidOn(0);
+            MotoSetThrottle(0);
+            BrakeSetBrake(10);
 			g_fbData.FSMstate =idle;
 			return 0;
 		}

@@ -786,7 +786,6 @@ static void MotoRecvTask(void)
                 if(pidModeOld)
                 {
                     MotoSetThrottle(0);
-                    BrakeSetBrake(0);
                 }
             }
 
