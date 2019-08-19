@@ -233,6 +233,18 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 			return 0;
 		}
 
+        case REMOTE_SET_KI_STATION_EVT:
+        {
+            g_param.KI_station = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+            return 0;
+        }
+
+        case REMOTE_SET_KP_STATION_EVT:
+        {
+            g_param.KP_station = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+            return 0;
+        }
+
 		case REMOTE_SET_KSP_EVT:
 		{
 			g_param.KSP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
@@ -386,6 +398,9 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 		case ENTRY_EVT:
 		{
             MotoSetPidOn(1);
+            MotoSetKI(g_param.KI);
+            MotoSetKP(g_param.KP);
+
 			g_fbData.FSMstate =running;
 			m_isInStation = 0;  //一旦开始运行，就认为不在站点
 			MotoSetGoalRPM(RPMfromSpeed(1.4));   //固定以1.4m/s启动
@@ -948,6 +963,10 @@ Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
 		case ENTRY_EVT:
 		{
 			g_fbData.FSMstate = stop;
+
+	        MotoSetKI(g_param.KI_station);
+	        MotoSetKP(g_param.KP_station);
+
 			StartStationStopRoutine();
 			return 0;
 		}

@@ -22,6 +22,7 @@
 #include "Lib/vector.h"
 #include "Lib/bitop.h"
 #include "logLib.h"
+#include "speed_control.h"
 
 /* 宏定义 */
 #define RX_MBOX_DEPTH (32)
@@ -54,6 +55,8 @@ static uint16_t maxSafeDistance = MAX_SAFE_DISTANCE;
 static uint16_t minSafeDistance = MIN_SAFE_DISTANCE;
 static float kap = 0.02;
 static float kai = 0.08;
+static float kp = 0.8;
+static float ki = 0.009;
 /********************************************************************************/
 /*          静态全局变量                                                              */
 /********************************************************************************/
@@ -708,6 +711,7 @@ static void MotoRecvTask(void)
 
             if( pidMode  )
             {
+#if 1
                 /*
                  * 拟合加速曲线（当前为固定加速度曲线）
                  */
@@ -726,6 +730,10 @@ static void MotoRecvTask(void)
                         calcRpm-=DELTA_RPM;
                     }
                 }
+#else
+                calcRpm = SpeedGenerate(calcRpm, vg);
+#endif
+
                 /*
                  * 限定最大速度
                  */
@@ -734,8 +742,8 @@ static void MotoRecvTask(void)
                 /*
                  * PID计算调节量
                  */
-                adjThrottle = MotoPidCalc(calcRpm,recvRpm,g_param.KP,
-                                        g_param.KI,g_param.KU, 0);
+                adjThrottle = MotoPidCalc(calcRpm,recvRpm,kp,
+                                        ki,0, 0);
 
                 hisThrottle += adjThrottle;
 
@@ -1388,4 +1396,15 @@ void MotoSetAdjustKAP(float kp)
 void MotoSetAdjustKAI(float ki)
 {
 	kai = ki;
+}
+
+
+void MotoSetKP(float value)
+{
+    kp = value;
+}
+
+void MotoSetKI(float value)
+{
+    ki = value;
 }
