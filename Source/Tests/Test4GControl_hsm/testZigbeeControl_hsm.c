@@ -53,6 +53,8 @@
 #define REMOTE_CMD_NEWROUTE      19
 #define REMOTE_CMD_KAP           20
 #define REMOTE_CMD_KAI           21
+#define REMOTE_CMD_KP_STATION    22
+#define REMOTE_CMD_KI_STATION    23
 
 //zigbee遥控超时
 #define ZIGBEE_TIMEOUT (10000)
@@ -224,6 +226,22 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 
 						break;
 					}
+
+                    case REMOTE_CMD_KI_STATION:
+                    {
+                        EVT_SETTYPE(&hsmEvt, REMOTE_SET_KI_STATION_EVT);
+                        memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
+
+                        break;
+                    }
+                    case REMOTE_CMD_KP_STATION:
+                    {
+                        EVT_SETTYPE(&hsmEvt, REMOTE_SET_KP_STATION_EVT);
+                        memcpy(&(EVT_CAST(&hsmEvt, evt_remote_set_float_param_t)->value), &pMsg->data[1],sizeof(float));
+
+                        break;
+                    }
+
 					case REMOTE_CMD_KSP:
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_SET_KSP_EVT);

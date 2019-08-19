@@ -22,7 +22,7 @@ void taskTestSpeed(void)
     while(1)
     {
         Task_sleep(50);
-        vg = SpeedGenerate(vc, ve, te);
+        vg = SpeedGenerate(vc, ve);
         if(vgR != vg)
         {
             LogMsg("%d\r\n",vg);

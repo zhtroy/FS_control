@@ -260,8 +260,8 @@ typedef struct{
  */
 #define MIN_SAFE_DISTANCE (100)
 #define MAX_SAFE_DISTANCE (300)
-#define MIN_SAFE_DISTANCE_STATION (50)
-#define MAX_SAFE_DISTANCE_STATION (100)
+#define MIN_SAFE_DISTANCE_STATION (40)
+#define MAX_SAFE_DISTANCE_STATION (70)
 #define DANGER_DISTANCE   (80)
 /*
  * 远离距离范围定义,单位(10cm)
@@ -274,7 +274,7 @@ typedef struct{
 
 
 #define FILTER_RPM (200)
-#define DELTA_RPM (8)
+#define DELTA_RPM (6)
 #define RPM_LIMIT (4000)
 
 #define BRAKE_THRO_RATIO (1)
@@ -306,5 +306,6 @@ uint16_t RPMfromSpeed(float speed);
 float SpeedfromRPM(uint16_t rpm);
 void MotoSetAdjustKAP(float kp);
 void MotoSetAdjustKAI(float ki);
-
+void MotoSetKP(float value);
+void MotoSetKI(float value);
 #endif

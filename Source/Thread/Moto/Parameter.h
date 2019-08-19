@@ -29,6 +29,10 @@ typedef struct parameter_tag{
     float KSI;
     uint16_t station_addr;   //站台zigbee地址
 
+    //停站流程使用的pid参数
+    float KP_station;
+    float KI_station;
+
 
 }parameter_t;
 
