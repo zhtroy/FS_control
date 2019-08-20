@@ -26,6 +26,7 @@ static Queue_Handle freeQueue;
 
 static int freesize = NUMMSGS;
 static int postedsize;
+static int freezerotimes = 0;
 
 static char * typeToName[]= {
 		"rfid",
@@ -37,14 +38,19 @@ static char * typeToName[]= {
 		"Empty"
 };
 
-uint32_t Message_getFreeNum()
+int Message_getFreeNum()
 {
 	return freesize;
 }
 
-uint32_t Message_getPostedNum()
+int Message_getPostedNum()
 {
 	return postedsize;
+}
+
+int Message_getFreeQzerotimes()
+{
+	return freezerotimes;
 }
 
 void Message_init(){
@@ -98,6 +104,11 @@ p_msg_t Message_getEmpty()
 	freesize --;
 
 	Hwi_restore(key);
+
+	if(freesize<=0)
+	{
+		freezerotimes++;
+	}
 
 	return msg;
 }

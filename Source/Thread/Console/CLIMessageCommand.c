@@ -50,7 +50,8 @@ BaseType_t prvMessageStatus( char *pcWriteBuffer, size_t xWriteBufferLen, const 
     /* Command Process*/
     memset( pcWriteBuffer, 0x00, xWriteBufferLen );
 
-	sprintf(pcWriteBuffer,"[Message Queue] free:%d\t posted:%d\n",Message_getFreeNum(), Message_getPostedNum());
+	sprintf(pcWriteBuffer,"[Message Queue] free:%d\t posted:%d \tfreeQ zero times:%d\n",
+									Message_getFreeNum(), Message_getPostedNum(),Message_getFreeQzerotimes());
 
 	xReturn = pdFALSE;
 

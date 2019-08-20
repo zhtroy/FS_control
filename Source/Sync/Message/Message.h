@@ -48,8 +48,9 @@ void Message_post(p_msg_t);
 char* Message_getNameByType(msg_type_t t);
 void Message_postError(unsigned char errorcode);
 void Message_postEvent(msg_type_t type, unsigned char code);
-uint32_t Message_getFreeNum();
-uint32_t Message_getPostedNum();
+int Message_getFreeNum();
+int Message_getPostedNum();
+int Message_getFreeQzerotimes();
 
 
 #endif /* MESSAGE_H_ */
