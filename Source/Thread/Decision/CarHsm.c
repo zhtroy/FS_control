@@ -1252,7 +1252,7 @@ Msg const * TopForceBrake(car_hsm_t * me, Msg* msg)
 			g_fbData.mode = ForceBrake;
 
 
-			BrakeSetBrake(MAX_BRAKE_SIZE);
+			BrakeSetBrake(FORCE_BRAKE_SIZE);
 			MotoSetGear(GEAR_NONE);
 			MotoSetThrottle(0);
 			return 0;

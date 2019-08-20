@@ -711,29 +711,30 @@ static void MotoRecvTask(void)
 
             if( pidMode  )
             {
-#if 1
-                /*
-                 * 拟合加速曲线（当前为固定加速度曲线）
-                 */
-                if ( abs((int)calcRpm - (int)(vg)) < DELTA_RPM )
-                {
-                    calcRpm = vg;
-                }
-                else
-                {
-                    if(calcRpm < vg)
-                    {
-                        calcRpm+=DELTA_RPM;
-                    }
-                    else if(calcRpm > vg)
-                    {
-                        calcRpm-=DELTA_RPM;
-                    }
-                }
-#else
-                calcRpm = SpeedGenerate(calcRpm, vg);
-#endif
+//#if 1
+//                /*
+//                 * 拟合加速曲线（当前为固定加速度曲线）
+//                 */
+//                if ( abs((int)calcRpm - (int)(vg)) < DELTA_RPM )
+//                {
+//                    calcRpm = vg;
+//                }
+//                else
+//                {
+//                    if(calcRpm < vg)
+//                    {
+//                        calcRpm+=DELTA_RPM;
+//                    }
+//                    else if(calcRpm > vg)
+//                    {
+//                        calcRpm-=DELTA_RPM;
+//                    }
+//                }
+//#else
+//                calcRpm = SpeedGenerate(calcRpm, vg);
+//#endif
 
+            	calcRpm = vg;
                 /*
                  * 限定最大速度
                  */

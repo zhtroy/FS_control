@@ -258,8 +258,8 @@ typedef struct{
 /*
  * 安全距离范围定义,单位(10cm)
  */
-#define MIN_SAFE_DISTANCE (150)
-#define MAX_SAFE_DISTANCE (400)
+#define MIN_SAFE_DISTANCE (100)
+#define MAX_SAFE_DISTANCE (300)
 #define MIN_SAFE_DISTANCE_STATION (40)
 #define MAX_SAFE_DISTANCE_STATION (70)
 #define DANGER_DISTANCE   (80)
@@ -271,10 +271,11 @@ typedef struct{
 
 
 #define MAX_BRAKE_SIZE (255)
+#define FORCE_BRAKE_SIZE (150)
 
 
 #define FILTER_RPM (200)
-#define DELTA_RPM (6)
+#define DELTA_RPM (8)
 #define RPM_LIMIT (4000)
 
 #define BRAKE_THRO_RATIO (1)
