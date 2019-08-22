@@ -388,6 +388,58 @@ void RFIDUpdateQueue(rfidPoint_t *rfidQ)
 	}
 }
 
+uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
+{
+    uint16_t size;
+    uint16_t i;
+    int16_t index;
+    size = vector_size(rfidQueue);
+
+    if(size == 0)
+    {
+        /*
+         * RFID队列已空，无法对接路线
+         */
+        return 0;
+    }
+
+    index = -1;
+    for(i=0;i<size;i++)
+    {
+        if(0 == memcmp(&rfidQueue[i],&rfidQ[0],sizeof(rfidPoint_t)))
+        {
+            index = i;
+        }
+    }
+
+    if(index > 0)
+    {
+        /*
+         * 清除相同点之后的路点
+         */
+        for(i=index+1;i<size;i++)
+        {
+            vector_erase(rfidQueue,i);
+        }
+
+        /*
+         * 追加新的路点
+         */
+        size = vector_size(rfidQ);
+        for(i=1;i<size;i++)
+        {
+            vector_push_back(rfidQueue,rfidQ[i]);
+        }
+
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+
+}
+
 uint8_t * RFIDGetRaw()
 {
 	return m_rawrfid;

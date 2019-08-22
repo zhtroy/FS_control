@@ -48,6 +48,10 @@
 #define COMMAND_TYPE_DOOR     (0x0C)
 #define COMMAND_TYPE_DOOR_RESPONSE     (0x1C)
 
+//修改路线
+#define COMMAND_TYPE_CHANGE_ROUTE_END       (0x0D)
+#define COMMAND_TYPE_CHANGE_ROUTE_RESPONSE  (0x1D)
+
 //车辆信息回传
 #define COMMAND_TYPE_CAR_INFO (0x80)
 //路线运行结束

@@ -193,6 +193,34 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 				break;
 			}
 
+			case COMMAND_TYPE_CHANGE_ROUTE_END:
+			{
+                uint16_t routeLen;
+                uint8_t success;
+                routeLen = packet.data[0] * 256 + packet.data[1];
+
+                if(routeLen ==  vector_size(vmap))
+                {
+
+                    LogMsg("change List\n");
+                    ShowRFIDPointList(vmap);
+                    success = RFIDAppendQueue(vmap);
+
+                    if(success)
+                    {
+                        RouteUpdateCopy(vroute);
+                    }
+                }
+                else
+                {
+                    success = 0;
+                    LogMsg("Update map error recved :%d should be %d\n",vector_size(vmap),routeLen );
+                }
+			    CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_CHANGE_ROUTE_RESPONSE);
+                break;
+			}
+
+
 			case COMMAND_TYPE_CALIB_START:
 			{
 				LogMsg("COMMAND_TYPE_CALIB_START\n");
