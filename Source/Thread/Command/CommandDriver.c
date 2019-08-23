@@ -206,7 +206,7 @@ void CommandSend(char* data, int datalen, uint8_t type)
 	}
 
 
-	UartNs550Send(COMMAND_UART_NUM,&m_sendPacket,datalen+4);  //加上包头，len, type
+	UartNs550SendBlock(COMMAND_UART_NUM,&m_sendPacket,datalen+4);  //加上包头，len, type
 }
 
 
