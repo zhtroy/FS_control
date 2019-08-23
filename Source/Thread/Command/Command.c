@@ -202,12 +202,12 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
                 if(routeLen ==  vector_size(vmap))
                 {
 
-                    LogMsg("change List\n");
-                    ShowRFIDPointList(vmap);
                     success = RFIDAppendQueue(vmap);
 
                     if(success)
                     {
+                        LogMsg("append List\n");
+                        ShowRFIDPointList(vmap);
                         RouteUpdateCopy(vroute);
                     }
                 }

@@ -412,15 +412,12 @@ uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
         }
     }
 
-    if(index > 0)
+    if(index >= 0)
     {
         /*
          * 清除相同点之后的路点
          */
-        for(i=index+1;i<size;i++)
-        {
-            vector_erase(rfidQueue,i);
-        }
+    	vector_set_size(rfidQueue, index +1);
 
         /*
          * 追加新的路点
