@@ -401,6 +401,11 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
             MotoSetKI(g_param.KI);
             MotoSetKP(g_param.KP);
 
+			/*
+			 * 向站台申请前车ID
+			 */
+			V2CAskFrontID();
+
 			g_fbData.FSMstate =running;
 			m_isInStation = 0;  //一旦开始运行，就认为不在站点
 			MotoSetGoalRPM(RPMfromSpeed(1.4));   //固定以1.4m/s启动
