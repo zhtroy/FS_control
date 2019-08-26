@@ -34,8 +34,7 @@
 
 //通信参数
 static v2v_param_t m_param = {
-		.backId = V2V_ID_NONE,
-		.backIdAdd = V2V_ID_NONE,
+		.backId = {V2V_ID_NONE,V2V_ID_NONE,V2V_ID_NONE},
 		.frontId = V2V_ID_NONE,
 		.leftRoadID = {0,0,0,0,0}
 };
@@ -73,6 +72,8 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 	uint16_t backCarId = 0;
 	uint8_t backCarIndex = 0;
 
+	int backIdx = 0;
+
 	while(1)
 	{
 		Task_sleep(INTERVAL);
@@ -80,16 +81,10 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		/*
 		 * 交替发送
 		 */
-		if(backCarIndex  == 0)
-		{
-		    backCarId = m_param.backId;
-		    backCarIndex = 1;
-		}
-		else
-		{
-		    backCarId = m_param.backIdAdd;
-		    backCarIndex = 0;
-		}
+
+		backCarId = m_param.backId[backIdx];
+
+		backIdx = (backIdx+1)/BACK_CAR_NUM;
 
 		//发送carstatus报文给后车
 		if(backCarId != V2V_ID_NONE)
@@ -239,6 +234,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
     int32_t timestamp;
     ZCPUserPacket_t recvPacket, sendPacket;
     epc_t lastFrontEpc, frontEpc;
+    int i;
 
 	while(1)
 	{
@@ -246,24 +242,64 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 		switch(recvPacket.type)
 		{
-			case ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE:
+			case ZCP_TYPE_V2V_REQ_BACK_STOPSENDING:
 			{
 				/*
-				 * 更新后车RFID，
+				 * 停止往后车发送，将后车ID设为0
 				 */
-			    if(recvPacket.addr != m_param.backId)
-			    {
-			        m_param.backIdAdd = m_param.backId;
-			        m_param.backId = recvPacket.addr;
-			    }
+				for(i = 0; i<BACK_CAR_NUM; i++)
+				{
+					if(m_param.backId[i] == recvPacket.addr)
+					{
+						m_param.backId[i] = 0;
+						break;
+					}
+				}
+
+				break;
+			}
+
+			case ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE:
+			{
 
 				/*
-				 * 并回复一个响应报文给后车
+				 * 检查是否已经有该后车
 				 */
-				sendPacket.addr = m_param.backId;
-				sendPacket.type = ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE;
-				sendPacket.len = 0;
-				ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+				for(i = 0; i<BACK_CAR_NUM; i++)
+				{
+					if(m_param.backId[i] == recvPacket.addr)
+					{
+						break;
+					}
+				}
+
+				if(i < BACK_CAR_NUM)  //如果现有后车数组包括当前车 , 不处理
+				{
+					break;
+				}
+
+				/*
+				 * 更新后车ID，
+				 */
+				for(i = 0; i<BACK_CAR_NUM; i++)
+				{
+					if(m_param.backId[i] == V2V_ID_NONE)
+					{
+						m_param.backId[i] = recvPacket.addr;
+						break;
+					}
+				}
+
+				if(i<BACK_CAR_NUM)
+				{
+					/*
+					 * 并回复一个响应报文给后车
+					 */
+					sendPacket.addr = recvPacket.addr;
+					sendPacket.type = ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE;
+					sendPacket.len = 0;
+					ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+				}
 				break;
 			}
 
@@ -405,7 +441,21 @@ void V2VSetDeltaDistance(int32_t delta)
 
 void V2VSetFrontCarId(uint16_t frontid)
 {
+	ZCPUserPacket_t sendPacket;
+
 	g_fbData.frontCarID = frontid;
+
+	//先向原来的前车发停止发送命令
+	if(V2VGetFrontCarId()!=V2V_ID_NONE)
+	{
+		sendPacket.addr = V2VGetFrontCarId();
+		sendPacket.type = ZCP_TYPE_V2V_REQ_BACK_STOPSENDING;
+		sendPacket.len = 0;
+		/*
+		 * 发送请求
+		 */
+		ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+	}
 
 	m_param.frontId = frontid;
 }

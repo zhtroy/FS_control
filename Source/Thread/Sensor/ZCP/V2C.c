@@ -286,9 +286,14 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			memcpy(&resp, recvPacket.data, sizeof(resp));
 			if(resp.status == 1)  //有前车
 			{
-				V2VSetFrontCarId(resp.forwardid);
-				V2VSetLeftRoadID(resp.leftRoadID);
-				V2VHandShakeFrontCar();
+				if(V2VGetFrontCarId() != resp.forwardid)   //只有在申请到的前车ID变化时才与前车握手
+				{
+
+					//设置新的前车ID
+					V2VSetFrontCarId(resp.forwardid);
+					V2VSetLeftRoadID(resp.leftRoadID);
+					V2VHandShakeFrontCar();
+				}
 			}
 			else
 			{
