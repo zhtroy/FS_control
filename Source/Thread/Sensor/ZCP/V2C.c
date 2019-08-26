@@ -292,8 +292,8 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 					//设置新的前车ID
 					V2VSetFrontCarId(resp.forwardid);
 					V2VSetLeftRoadID(resp.leftRoadID);
-					V2VHandShakeFrontCar();
 				}
+				V2VHandShakeFrontCar();
 			}
 			else
 			{

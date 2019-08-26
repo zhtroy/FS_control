@@ -261,7 +261,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 			case ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE:
 			{
-
+				uint8_t shouldRespond = 0;
 				/*
 				 * 检查是否已经有该后车
 				 */
@@ -275,25 +275,32 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 				if(i < BACK_CAR_NUM)  //如果现有后车数组包括当前车 , 不处理
 				{
-					break;
+					shouldRespond = 1;
 				}
-
-				/*
-				 * 更新后车ID，
-				 */
-				for(i = 0; i<BACK_CAR_NUM; i++)
+				else
 				{
-					if(m_param.backId[i] == V2V_ID_NONE)
+					/*
+					 * 更新后车ID，
+					 */
+					for(i = 0; i<BACK_CAR_NUM; i++)
 					{
-						m_param.backId[i] = recvPacket.addr;
-						break;
+						if(m_param.backId[i] == V2V_ID_NONE)
+						{
+							m_param.backId[i] = recvPacket.addr;
+							break;
+						}
+					}
+
+					if(i<BACK_CAR_NUM)
+					{
+						shouldRespond = 1;
 					}
 				}
 
-				if(i<BACK_CAR_NUM)
+				if(shouldRespond)
 				{
 					/*
-					 * 并回复一个响应报文给后车
+					 * 并回复一个响应报文给后车,如果超出后车数量就不回复
 					 */
 					sendPacket.addr = recvPacket.addr;
 					sendPacket.type = ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE;
