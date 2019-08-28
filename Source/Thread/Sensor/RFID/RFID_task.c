@@ -235,7 +235,6 @@ void taskCreateRFID(UArg a0, UArg a1)
     uint32_t lastPos = 0;
     uint32_t rfidDist = 0;
     car_mode_t mode = Manual;
-    car_mode_t modeOld = Manual;
     enum motoGear gear = GEAR_NONE;
     rfidPoint_t virtualRfid;
     epc_t epc;
@@ -252,29 +251,6 @@ void taskCreateRFID(UArg a0, UArg a1)
          */
         lastPos = carPos;
         carPos = MotoGetCarDistance();
-        /*
-         * 车辆从自动模式跳出
-         */
-        modeOld = mode;
-        mode = MotoGetCarMode();
-        if(mode != Auto)
-        {
-#if 0
-            if(modeOld == Auto)
-            {
-                /*
-                 * 从自动模式跳出，清除队列
-                 */
-                vector_free(rfidQueue);
-                rfidQueue = 0;
-            }
-#endif
-
-            /*
-             * 非自动模式采用物理RFID
-             */
-            continue;
-        }
 
 
         /*
