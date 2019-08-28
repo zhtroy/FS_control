@@ -304,6 +304,7 @@ static void MotoUpdateDistanceTask(void)
             }
         }
 
+#if 0
         mode = MotoGetCarMode();
         /*
          * 非Auto模式下，采用物理RFID校准距离
@@ -340,6 +341,7 @@ static void MotoUpdateDistanceTask(void)
             g_fbData.distance = m_distance;
             continue;
         }
+#endif
 
         if(bSecMbox != NULL && Mailbox_pend(bSecMbox,&deltaDist,BIOS_NO_WAIT))
 		{
