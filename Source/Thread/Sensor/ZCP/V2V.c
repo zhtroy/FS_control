@@ -31,13 +31,16 @@
  */
 #define V2V_RECV_TASK_PRIO 		(5)
 #define V2V_SESSION_TASK_PRIO   (V2V_RECV_TASK_PRIO + 1)
+#define BACK_CAR_NUM (3)
 
 //通信参数
 static v2v_param_t m_param = {
-		.backId = {V2V_ID_NONE,V2V_ID_NONE,V2V_ID_NONE},
 		.frontId = V2V_ID_NONE,
 		.leftRoadID = {0,0,0,0,0}
 };
+
+static uint16_t m_backId[BACK_CAR_NUM] = {0};
+
 //前车状态
 static v2v_req_carstatus_t m_frontCarStatus;
 static uint32_t m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
@@ -82,7 +85,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		 * 交替发送
 		 */
 
-		backCarId = m_param.backId[backIdx];
+		backCarId = m_backId[backIdx];
 
 		backIdx = (backIdx+1)/BACK_CAR_NUM;
 
@@ -249,9 +252,9 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 				 */
 				for(i = 0; i<BACK_CAR_NUM; i++)
 				{
-					if(m_param.backId[i] == recvPacket.addr)
+					if(m_backId[i] == recvPacket.addr)
 					{
-						m_param.backId[i] = 0;
+						m_backId[i] = 0;
 						break;
 					}
 				}
@@ -267,7 +270,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 				 */
 				for(i = 0; i<BACK_CAR_NUM; i++)
 				{
-					if(m_param.backId[i] == recvPacket.addr)
+					if(m_backId[i] == recvPacket.addr)
 					{
 						break;
 					}
@@ -284,9 +287,9 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 					 */
 					for(i = 0; i<BACK_CAR_NUM; i++)
 					{
-						if(m_param.backId[i] == V2V_ID_NONE)
+						if(m_backId[i] == V2V_ID_NONE)
 						{
-							m_param.backId[i] = recvPacket.addr;
+							m_backId[i] = recvPacket.addr;
 							break;
 						}
 					}

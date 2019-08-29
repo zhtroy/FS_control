@@ -17,11 +17,9 @@
 #define V2V_CARSTATUS_STOP  (0)
 #define TIMEOUT_FRONT_CAR_DISCONNECT    (5000)
 
-#define BACK_CAR_NUM (3)
 typedef struct
 {
 	uint16_t frontId;
-	uint16_t backId[BACK_CAR_NUM];
 	roadID_t leftRoadID;
 }v2v_param_t;
 
