@@ -40,6 +40,7 @@ static v2v_param_t m_param = {
 };
 
 static uint16_t m_backId[BACK_CAR_NUM] = {0};
+static int m_nextBackCarIdx = 0;
 
 //前车状态
 static v2v_req_carstatus_t m_frontCarStatus;
@@ -87,7 +88,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 		backCarId = m_backId[backIdx];
 
-		backIdx = (backIdx+1)/BACK_CAR_NUM;
+		backIdx = (backIdx+1) % BACK_CAR_NUM;
 
 		//发送carstatus报文给后车
 		if(backCarId != V2V_ID_NONE)
@@ -264,7 +265,6 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 			case ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE:
 			{
-				uint8_t shouldRespond = 0;
 				/*
 				 * 检查是否已经有该后车
 				 */
@@ -278,38 +278,27 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 				if(i < BACK_CAR_NUM)  //如果现有后车数组包括当前车 , 不处理
 				{
-					shouldRespond = 1;
 				}
 				else
 				{
 					/*
-					 * 更新后车ID，
+					 * 循环更新后车ID，
 					 */
-					for(i = 0; i<BACK_CAR_NUM; i++)
-					{
-						if(m_backId[i] == V2V_ID_NONE)
-						{
-							m_backId[i] = recvPacket.addr;
-							break;
-						}
-					}
+					m_backId[m_nextBackCarIdx] = recvPacket.addr;
+					m_nextBackCarIdx = (m_nextBackCarIdx + 1) % BACK_CAR_NUM;
 
-					if(i<BACK_CAR_NUM)
-					{
-						shouldRespond = 1;
-					}
 				}
 
-				if(shouldRespond)
-				{
-					/*
-					 * 并回复一个响应报文给后车,如果超出后车数量就不回复
-					 */
-					sendPacket.addr = recvPacket.addr;
-					sendPacket.type = ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE;
-					sendPacket.len = 0;
-					ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
-				}
+
+				/*
+				 * 并回复一个响应报文给后车
+				 */
+				sendPacket.addr = recvPacket.addr;
+				sendPacket.type = ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE;
+				sendPacket.len = 0;
+				ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+
+
 				break;
 			}
 
