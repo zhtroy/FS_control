@@ -367,7 +367,10 @@ static void MotoUpdateDistanceTask(void)
                 calibrationQueue[0].byte[10];
         calibrationPointMin = calibrationPoint - (MAX_CALIBRATION_DISTANCE/2);
 
-        if(lastDistance < calibrationPointMin && m_distance >= calibrationPointMin && g_calibFlag == 0)
+        //从0点翻转为281的情况也不要进入校准流程
+        if(lastDistance < calibrationPointMin && m_distance >= calibrationPointMin
+			&& (!(lastDistance < 50 && m_distance >TOTAL_DISTANCE - 50) )
+			&& g_calibFlag == 0)
         {
             /*
              * 到达校准点
