@@ -266,28 +266,22 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 			case ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE:
 			{
 				/*
-				 * 检查是否已经有该后车
+				 * 检查是否已经有该后车,如果有了就把这个位置设为0
 				 */
 				for(i = 0; i<BACK_CAR_NUM; i++)
 				{
 					if(m_backId[i] == recvPacket.addr)
 					{
-						break;
+						m_backId[i] = V2V_ID_NONE;
 					}
 				}
 
-				if(i < BACK_CAR_NUM)  //如果现有后车数组包括当前车 , 不处理
-				{
-				}
-				else
-				{
-					/*
-					 * 循环更新后车ID，
-					 */
-					m_backId[m_nextBackCarIdx] = recvPacket.addr;
-					m_nextBackCarIdx = (m_nextBackCarIdx + 1) % BACK_CAR_NUM;
 
-				}
+				/*
+				 * 循环更新后车ID，
+				 */
+				m_backId[m_nextBackCarIdx] = recvPacket.addr;
+				m_nextBackCarIdx = (m_nextBackCarIdx + 1) % BACK_CAR_NUM;
 
 
 				/*
