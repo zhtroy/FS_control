@@ -492,7 +492,7 @@ static void MotoRecvTask(void)
 	int frontReverseCount  = 0;
 	int rearReverseCount = 0;
 
-	const int REVERSE_THR = 40;  //2s
+	const int REVERSE_THR = 20;  //1s
 
 	g_fbData.motorDataF.MotoId = MOTO_FRONT;
 	g_fbData.motorDataR.MotoId = MOTO_REAR;
