@@ -282,9 +282,9 @@ static void MotoUpdateDistanceTask(void)
         lastCircleNum = curCircleNum;
         /*
          * 过滤掉CAN传输出错的圈数数据
-         * 圈数差每100ms不超过20圈
+         * 圈数差每100ms不超过10圈 , 认为0.1s跑不了3m
          */
-        if(circleDiff<20)
+        if(circleDiff<10)
         {
             step = circleDiff * (sysParam.wheelPerimeter/100.0) / WHEEL_SPEED_RATIO;
             if(GEAR_REVERSE == MotoGetGear())
