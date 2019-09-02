@@ -33,6 +33,7 @@ typedef struct {
 			uint8_t prevrailstate;
 
 		State automode_arrived;
+		State automode_tempstop;
 		State automode_enterstation;
 		State automode_stopstation;
 		State autemode_stopstationleave;

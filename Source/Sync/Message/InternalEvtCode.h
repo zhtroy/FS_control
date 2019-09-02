@@ -14,5 +14,7 @@
 #define IN_EVTCODE_STOPSTATION_COMPLETE  	   (2)
 //轨道掉电超过3s
 #define IN_EVTCODE_RAIL_POWER_DROP			   (3)
+//临停完成 速度为0
+#define IN_EVTCODE_TEMPSTOP_COMPLETE  	   	   (4)
 
 #endif /* INTERNALEVTCODE_H_ */

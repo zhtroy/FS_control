@@ -15,6 +15,7 @@
 #define ROUTE_NT_MOVE (0)
 #define ROUTE_NT_STOP (1)
 #define ROUTE_NT_START (2)
+#define ROUTE_NT_TEMP_STOP (3)
 
 #define ROUTE_WS_OUTA 	(2)
 #define ROUTE_WS_INA 	(6)

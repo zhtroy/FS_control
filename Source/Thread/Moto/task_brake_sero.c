@@ -46,6 +46,7 @@ static Semaphore_Handle sem_rxData;
 static Semaphore_Handle sem_modbus;
 static Semaphore_Handle sem_startChangeRail;
 static Semaphore_Handle sem_startStopStation;
+static Semaphore_Handle sem_startTempStop;
 static Mailbox_Handle recvMbox;
 static uartDataObj_t brakeUartDataObj;
 static uartDataObj_t recvUartDataObj;
@@ -114,6 +115,7 @@ static void ServoInitSem(void)
     sem_modbus = Semaphore_create(1, &semParams, NULL);
     sem_startChangeRail = Semaphore_create(0, &semParams, NULL);
     sem_startStopStation = Semaphore_create(0, &semParams, NULL);
+    sem_startTempStop = Semaphore_create(0, &semParams, NULL);
     changeRailSem = Semaphore_create(0, &semParams, NULL);
 }
  
@@ -911,6 +913,37 @@ static void TaskChangeRailRoutine()
 }
 
 /*
+ * 临时停靠
+ */
+void StartTempStopRoutine()
+{
+	Semaphore_post(sem_startTempStop);
+}
+
+static void TaskTempStopRoutine()
+{
+	while(1)
+	{
+		Semaphore_pend(sem_startTempStop, BIOS_WAIT_FOREVER);
+
+		//开始停车
+		MotoSetGoalRPM(0);
+
+		//等待速度为0
+		while(1)
+		{
+			Task_sleep(100);
+			if(0 == MotoGetRealRPM())
+			{
+				Message_postEvent(internal, IN_EVTCODE_TEMPSTOP_COMPLETE);
+				break;
+			}
+		}
+
+	}
+}
+
+/*
  * 开始停站的流程，包括等待光电对管，速度设为0，并等待真实转速为0
  * 如出现超时发错误消息
  */
@@ -1303,6 +1336,12 @@ void ServoTaskInit()
 	}
 
     task = Task_create(TaskEnterStationStopRoutine, &taskParams, NULL);
+	if (task == NULL) {
+	   System_printf("Task_create() failed!\n");
+	   BIOS_exit(0);
+	}
+
+    task = Task_create(TaskTempStopRoutine, &taskParams, NULL);
 	if (task == NULL) {
 	   System_printf("Task_create() failed!\n");
 	   BIOS_exit(0);

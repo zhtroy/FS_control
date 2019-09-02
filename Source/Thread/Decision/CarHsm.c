@@ -448,7 +448,11 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 					{
 
 					}
-					else
+					else if(ROUTE_NT_TEMP_STOP== RouteGetNodeNT(curNode))  //临时停靠点
+					{
+						STATE_TRAN(me, &me->automode_tempstop);
+					}
+					else if(ROUTE_NT_MOVE == RouteGetNodeNT(curNode))  //变轨点
 					{
 						if(RailGetRailState() == UNKNOWNRAIL)
 						{
@@ -1001,6 +1005,44 @@ Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
 	return msg;
 }
 
+Msg const * AutoModeTempStop(car_hsm_t * me, Msg * msg)
+{
+	switch(msg->evt)
+	{
+		case START_EVT:
+		{
+			return 0;
+		}
+		case ENTRY_EVT:
+		{
+
+	        MotoSetKI(0.04);
+	        MotoSetKP(0.8);
+
+	        StartTempStopRoutine();
+			return 0;
+		}
+		case EXIT_EVT:
+		{
+			return 0;
+		}
+		case INTERNAL_EVT:
+		{
+			evt_internal_t *pEvt = EVT_CAST(msg, evt_internal_t);
+
+			//临停结束
+			if(pEvt->eventcode == IN_EVTCODE_TEMPSTOP_COMPLETE)
+			{
+				STATE_TRAN(me, &me->automode_idle);
+				return 0;
+			}
+			break;
+		}
+	}
+
+	return msg;
+}
+
 //Msg const * AutomodeEnterStation(car_hsm_t * me, Msg * msg)
 //{
 //	switch(msg->evt)
@@ -1295,6 +1337,8 @@ void CarHsmCtor(car_hsm_t * me)
 			StateCtor(&me->changerail_changing, "changerail_changing",&me->automode_changerail, (EvtHndlr) ChangeRailChanging);
 
 		StateCtor(&me->automode_arrived, "automode_arrived", &me->automode, (EvtHndlr) AutoModeArrived);
+		StateCtor(&me->automode_tempstop, "automode_tempstop", &me->automode, (EvtHndlr) AutoModeTempStop);
+
 //		StateCtor(&me->automode_enterstation, "automode_enterstation",&me->automode, (EvtHndlr) AutomodeEnterStation);
 //		StateCtor(&me->automode_stopstation, "automode_stopstation",&me->automode, (EvtHndlr) AutomodeStopStation);
 //		StateCtor(&me->autemode_stopstationleave, "autemode_stopstationleave",&me->automode, (EvtHndlr) AutomodeStopStationLeave);

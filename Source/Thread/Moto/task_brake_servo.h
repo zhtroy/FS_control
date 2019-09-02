@@ -87,5 +87,10 @@ extern uint8_t BrakeGetReady();
  */
 extern void StartStationStopRoutine();
 
+/*
+ * 临时停靠
+ */
+extern void StartTempStopRoutine();
+
 #endif
 
