@@ -295,6 +295,21 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 				break;
 			}
 
+			case COMMAND_TYPE_SET_RFID:
+			{
+				uint8_t success = 1;
+
+				RFIDSetRaw(packet.data);
+
+				MotoSetCarDistance(RFIDGetEpc().distance);
+
+				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_SET_RFID_RESPONSE);
+
+				LogMsg("COMMAND_TYPE_SET_RFID\n");
+
+				break;
+			}
+
 			case COMMAND_TYPE_SETLOOP:
 			{
 				uint8_t success = 1;

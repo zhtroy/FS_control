@@ -52,6 +52,10 @@
 #define COMMAND_TYPE_CHANGE_ROUTE_END       (0x0D)
 #define COMMAND_TYPE_CHANGE_ROUTE_RESPONSE  (0x1D)
 
+//设置当前的RFID
+#define COMMAND_TYPE_SET_RFID    		(0x0E)
+#define COMMAND_TYPE_SET_RFID_RESPONSE	(0x1E)
+
 //车辆信息回传
 #define COMMAND_TYPE_CAR_INFO (0x80)
 //路线运行结束

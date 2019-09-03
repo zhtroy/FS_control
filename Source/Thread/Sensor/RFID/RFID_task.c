@@ -432,3 +432,12 @@ uint64_t RFIDGetNID()
 	return EPCgetShortID(&m_lastepc);
 }
 
+void RFIDSetRaw(uint8_t* pRaw)
+{
+	//将读到的RFID反馈
+	memcpy(g_fbData.rfid, pRaw, EPC_SIZE);
+
+	EPCfromByteArray(&m_lastepc, pRaw);
+
+	memcpy(m_rawrfid, pRaw, EPC_SIZE);
+}

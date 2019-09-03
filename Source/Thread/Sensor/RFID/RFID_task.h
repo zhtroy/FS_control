@@ -21,4 +21,5 @@ Mailbox_Handle RFIDGetV2vMailbox();
 extern void RFIDUpdateQueue(rfidPoint_t *rfidQ);
 extern Void taskRFID(UArg a0, UArg a1);
 uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ);
+extern void RFIDSetRaw(uint8_t* pRaw);
 #endif /* RFID_TASK_H_ */
