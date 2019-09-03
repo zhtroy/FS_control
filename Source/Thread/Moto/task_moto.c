@@ -660,6 +660,7 @@ static void MotoRecvTask(void)
 		    /*
 		     * 获取车辆转速: 增加了只有一个轮子正常的处理
 		     */
+			recvCircle = frontCircle;
 		    if(frontValid == 1 && rearValid == 1)
 		    {
 		        /*
@@ -668,7 +669,7 @@ static void MotoRecvTask(void)
 		         */
 		        recvRpm = (frontRpm + rearRpm)/2;
 		        maxThrottle = sysParam.maxtThrottle;
-		        recvCircle = (rearCircle + frontCircle)/2;
+//		        recvCircle = (rearCircle + frontCircle)/2;
 
 		        /*
                  * 前后轮转速差过大，视为异常，进入急停模式
@@ -689,13 +690,13 @@ static void MotoRecvTask(void)
 		    else if(frontValid == 1)
 		    {
 		        recvRpm = frontRpm;
-		        recvCircle = frontCircle;
+//		        recvCircle = frontCircle;
 		        maxThrottle = sysParam.maxtThrottle;
 		    }
 		    else if(rearValid == 1)
 		    {
 		        recvRpm = rearRpm;
-		        recvCircle = rearCircle;
+//		        recvCircle = rearCircle;
 		        maxThrottle = sysParam.maxtThrottle;
 		    }
 		    else;
