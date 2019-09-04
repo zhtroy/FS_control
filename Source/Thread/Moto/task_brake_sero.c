@@ -953,11 +953,14 @@ void StartStationStopRoutine()
 }
 
 #define STOP_STATION_WAIT_PHOTON_DISTANCE (50) //5m
+#define STOP_DISTANCE_AFTER_PHTON    (32)   //在光电对管3.2m后必须停下
 static void TaskEnterStationStopRoutine()
 {
 	Bool result;
 	uint32_t startPos;
 	uint8_t outofdistance  = 0;
+	uint32_t photonPos;   //读到光电对管时的位置
+
 	while(1)
 	{
 		Semaphore_pend(sem_startStopStation, BIOS_WAIT_FOREVER);
@@ -994,11 +997,14 @@ static void TaskEnterStationStopRoutine()
 		//开始停车
 		MotoSetGoalRPM(0);
 
+		photonPos = MotoGetCarDistance();
+
+
 		//等待速度为0
 		while(1)
 		{
 			Task_sleep(100);
-			if(0 == MotoGetRealRPM())
+			if(0 == MotoGetRealRPM() || MotoGetCarDistance()-photonPos >= STOP_DISTANCE_AFTER_PHTON)
 			{
 				Message_postEvent(internal, IN_EVTCODE_STOPSTATION_COMPLETE);
 				break;

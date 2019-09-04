@@ -364,7 +364,7 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 		{
             MotoSetPidOn(0);
             MotoSetThrottle(0);
-            BrakeSetBrake(10);
+            BrakeSetBrake(80);
 			g_fbData.FSMstate =idle;
 			return 0;
 		}
