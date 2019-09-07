@@ -128,6 +128,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 	packet_routenode_t routePoint;
 	epc_t routeEPC;
+	uint8_t routeReady = 0;   //路径是否准备好
 
 	vector_grow(vmap, 256);
 	vector_grow(vcalib, 256);
@@ -147,6 +148,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 				vector_set_size(vmap, 0);
 				vector_set_size(vroute, 0);
+				routeReady = 0;
 
 				break;
 			}
@@ -172,16 +174,44 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 				uint16_t routeLen;
 				uint8_t success;
 				routeLen = packet.data[0] * 256 + packet.data[1];
+				uint8_t * rawRFID =0;
+				epc_t vmapFirstEPC;
+				int vmapFirstPosDiff;    //vmap第一个点与当前位置的差值
 
 				if(routeLen ==  vector_size(vmap))
 				{
-					success = 1;
+					rawRFID = RFIDGetRaw();
 
-					RFIDUpdateQueue(vmap);
-					LogMsg("map List\n");
-					ShowRFIDPointList(vmap);
+					EPCfromByteArray(&vmapFirstEPC, vmap[0].byte);
 
-					RouteUpdateCopy(vroute);
+					vmapFirstPosDiff = (int) vmapFirstEPC.distance - (int) MotoGetCarDistance();
+
+					if(vmapFirstPosDiff <0)
+					{
+						vmapFirstPosDiff += TOTAL_DISTANCE;
+					}
+
+					//如果路线中第一个点和当前点的道路编号一致， 且在当前点前方36m处，认为路线正确，否则都认为发错路线
+					if( memcmp ( &(vmap[0].byte[1]), &(rawRFID[1]), sizeof(roadID_t)) == 0
+						&& vmapFirstPosDiff>=0 && vmapFirstPosDiff< 360)
+					{
+						success = 1;
+
+						RFIDUpdateQueue(vmap);
+						LogMsg("map List\n");
+						ShowRFIDPointList(vmap);
+
+						RouteUpdateCopy(vroute);
+
+						routeReady = 1;
+					}
+
+					else
+					{
+						success = 0;
+					}
+
+
 				}
 				else
 				{
@@ -206,6 +236,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
                     if(success)
                     {
+                    	routeReady = 1;
                         LogMsg("append List\n");
                         ShowRFIDPointList(vmap);
                         RouteUpdateCopy(vroute);
@@ -265,11 +296,21 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 			{
 				uint8_t success = 1;
 
-				LogMsg("COMMMAD: go\n");
-				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_GO_RESPONSE);
+				if(routeReady)
+				{
+					routeReady = 0;
+					success = 1;
+					Message_postEvent(cell,CELL_MSG_ENTERAUTOMODE);
+					Message_postEvent(cell,CELL_MSG_STARTRUN);
+				}
+				else
+				{
+					success = 0;
+				}
 
-				Message_postEvent(cell,CELL_MSG_ENTERAUTOMODE);
-				Message_postEvent(cell,CELL_MSG_STARTRUN);
+				LogMsg("COMMMAD: GO\t%d\n",success);
+
+				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_GO_RESPONSE);
 
 				break;
 			}
