@@ -489,10 +489,11 @@ static void MotoRecvTask(void)
     int volLowCount = 0;
 	float voltage;
 
-	int frontReverseCount  = 0;
-	int rearReverseCount = 0;
+	int frontReverseStartDistance = 0;
+	int rearReverseStartDistance = 0;
+	int distanceDiff = 0;
 
-	const int REVERSE_THR = 20;  //1s
+	const int REVERSE_THR = 5;  //0.5m
 
 	g_fbData.motorDataF.MotoId = MOTO_FRONT;
 	g_fbData.motorDataR.MotoId = MOTO_REAR;
@@ -517,16 +518,26 @@ static void MotoRecvTask(void)
 
     			if( BF_GET(g_fbData.motorDataF.MotoMode,4,1) == 1)
     			{
-    				frontReverseCount++;
+    				//反转
     			}
     			else
     			{
-    				frontReverseCount = 0;
+    				frontReverseStartDistance = MotoGetCarDistance();
     			}
 
-    			if(frontReverseCount > REVERSE_THR)
+    			if(MotoGetCarDistance() < frontReverseStartDistance)
     			{
-    				frontReverseCount = 0;
+    				distanceDiff = TOTAL_DISTANCE - frontReverseStartDistance + MotoGetCarDistance();
+    			}
+    			else
+    			{
+    				distanceDiff = MotoGetCarDistance() - frontReverseStartDistance;
+    			}
+
+
+    			if(distanceDiff > REVERSE_THR)
+    			{
+    				frontReverseStartDistance = MotoGetCarDistance();
     				Message_postError(ERROR_REVERSING);
     			}
 
@@ -597,16 +608,26 @@ static void MotoRecvTask(void)
 
     			if( BF_GET(g_fbData.motorDataR.MotoMode,4,1) == 1)
     			{
-    				rearReverseCount++;
+    				//反转
     			}
     			else
     			{
-    				rearReverseCount = 0;
+    				rearReverseStartDistance = MotoGetCarDistance();
     			}
 
-    			if(rearReverseCount > REVERSE_THR)
+    			if(MotoGetCarDistance() < rearReverseStartDistance)
     			{
-    				rearReverseCount = 0;
+    				distanceDiff = TOTAL_DISTANCE - rearReverseStartDistance + MotoGetCarDistance();
+    			}
+    			else
+    			{
+    				distanceDiff = MotoGetCarDistance() - rearReverseStartDistance;
+    			}
+
+
+    			if(distanceDiff > REVERSE_THR)
+    			{
+    				rearReverseStartDistance = MotoGetCarDistance();
     				Message_postError(ERROR_REVERSING);
     			}
 
