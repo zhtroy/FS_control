@@ -493,7 +493,7 @@ static void MotoRecvTask(void)
 	int rearReverseStartDistance = 0;
 	int distanceDiff = 0;
 
-	const int REVERSE_THR = 5;  //0.5m
+	const int REVERSE_THR = 10;  //1m
 
 	g_fbData.motorDataF.MotoId = MOTO_FRONT;
 	g_fbData.motorDataR.MotoId = MOTO_REAR;
