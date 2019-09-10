@@ -14,7 +14,8 @@
 #define MODBUS_ACK_LOOPERR      (5)
 #define MODBUS_ACK_SENDERR      (6)
 
-#define UNKNOWNRAIL (3)
+#define UNKNOWNRAIL_0 (0)
+#define UNKNOWNRAIL_3 (3)
 #define LEFTRAIL    (2)
 #define RIGHTRAIL   (1)
 
@@ -72,6 +73,7 @@ extern void RailChangeStart();
 
 extern void RailSetRailState(uint8_t state);
 extern uint8_t RailGetRailState();
+extern uint8_t RailRailStateUnknown();
 
 /*
  * Brake 刹车

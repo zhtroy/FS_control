@@ -1371,6 +1371,10 @@ uint8_t RailGetRailState()
 {
 	return m_railCtrl.RailState;
 }
+uint8_t RailRailStateUnknown()
+{
+	return (m_railCtrl.RailState == UNKNOWNRAIL_0) || (m_railCtrl.RailState == UNKNOWNRAIL_3);
+}
 
 void BrakeSetBrake(uint8_t value)
 {

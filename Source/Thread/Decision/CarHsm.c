@@ -454,7 +454,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 					}
 					else if(ROUTE_NT_MOVE == RouteGetNodeNT(curNode))  //变轨点
 					{
-						if(RailGetRailState() == UNKNOWNRAIL)
+						if(RailRailStateUnknown())
 						{
 							Message_postError(ERROR_UNKNOWN_RAILSTATE);
 						}
@@ -617,7 +617,7 @@ Msg const * RunningSeperate(car_hsm_t * me, Msg * msg)
 			myepc = RFIDGetEpc();
 			frontepc = V2VGetFrontCarEpc();
 
-			if(RailGetRailState() == UNKNOWNRAIL)
+			if( RailRailStateUnknown() )
 			{
 				Message_postError(ERROR_UNKNOWN_RAILSTATE);
 			}
