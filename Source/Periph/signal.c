@@ -19,7 +19,10 @@ void SignalCallBack(uint8_t intStatus)
 {
     LogMsg("Signal Check %x",intStatus);
 }
-
+void SignalSetIntEnable(uint8_t value)
+{
+    EMIFAWriteWord(FPGA_SIGNAL_INT_ENB,0,value);
+}
 void SignalInit()
 {
     /*
@@ -38,4 +41,11 @@ void SignalInit()
      * 清空中断状态
      */
     SignalGetHardIntStatus();
+
+    /*
+     * 打开中断使能
+     */
+    SignalSetIntEnable(1);
 }
+
+

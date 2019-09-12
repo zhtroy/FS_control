@@ -26,6 +26,7 @@ void HWI_4_Isr(void)
 	//Disable UART 中断
 	UartNs550HardIntDisable ();
     CanHardIntDisable();
+    SignalSetIntEnable(0);
 
     // 关闭 GPIO BANK 0 中断
     GPIOBankIntDisable(SOC_GPIO_0_REGS, 0);
@@ -72,4 +73,5 @@ void HWI_4_Isr(void)
     GPIOBankIntEnable(SOC_GPIO_0_REGS, 0);
     UartNs550HardIntEnable();
     CanHardIntEnable();
+    SignalSetIntEnable(1);
 }
