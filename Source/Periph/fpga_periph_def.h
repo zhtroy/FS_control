@@ -146,4 +146,7 @@
 #define FPGA_SIGNAL3_FILTER  (FPGA_BASE_ADDR + (0x64<<1))
 #define FPGA_SIGNAL_INT      (FPGA_BASE_ADDR + (0x65<<1))
 #define FPGA_SIGNAL_INT_ENB  (FPGA_BASE_ADDR + (0x66<<1))
+
+#define FPGA_PCO_LOW         (FPGA_BASE_ADDR + (0x68<<1))
+#define FPGA_PCO_HIGH        (FPGA_BASE_ADDR + (0x69<<1))
 #endif /* FPGA_PERIPH_DEF_H_ */

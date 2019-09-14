@@ -4,6 +4,7 @@
 #include <ti/sysbios/BIOS.h>
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/knl/Task.h>
+#include "fpga_periph_def.h"
 
 static int32_t vc = 0;
 static int32_t ve = 0;
@@ -19,15 +20,27 @@ void speedSet(int32_t slVc,int32_t slVe,int32_t slTe)
 void taskTestSpeed(void)
 {
     int32_t vg = 0,vgR = 0;
+    uint16_t test = 0;
+    uint16_t tmp = 0;
     while(1)
     {
-        Task_sleep(50);
+        Task_sleep(100);
+        test = EMIFAReadWord(FPGA_PCO_LOW,0);
+        test += (EMIFAReadWord(FPGA_PCO_HIGH,0) << 8);
+
+        if(test != tmp)
+        {
+            LogMsg("%d\r\n",test);
+            tmp = test;
+        }
+#if 0
         vg = SpeedGenerate(vc, ve);
         if(vgR != vg)
         {
             LogMsg("%d\r\n",vg);
             vgR = vg;
         }
+#endif
     }
 }
 

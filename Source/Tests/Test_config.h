@@ -33,7 +33,7 @@
 //#define TEST_PHOTOELEC
 //#define TEST_MPU9250
 
-//#define TEST_SPEED_CONTROL
+#define TEST_SPEED_CONTROL
 //#define TEST_4G_CONTROL
 
 #define TEST_ZIGBEE_CONTROL_HSM
