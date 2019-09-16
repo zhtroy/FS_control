@@ -213,7 +213,13 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 		}
 
-
+		if(isSameAdjustArea == 0 && m_distanceToFrontCar < DANGER_DISTANCE )
+		{
+		    /*
+		     * 非同一调整区，前车距离小于碰撞距离
+		     */
+		    Message_postError(ERROR_SAFE_DISTANCE);
+		}
 
 		g_fbData.forwardCarDistance = m_distanceToFrontCar;
 		g_fbData.forwardCarRPM = m_frontCarStatus.rpm;
