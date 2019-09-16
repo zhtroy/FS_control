@@ -23,6 +23,7 @@ typedef struct
 	uint8_t rfid[12];
 	uint32_t distance;
 	uint8_t railpos;
+	uint8_t carmode;
 }v2c_req_forward_id_t;
 
 /*
@@ -34,6 +35,8 @@ typedef struct
 	uint32_t distance;
 	uint16_t rpm;
 	uint8_t status;
+	uint8_t railstate;
+	uint8_t carmode;
 }v2c_req_carstatus_t;
 
 /*

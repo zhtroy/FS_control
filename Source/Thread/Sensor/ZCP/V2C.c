@@ -159,6 +159,8 @@ static void V2CSendTask(UArg arg0, UArg arg1)
 				carstatus.status = 1;
 		}
 		carstatus.distance = MotoGetCarDistance();
+		carstatus.carmode = MotoGetCarMode();
+		carstatus.railstate = RailGetRailState();
 		memcpy(carstatus.rfid, RFIDGetRaw(), EPC_SIZE);
 		memcpy(sendPacket.data, &carstatus, sizeof(carstatus));
 		sendPacket.addr = g_param.station_addr;
@@ -254,6 +256,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			 * 构造请求报文
 			 */
 
+			req.carmode = MotoGetCarMode();
 			req.railpos = RailGetRailState();
 			req.distance = RFIDGetEpc().distance;
 			memcpy(req.rfid, RFIDGetRaw(), EPC_SIZE);
