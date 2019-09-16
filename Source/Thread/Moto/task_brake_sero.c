@@ -855,13 +855,13 @@ static void TaskChangeRailRoutine()
 	Bool result;
 	uint8_t lastRailState;
 	uint32_t startPos;
-	uint8_t outofdistance  = 0;
+	uint8_t dontchangerail  = 0;
 	while(1)
 	{
 		Semaphore_pend(sem_startChangeRail, BIOS_WAIT_FOREVER);
 		startPos = MotoGetCarDistance();
 		lastRailState = RailGetRailState();
-		outofdistance = 0;
+		dontchangerail = 0;
 
 		LogMsg("changerail start time: %d\n",Timestamp_get32());
 		LogMsg("changerail start dis = %d\n",startPos);
@@ -880,13 +880,19 @@ static void TaskChangeRailRoutine()
 			}
 			if((int32_t)MotoGetCarDistance() - (int32_t)startPos > WAIT_PHOTON_DISTANCE)
 			{
-				outofdistance =1 ;
+				dontchangerail =1 ;
 				Message_postError(ERROR_WAIT_MERGE_PHOTON);
+				break;
+			}
+			//如果退出自动模式，退出变轨流程
+			if( MotoGetCarMode() != Auto)
+			{
+				dontchangerail = 1;
 				break;
 			}
 		}
 
-		if(outofdistance)
+		if(dontchangerail)
 		{
 			continue;
 		}
