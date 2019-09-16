@@ -15,6 +15,7 @@
 #include "canModule.h"
 #include "Sensor/PhotoElectric/PhotoElectric.h"
 #include "logLib.h"
+#include "Decision/CarState.h"
 
 extern uint16_t getRPM(void);
 
