@@ -149,4 +149,8 @@
 
 #define FPGA_PCO_LOW         (FPGA_BASE_ADDR + (0x68<<1))
 #define FPGA_PCO_HIGH        (FPGA_BASE_ADDR + (0x69<<1))
+#define FPGA_DCO_LOW         (FPGA_BASE_ADDR + (0x6A<<1))
+#define FPGA_DCO_HIGH        (FPGA_BASE_ADDR + (0x6B<<1))
+#define FPGA_SCO_LOW         (FPGA_BASE_ADDR + (0x6C<<1))
+#define FPGA_SCO_HIGH        (FPGA_BASE_ADDR + (0x6D<<1))
 #endif /* FPGA_PERIPH_DEF_H_ */

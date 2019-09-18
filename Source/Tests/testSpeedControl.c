@@ -20,19 +20,29 @@ void speedSet(int32_t slVc,int32_t slVe,int32_t slTe)
 void taskTestSpeed(void)
 {
     int32_t vg = 0,vgR = 0;
-    uint16_t test = 0;
+    uint16_t dco = 0;
+    uint16_t sco = 0;
     uint16_t tmp = 0;
+    int16_t * dptr;
+    int16_t * sptr;
     while(1)
     {
         Task_sleep(100);
-        test = EMIFAReadWord(FPGA_PCO_LOW,0);
-        test += (EMIFAReadWord(FPGA_PCO_HIGH,0) << 8);
+        dco = EMIFAReadWord(FPGA_DCO_LOW,0);
+        dco += (EMIFAReadWord(FPGA_DCO_HIGH,0) << 8);
+        dptr = &dco;
 
-        if(test != tmp)
+
+        sco = EMIFAReadWord(FPGA_SCO_LOW,0);
+        sco += (EMIFAReadWord(FPGA_SCO_HIGH,0) << 8);
+        sptr = &sco;
+
+        if(dco != tmp)
         {
-            LogMsg("%d\r\n",test);
-            tmp = test;
+            LogMsg("%d %d\r\n",*dptr,*sptr);
+            tmp = dco;
         }
+
 #if 0
         vg = SpeedGenerate(vc, ve);
         if(vgR != vg)
