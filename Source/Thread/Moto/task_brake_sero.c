@@ -708,7 +708,7 @@ void ServoBrakeRecvTask()
 
 	while(1)
 	{
-
+		Task_sleep(500);
 	    result = Mailbox_pend(rxDataMbox, (Ptr *)&canRecvData, SERVO_BRAKE_TIMEOUT);
 
 	    if(!result)
@@ -726,14 +726,17 @@ void ServoBrakeRecvTask()
 
 	    if(errorCode!=0)
 	    {
-	    	p_msg_t msg;
-			msg = Message_getEmpty();
-			msg->type = error;
-			msg->data[0] = ERROR_BRAKE_ERROR;
-			msg->dataLen = 1;
-			Message_post(msg);
+	    	if(MotoGetCarMode() == Auto)
+	    	{
+				p_msg_t msg;
+				msg = Message_getEmpty();
+				msg->type = error;
+				msg->data[0] = ERROR_BRAKE_ERROR;
+				msg->dataLen = 1;
+				Message_post(msg);
 
-			g_fbData.brakeErrorCode = errorCode;
+				g_fbData.brakeErrorCode = errorCode;
+	    	}
 	    }
 
 
