@@ -125,7 +125,15 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 		if(myepc.areaType == EPC_AREATYPE_STATION)
 		{
-			MotoSetSafeDistance(MIN_SAFE_DISTANCE_STATION,MAX_SAFE_DISTANCE_STATION);
+			//进站车辆安全距离设置为站台安全距离
+			if(g_param.cycleRoute == 0)
+			{
+				MotoSetSafeDistance(MIN_SAFE_DISTANCE_STATION,MAX_SAFE_DISTANCE_STATION);
+			}
+			else
+			{
+				MotoSetSafeDistance(MIN_SAFE_DISTANCE,MAX_SAFE_DISTANCE);
+			}
 		}
 
 		if(myepc.areaType == EPC_AREATYPE_NORMAL)
