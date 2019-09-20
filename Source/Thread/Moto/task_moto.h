@@ -238,6 +238,9 @@ typedef struct{
 
 #define ERROR_SAFE_DISTANCE                 (29)
 
+/*轨道状态错误*/
+#define ERROR_WRONG_RAILSTATE   		(30)
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 

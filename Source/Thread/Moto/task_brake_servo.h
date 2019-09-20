@@ -74,6 +74,7 @@ extern void RailChangeStart();
 extern void RailSetRailState(uint8_t state);
 extern uint8_t RailGetRailState();
 extern uint8_t RailRailStateUnknown();
+extern uint8_t RailIsStateUnknown(uint8_t state);
 
 /*
  * Brake 刹车

@@ -40,6 +40,8 @@ static int16_t pulseE0;
 
 static uint8_t railState;
 static uint8_t keyState;
+static uint8_t expectedRailState;    //预期的轨道状态
+static uint8_t shouldCheckRail = 1;
 
 
 static Semaphore_Handle sem_txData;
@@ -901,6 +903,7 @@ static void TaskChangeRailRoutine()
 		}
 
 
+		shouldCheckRail = 0;
 		//开始变轨
 		RailChangeStart();
 
@@ -918,9 +921,46 @@ static void TaskChangeRailRoutine()
 			Message_postError(ERROR_MERGE_FAILED);
 		}
 
+		shouldCheckRail = 1;
+
 	}
 }
 
+/*
+ * 检查轨道状态
+ */
+static void TaskRailStateCheck()
+{
+	const int CHECK_INTERVAL = 100;
+	const int CHECK_TIMES = 10;
+	int abnormalCount = 0;
+
+	while(1)
+	{
+		Task_sleep(CHECK_INTERVAL);
+		if(shouldCheckRail && MotoGetCarMode() == Auto)
+		{
+			if(!RailIsStateUnknown(expectedRailState) && RailGetRailState() != expectedRailState)
+			{
+				abnormalCount ++ ;
+			}
+			else
+			{
+				abnormalCount = 0;
+			}
+
+			if(abnormalCount > CHECK_TIMES)
+			{
+				abnormalCount = 0;
+				Message_postError(ERROR_WRONG_RAILSTATE);
+			}
+		}
+		else
+		{
+			abnormalCount = 0;
+		}
+	}
+}
 /*
  * 临时停靠
  */
@@ -1047,10 +1087,11 @@ static void ServoChangeRailTask(void)
 		*/
 		sendmsg = Message_getEmpty();
 		sendmsg->type = error;
-		sendmsg->data[0] = ERROR_CHANGERAIL_TIMEOUT;
+		sendmsg->data[0] = ERROR_WRONG_RAILSTATE;
 		Message_post(sendmsg);
 	}
 
+	expectedRailState = RailGetRailState();
 
 	while(1)
 	{
@@ -1097,6 +1138,9 @@ static void ServoChangeRailTask(void)
             {
                 RailSetRailState(regv & 0x03);		/* 更新轨道状态 */
                 changerail_timeout_cnt = 0;		/* 超时计数器清零 */
+
+                expectedRailState = RailGetRailState();
+
                 break;
             }
 
@@ -1368,6 +1412,12 @@ void ServoTaskInit()
 	   BIOS_exit(0);
 	}
 
+	task = Task_create(TaskRailStateCheck, &taskParams, NULL);
+	if (task == NULL) {
+	   System_printf("Task_create() failed!\n");
+	   BIOS_exit(0);
+	}
+
 
 }
 
@@ -1383,6 +1433,11 @@ uint8_t RailGetRailState()
 uint8_t RailRailStateUnknown()
 {
 	return (m_railCtrl.RailState == UNKNOWNRAIL_0) || (m_railCtrl.RailState == UNKNOWNRAIL_3);
+}
+
+uint8_t RailIsStateUnknown(uint8_t state)
+{
+	return (state == UNKNOWNRAIL_0) || (state == UNKNOWNRAIL_3);
 }
 
 void BrakeSetBrake(uint8_t value)

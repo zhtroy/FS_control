@@ -23,6 +23,7 @@
 #include "Sensor/SonicRadar/SonicRadar.h"
 #include <ti/sysbios/knl/Clock.h>
 #include "logLib.h"
+#include "Moto/Parameter.h"
 
 #define V2V_ZCP_UART_DEV_NUM    (1)
 #define V2V_ZCP_DEV_NUM (0)
