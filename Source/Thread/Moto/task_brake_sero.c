@@ -1117,9 +1117,9 @@ static void ServoChangeRailTask(void)
          * 4.判断电机是否到位
          */
         if(RailGetRailState() == LEFTRAIL)
-            TTLWriteBit(RAIL_DIRECT,1);
+            TTLWriteBit(RAIL_DIRECT,sysParam.changeRailDirection?1:0);
         else
-            TTLWriteBit(RAIL_DIRECT,0);
+            TTLWriteBit(RAIL_DIRECT,sysParam.changeRailDirection?0:1);
 
         Task_sleep(10);
 

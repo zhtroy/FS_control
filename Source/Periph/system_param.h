@@ -16,6 +16,8 @@ typedef struct{
     uint8_t maxtThrottle;
     uint8_t brakeReverseRatio;
     uint32_t wheelPerimeter;  //车轮周长(mm)
+    uint32_t encoderWheelPerimeter; //编码器测距轮周长(0.1mm)
+    uint8_t changeRailDirection;  //变轨方向
 }systemParameter_t;
 #pragma pack()
 
