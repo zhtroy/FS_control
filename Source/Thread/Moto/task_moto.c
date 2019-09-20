@@ -488,6 +488,8 @@ static void MotoRecvTask(void)
     uint8_t pidModeOld = 0;
     int volLowCount = 0;
 	float voltage;
+	int RPMzeroCount = 0;
+	uint8_t fixedBrakeGiven = 0;
 
 	int frontReverseStartDistance = 0;
 	int rearReverseStartDistance = 0;
@@ -774,6 +776,27 @@ static void MotoRecvTask(void)
                                         ki,0, 0);
 
                 hisThrottle += adjThrottle;
+
+                //如果速度为0，给一个固定刹车量,每次为0只给一次
+                if( MotoGetRealRPM() == 0)
+                {
+                	RPMzeroCount ++;
+                	if( RPMzeroCount >= 2)
+                	{
+                		RPMzeroCount = 0;
+                		if( !fixedBrakeGiven)
+                		{
+							hisThrottle = -FORCE_BRAKE_SIZE;
+							fixedBrakeGiven = 1;
+                		}
+                	}
+                }
+                else if (MotoGetRealRPM() > 0)
+                {
+                	RPMzeroCount = 0;
+                	fixedBrakeGiven = 0;
+                }
+
 
                 if(hisThrottle < 0)
                 {
