@@ -777,11 +777,11 @@ static void MotoRecvTask(void)
 
                 hisThrottle += adjThrottle;
 
-                //如果速度为0，给一个固定刹车量,每次为0只给一次
-                if( MotoGetRealRPM() == 0)
+                //如果目标速度和实际速度连续几帧都为0，给一个固定刹车量,每次为0只给一次
+                if(calcRpm==0 && MotoGetRealRPM() == 0)
                 {
                 	RPMzeroCount ++;
-                	if( RPMzeroCount >= 2)
+                	if( RPMzeroCount >= 3)
                 	{
                 		RPMzeroCount = 0;
                 		if( !fixedBrakeGiven)
@@ -791,10 +791,16 @@ static void MotoRecvTask(void)
                 		}
                 	}
                 }
-                else if (MotoGetRealRPM() > 0)
+                else
                 {
                 	RPMzeroCount = 0;
-                	fixedBrakeGiven = 0;
+                }
+
+                //如果目标速度大于0，且给过固定刹车，直接松刹车给油门
+                if(calcRpm > 0 && fixedBrakeGiven)
+                {
+                	hisThrottle = 0;
+            		fixedBrakeGiven = 0;
                 }
 
 
@@ -1046,6 +1052,11 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
     }
 
     vg = vg+vd;
+
+    if(di <= minSafeDistance)
+    {
+    	vg = 0;
+    }
 
     if(vg > vgs)
     {
