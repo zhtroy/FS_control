@@ -932,7 +932,7 @@ static void TaskChangeRailRoutine()
 static void TaskRailStateCheck()
 {
 	const int CHECK_INTERVAL = 100;
-	const int CHECK_TIMES = 10;
+	const int CHECK_TIMES = 30;
 	int abnormalCount = 0;
 
 	while(1)
