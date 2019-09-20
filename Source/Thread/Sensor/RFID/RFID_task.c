@@ -31,6 +31,7 @@
 #include "CarState.h"
 #include "Parameter.h"
 #include "ZCP/V2V.h"
+#include "Sensor/RFID/EPCdef.h"
 
 
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
@@ -368,6 +369,11 @@ uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
     uint16_t size;
     uint16_t i;
     int16_t index;
+    epc_t headepc;
+    epc_t tempepc;
+
+    EPCfromByteArray(&headepc, rfidQ[0].byte);
+
     size = vector_size(rfidQueue);
 
     if(size == 0)
@@ -381,7 +387,8 @@ uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
     index = -1;
     for(i=0;i<size;i++)
     {
-        if(0 == memcmp(&rfidQueue[i],&rfidQ[0],sizeof(rfidPoint_t)))
+    	EPCfromByteArray(&tempepc, rfidQueue[i].byte);
+        if(EPCinSameRoad(&tempepc, &headepc) && tempepc.distance == headepc.distance)
         {
             index = i;
         }
