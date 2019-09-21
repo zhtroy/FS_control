@@ -222,10 +222,10 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 		}
 
-		if(isSameAdjustArea == 0 && m_distanceToFrontCar < DANGER_DISTANCE )
+		if(isSameAdjustArea == 0 && m_distanceToFrontCar < DANGER_DISTANCE && MotoGetCarMode() == Auto )
 		{
 		    /*
-		     * 非同一调整区，前车距离小于碰撞距离
+		     * 自动模式下，非同一调整区，前车距离小于碰撞距离
 		     */
 		    Message_postError(ERROR_SAFE_DISTANCE);
 		}
