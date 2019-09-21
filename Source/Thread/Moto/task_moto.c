@@ -1369,9 +1369,7 @@ uint16_t MotoGetRpm()
  */
 float MotoGetSpeed()
 {
-	float speed = (float)MotoGetRpm() / WHEEL_SPEED_RATIO * (sysParam.wheelPerimeter / 1000.0);
-
-	return MotoGetGear() == GEAR_REVERSE ? -speed : speed;
+	return SpeedfromRPM(MotoGetRealRPM());
 }
 
 /*

@@ -29,6 +29,8 @@
 #include "mpu9250_drv.h"
 #include "signal.h"
 
+#include "Sensor/Encoder/Encoder.h"
+
 void PeriphInit()
 {
     /*
@@ -51,6 +53,7 @@ void PeriphInit()
 	mpu9250I2CInit();
 
 	EMIFAInit();
+
 
 	/*
 	 * **********FPGA外设初始化***************
@@ -80,6 +83,7 @@ void PeriphInit()
     CanTableInit();
     TTLInit();
     SignalInit();
+	EncoderInit();
 
 }
 

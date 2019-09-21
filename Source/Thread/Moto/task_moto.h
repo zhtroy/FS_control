@@ -241,6 +241,11 @@ typedef struct{
 /*轨道状态错误*/
 #define ERROR_WRONG_RAILSTATE   		(30)
 
+/*
+ * 编码器故障
+ */
+#define ERROR_ENCODER   		(31)
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 

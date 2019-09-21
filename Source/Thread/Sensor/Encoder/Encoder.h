@@ -21,4 +21,8 @@ extern int16_t EncoderGetDeltaPoint();
  */
 extern int16_t EncoderGetPointsIn50ms();
 
+void EncoderInit();
+
+float EncoderGetSpeed();
+
 #endif /* ENCODER_H_ */
