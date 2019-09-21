@@ -23,6 +23,7 @@
 #include "Lib/bitop.h"
 #include "logLib.h"
 #include "speed_control.h"
+#include "Sensor/Encoder/Encoder.h"
 
 /* 宏定义 */
 #define RX_MBOX_DEPTH (32)
@@ -266,43 +267,19 @@ static void MotoUpdateDistanceTask(void)
         Task_sleep(UPDATE_INTERVAL);
         lastDistance = m_distance;
 
-        /*
-         * 根据车轮圈数更新距离
-         */
-        curCircleNum = MotoGetCircles();
-        if(lastCircleNum > curCircleNum)
-        {
-            circleDiff = 65535 -lastCircleNum + curCircleNum;
-        }
-        else
-        {
-            circleDiff = curCircleNum - lastCircleNum;
-        }
+		step = (float) EncoderGetDeltaPoint() *(sysParam.encoderWheelPerimeter / 1000.0) / (float) ENCODER_POINTS_CYCLE ;
 
-        lastCircleNum = curCircleNum;
-        /*
-         * 过滤掉CAN传输出错的圈数数据
-         * 圈数差每100ms不超过10圈 , 认为0.1s跑不了3m
-         */
-        if(circleDiff<10)
-        {
-            step = circleDiff * (sysParam.wheelPerimeter/100.0) / WHEEL_SPEED_RATIO;
-            if(GEAR_REVERSE == MotoGetGear())
-            {
-                if(m_distance > step)
-                    m_distance -= step;
-                else
-                    m_distance = TOTAL_DISTANCE - step + m_distance;
-            }
-            else
-            {
-                m_distance += step;
-                if(m_distance >TOTAL_DISTANCE )
-                {
-                	m_distance -= TOTAL_DISTANCE;
-                }
-            }
-        }
+		m_distance += step;
+
+		if(m_distance<0)
+		{
+			m_distance += TOTAL_DISTANCE;
+		}
+		else if(m_distance >TOTAL_DISTANCE )
+		{
+			m_distance -= TOTAL_DISTANCE;
+		}
+
 
 #if 0
         mode = MotoGetCarMode();
