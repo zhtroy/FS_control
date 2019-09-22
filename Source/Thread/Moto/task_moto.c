@@ -468,6 +468,7 @@ static void MotoRecvTask(void)
 	float voltage;
 	int RPMzeroCount = 0;
 	uint8_t fixedBrakeGiven = 0;
+	float balanceThrottle = 0;
 
 	int frontReverseStartDistance = 0;
 	int rearReverseStartDistance = 0;
@@ -719,6 +720,7 @@ static void MotoRecvTask(void)
                 		RPMzeroCount = 0;
                 		if( !fixedBrakeGiven)
                 		{
+                			balanceThrottle = hisThrottle;
 							hisThrottle = -FORCE_BRAKE_SIZE;
 							fixedBrakeGiven = 1;
                 		}
@@ -732,7 +734,7 @@ static void MotoRecvTask(void)
                 //如果目标速度大于0，且给过固定刹车，直接松刹车给油门
                 if(calcRpm > 0 && fixedBrakeGiven)
                 {
-                	hisThrottle = 0;
+                	hisThrottle = balanceThrottle;
             		fixedBrakeGiven = 0;
                 }
 
