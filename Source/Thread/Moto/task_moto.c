@@ -495,30 +495,7 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataF.MotoTemp   = (uint8_t)canRecvData.Data[6] - 40;
     			g_fbData.motorDataF.DriverTemp = (uint8_t)canRecvData.Data[7] - 40;
 
-    			if( BF_GET(g_fbData.motorDataF.MotoMode,4,1) == 1)
-    			{
-    				//反转
-    			}
-    			else
-    			{
-    				frontReverseStartDistance = MotoGetCarDistance();
-    			}
 
-    			if(MotoGetCarDistance() < frontReverseStartDistance)
-    			{
-    				distanceDiff = TOTAL_DISTANCE - frontReverseStartDistance + MotoGetCarDistance();
-    			}
-    			else
-    			{
-    				distanceDiff = MotoGetCarDistance() - frontReverseStartDistance;
-    			}
-
-
-    			if(distanceDiff > REVERSE_THR)
-    			{
-    				frontReverseStartDistance = MotoGetCarDistance();
-    				Message_postError(ERROR_REVERSING);
-    			}
 
     			//LogMsg("moto turn front : %d\n", BF_GET(g_fbData.motorDataF.MotoMode,4,1));
     			/*
@@ -585,30 +562,7 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataR.DriverTemp     = (uint8_t)canRecvData.Data[7] - 40;
 
 
-    			if( BF_GET(g_fbData.motorDataR.MotoMode,4,1) == 1)
-    			{
-    				//反转
-    			}
-    			else
-    			{
-    				rearReverseStartDistance = MotoGetCarDistance();
-    			}
 
-    			if(MotoGetCarDistance() < rearReverseStartDistance)
-    			{
-    				distanceDiff = TOTAL_DISTANCE - rearReverseStartDistance + MotoGetCarDistance();
-    			}
-    			else
-    			{
-    				distanceDiff = MotoGetCarDistance() - rearReverseStartDistance;
-    			}
-
-
-    			if(distanceDiff > REVERSE_THR)
-    			{
-    				rearReverseStartDistance = MotoGetCarDistance();
-    				Message_postError(ERROR_REVERSING);
-    			}
 
     			//LogMsg("moto turn rear : %d\n", BF_GET(g_fbData.motorDataR.MotoMode,4,1));
     			/*

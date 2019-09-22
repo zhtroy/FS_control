@@ -57,9 +57,15 @@ static void TaskCheckEncoderStatus()
 	int abnormalcount = 0;
 	const float SPEED_DIFF =  0.5;
 	const int ABNORMAL_TIMES = 20;
+	const int REVERSE_THR = 10; // 1m
+	int reversingStartPos;
+	int reverseDiff;
+
 	while(1)
 	{
 		Task_sleep(100);
+
+		//检测编码器返回速度和电机返回速度是否有0.5m/s以上的差别，如果有，则报故障
 		if(fabs( fabs(EncoderGetSpeed()) - MotoGetSpeed() ) > SPEED_DIFF)
 		{
 			abnormalcount ++;
@@ -75,6 +81,32 @@ static void TaskCheckEncoderStatus()
 		}
 
 		//g_fbData.encoderSpeed = EncoderGetSpeed();
+
+		//检测是否有溜坡
+		if( (MotoGetGear()==GEAR_DRIVE && EncoderGetSpeed()>=0)
+		  ||(MotoGetGear() == GEAR_REVERSE && EncoderGetSpeed()<=0 ))
+		{
+			reversingStartPos = MotoGetCarDistance();
+		}
+
+		reverseDiff = 0;
+		if(MotoGetGear() == GEAR_DRIVE)
+		{
+			reverseDiff = reversingStartPos - MotoGetCarDistance();
+		}
+		else if(MotoGetGear() == GEAR_REVERSE )
+		{
+			reverseDiff =  MotoGetCarDistance() - reversingStartPos;
+		}
+
+		if(reverseDiff > REVERSE_THR)
+		{
+			reversingStartPos = MotoGetCarDistance();
+			Message_postError(ERROR_REVERSING);
+		}
+
+
+
 	}
 
 
