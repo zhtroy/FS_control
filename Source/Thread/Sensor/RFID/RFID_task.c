@@ -371,6 +371,7 @@ uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
     int16_t index;
     epc_t headepc;
     epc_t tempepc;
+    epc_t firstrouteepc;
 
     EPCfromByteArray(&headepc, rfidQ[0].byte);
 
@@ -384,10 +385,18 @@ uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
         return 0;
     }
 
-    //如果当前位置离第一个RFID距离小于1m，修改失败
-    if( (int32_t)headepc.distance - (int32_t)MotoGetCarDistance() < 10)
+    //如果当前位置离第一个关键点距离小于3m，修改失败
+    for(i=0;i<size;i++)
     {
-    	return 0;
+    	if(rfidQ[i].byte[12] == 1) //是路径点
+    	{
+    		EPCfromByteArray(&firstrouteepc, rfidQ[i].byte);
+
+    		if( (int32_t)firstrouteepc.distance - (int32_t)MotoGetCarDistance() < 30)
+			{
+				return 0;
+			}
+    	}
     }
 
     index = -1;
