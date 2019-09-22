@@ -45,6 +45,7 @@ static int m_nextBackCarIdx = 0;
 
 //前车状态
 static v2v_req_carstatus_t m_frontCarStatus;
+static uint8_t m_isFrontCarDataUpdated = 0;
 static uint32_t m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
 static int32_t m_deltaDistance;
 //ZCP驱动实例
@@ -61,13 +62,37 @@ static Task_Handle m_task_handshakefrontcar = NULL;
 static Semaphore_Handle m_sem_handshakefrontcar_resp;
 static Semaphore_Handle m_sem_handshakefrontcar_start;
 
+static void V2VFillCarStatusPacket(ZCPUserPacket_t* psendPacket, uint16_t backCarId)
+{
+	v2v_req_carstatus_t carstatus;
+
+	carstatus.rpm = MotoGetRealRPM();
+	if(MotoGetCarMode() == ForceBrake)
+	{
+		carstatus.status = V2V_CARSTATUS_ERROR;
+	}
+	else
+	{
+		if(MotoGetRealRPM() == 0)
+			carstatus.status = V2V_CARSTATUS_STOP;
+		else
+			carstatus.status = V2V_CARSTATUS_RUNNING;
+	}
+
+	memcpy(carstatus.epc, RFIDGetRaw(), EPC_SIZE);
+	carstatus.distance = MotoGetCarDistance();
+	carstatus.deltadistance = m_deltaDistance;
+
+	memcpy(psendPacket->data, &carstatus, sizeof(carstatus));
+	psendPacket->addr = backCarId;
+	psendPacket->len = sizeof(carstatus);
+}
 
 static void V2VSendTask(UArg arg0, UArg arg1)
 {
 
 	const int INTERVAL = 100;
 
-	v2v_req_carstatus_t carstatus;
 	ZCPUserPacket_t sendPacket;
 
 	epc_t myepc;
@@ -94,34 +119,12 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		//发送carstatus报文给后车
 		if(backCarId != V2V_ID_NONE)
 		{
-			carstatus.rpm = MotoGetRealRPM();
-			if(MotoGetCarMode() == ForceBrake)
-			{
-				carstatus.status = V2V_CARSTATUS_ERROR;
-			}
-			else
-			{
-				if(MotoGetRealRPM() == 0)
-					carstatus.status = V2V_CARSTATUS_STOP;
-				else
-					carstatus.status = V2V_CARSTATUS_RUNNING;
-			}
-
-			memcpy(carstatus.epc, RFIDGetRaw(), EPC_SIZE);
-			carstatus.distance = MotoGetCarDistance();
-			carstatus.deltadistance = m_deltaDistance;
-
-			memcpy(sendPacket.data, &carstatus, sizeof(carstatus));
-			sendPacket.addr = backCarId;
+			V2VFillCarStatusPacket(&sendPacket, backCarId);
 			sendPacket.type = ZCP_TYPE_V2V_REQ_FRONT_CARSTATUS;
-			sendPacket.len = sizeof(carstatus);
-
 			ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
 		}
 
-		/*
-		 * 定时计算前车距离
-		 */
+
 		myepc=RFIDGetEpc();
 
 		if(myepc.areaType == EPC_AREATYPE_STATION)
@@ -149,6 +152,11 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		}
 		else  //普通区距离
 		*/
+
+		/*
+		 * 定时计算前车距离
+		 */
+		if(m_isFrontCarDataUpdated)
 		{
 		    isSameAdjustArea = 0;
 			if(m_param.frontId == V2V_ID_NONE)
@@ -220,18 +228,19 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 				}
 			}
 
-		}
 
-		if(isSameAdjustArea == 0 && m_distanceToFrontCar < DANGER_DISTANCE && MotoGetCarMode() == Auto )
-		{
-		    /*
-		     * 自动模式下，非同一调整区，前车距离小于碰撞距离
-		     */
-		    Message_postError(ERROR_SAFE_DISTANCE);
-		}
 
-		g_fbData.forwardCarDistance = m_distanceToFrontCar;
-		g_fbData.forwardCarRPM = m_frontCarStatus.rpm;
+			if(isSameAdjustArea == 0 && m_distanceToFrontCar < DANGER_DISTANCE && MotoGetCarMode() == Auto )
+			{
+				/*
+				 * 自动模式下，非同一调整区，前车距离小于碰撞距离
+				 */
+				Message_postError(ERROR_SAFE_DISTANCE);
+			}
+
+			g_fbData.forwardCarDistance = m_distanceToFrontCar;
+			g_fbData.forwardCarRPM = m_frontCarStatus.rpm;
+		}
 
 	}
 }
@@ -302,9 +311,10 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 				/*
 				 * 并回复一个响应报文给后车
 				 */
-				sendPacket.addr = recvPacket.addr;
+
+				V2VFillCarStatusPacket(&sendPacket, recvPacket.addr);
 				sendPacket.type = ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE;
-				sendPacket.len = 0;
+
 				ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
 
 
@@ -315,6 +325,8 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 			{
 				Semaphore_post(m_sem_handshakefrontcar_resp);
 
+				m_isFrontCarDataUpdated = 1;
+				memcpy(&m_frontCarStatus, recvPacket.data, sizeof(m_frontCarStatus));
 
 				break;
 			}
@@ -327,6 +339,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 				{
 					break;
 				}
+				m_isFrontCarDataUpdated = 1;
 				memcpy(&m_frontCarStatus, recvPacket.data, sizeof(m_frontCarStatus));
 
 				//如果前车上一次在分离区，这次在普通区，即离开分离区，发送消息
@@ -466,6 +479,8 @@ void V2VSetFrontCarId(uint16_t frontid)
 	}
 
 	m_param.frontId = frontid;
+	//清除前车信息
+	m_isFrontCarDataUpdated = 0;
 }
 
 void V2VSetLeftRoadID(roadID_t raodID)
