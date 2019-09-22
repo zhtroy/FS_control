@@ -854,7 +854,7 @@ void RailStartChangeRoutine()
 
 #define WAIT_PHOTON_TIMEOUT (100)
 #define WAIT_PHOTON_DISTANCE (100) // 10m
-#define WAIT_CHANGERAIL_TIMEOUT (3000)
+#define WAIT_CHANGERAIL_TIMEOUT (4000)
 static void TaskChangeRailRoutine()
 {
 	Bool result;
