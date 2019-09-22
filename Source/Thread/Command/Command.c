@@ -191,9 +191,8 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 						vmapFirstPosDiff += TOTAL_DISTANCE;
 					}
 
-					//如果路线中第一个点和当前点的道路编号一致， 且在当前点前方36m处，认为路线正确，否则都认为发错路线
-					if( memcmp ( &(vmap[0].byte[1]), &(rawRFID[1]), sizeof(roadID_t)) == 0
-						&& vmapFirstPosDiff>=0 && vmapFirstPosDiff< 360)
+					//如果路线中第一个点在当前点前方36m处，认为路线正确，否则都认为发错路线
+					if( vmapFirstPosDiff>=0 && vmapFirstPosDiff< 360)
 					{
 						success = 1;
 
