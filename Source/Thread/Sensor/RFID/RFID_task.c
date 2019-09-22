@@ -384,6 +384,12 @@ uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
         return 0;
     }
 
+    //如果当前位置离第一个RFID距离小于1m，修改失败
+    if( (int32_t)headepc.distance - (int32_t)MotoGetCarDistance() < 10)
+    {
+    	return 0;
+    }
+
     index = -1;
     for(i=0;i<size;i++)
     {
