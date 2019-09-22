@@ -237,10 +237,15 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 				 */
 				Message_postError(ERROR_SAFE_DISTANCE);
 			}
-
-			g_fbData.forwardCarDistance = m_distanceToFrontCar;
-			g_fbData.forwardCarRPM = m_frontCarStatus.rpm;
 		}
+		else
+		{
+			//如果前车数据无效，则将前车距离设置为无穷大
+			m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
+		}
+
+		g_fbData.forwardCarDistance = m_distanceToFrontCar;
+		g_fbData.forwardCarRPM = m_frontCarStatus.rpm;
 
 	}
 }
