@@ -984,7 +984,8 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
 
     vg = vg+vd;
 
-    if(di <= minSafeDistance)
+    //在最小安全距离+2m处，将vg清零，解决上坡停好后还要走的问题
+    if(di <= minSafeDistance + 20)
     {
     	vg = 0;
     }
