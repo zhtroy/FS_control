@@ -311,7 +311,7 @@ uint32_t MotoGetCarDistance();
 float MotoGetSpeed();
 void MotoSetCarDistance(uint32_t dist);
 void MotoUpdateCalibrationPoint(rfidPoint_t * calib);
-uint16_t RPMfromSpeed(float speed);
+int16_t RPMfromSpeed(float speed);
 float SpeedfromRPM(uint16_t rpm);
 void MotoSetAdjustKAP(float kp);
 void MotoSetAdjustKAI(float ki);

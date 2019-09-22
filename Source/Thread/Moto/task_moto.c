@@ -46,7 +46,7 @@ static Clock_Handle clockMotoFrontHeart;
 static Clock_Handle clockThrottle;
 
 static float MotoPidCalc(int16_t expRpm,int16_t realRpm,float kp,float ki, float ku,uint8_t clear);
-static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi);
+static uint16_t MotoGoalSpeedGen(int16_t vc, float ksp, float ksi);
 static uint8_t frontValid = 0;
 static uint8_t rearValid = 0;
 static uint16_t recvCircle = 0;
@@ -448,6 +448,7 @@ static void MotoUpdateDistanceTask(void)
 static void MotoRecvTask(void)
 {
     uint16_t recvRpm = 0;
+    int16_t encoderRpm = 0;
     float adjThrottle = 0;
     float adjbrake = 0;
     static float hisThrottle = 0;
@@ -664,7 +665,8 @@ static void MotoRecvTask(void)
              *  b)根据calcRPM，进行PID调节
              */
 
-            vg = MotoGoalSpeedGen(recvRpm, g_param.KSP, g_param.KSI);
+            encoderRpm = RPMfromSpeed(EncoderGetSpeed());
+            vg = MotoGoalSpeedGen(encoderRpm, g_param.KSP, g_param.KSI);
 
             pidModeOld = pidMode;
             pidMode = MotoGetPidOn();
@@ -703,7 +705,7 @@ static void MotoRecvTask(void)
                 /*
                  * PID计算调节量
                  */
-                adjThrottle = MotoPidCalc(calcRpm,recvRpm,kp,
+                adjThrottle = MotoPidCalc(calcRpm,encoderRpm,kp,
                                         ki,0, 0);
 
                 hisThrottle += adjThrottle;
@@ -910,7 +912,7 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
  * 2.由位置PID改为增量式PID模式；
  * 3.增加调整区的特殊处理：采用另外一组参数；
  */
-static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
+static uint16_t MotoGoalSpeedGen(int16_t vc, float ksp, float ksi)
 {
     uint16_t ds;
     uint16_t vf;
@@ -1331,9 +1333,9 @@ float MotoGetSpeed()
  * 速度单位(m/s)
  * 转速单位(圈/min)
  */
-uint16_t RPMfromSpeed(float speed)
+int16_t RPMfromSpeed(float speed)
 {
-	return  (uint16_t) (speed * WHEEL_SPEED_RATIO / (sysParam.wheelPerimeter / 1000.0) * 60.0);
+	return  (int16_t) (speed * WHEEL_SPEED_RATIO / (sysParam.wheelPerimeter / 1000.0) * 60.0);
 }
 
 /*

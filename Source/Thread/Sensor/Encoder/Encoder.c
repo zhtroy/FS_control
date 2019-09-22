@@ -44,6 +44,7 @@ int16_t EncoderGetPointsIn50ms()
 
 /*
  * 返回编码器测量速度 m/s
+ * 有正负
  */
 float EncoderGetSpeed()
 {
