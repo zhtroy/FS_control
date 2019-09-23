@@ -153,7 +153,7 @@ static void V2CSendTask(UArg arg0, UArg arg1)
 		}
 		else
 		{
-			if(MotoGetRealRPM() == 0)
+			if(MotoGetRealRPM() == 0 && g_fbData.FSMstate == idle && MotoGetCarMode() == Auto )
 				carstatus.status = 0;
 			else
 				carstatus.status = 1;
