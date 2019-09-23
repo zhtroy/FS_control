@@ -55,7 +55,7 @@ static void ShowRFIDPointList(rfidPoint_t * list)
 
 static void CommandSendTask(UArg arg0, UArg arg1)
 {
-	const int SEND_INTERVAL = 100;
+	const int SEND_INTERVAL = 200;
 	int packetLen = 0;
 	char packetBuff[256];
 
