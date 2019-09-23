@@ -385,19 +385,35 @@ uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
         return 0;
     }
 
-    //如果当前位置离第一个关键点距离小于3m，修改失败
-    for(i=0;i<size;i++)
+
+
+    for(i=0;i<vector_size(rfidQ);i++)
     {
     	if(rfidQ[i].byte[12] == 1) //是路径点
     	{
-    		EPCfromByteArray(&firstrouteepc, rfidQ[i].byte);
+    		break;
+    	}
+    }
 
-    		if( (int32_t)firstrouteepc.distance - (int32_t)MotoGetCarDistance() < 30)
+    //路线只有一个点的情况，认为是挪车，都不拒绝
+    if(vector_size(rfidQ) > 1)
+    {
+		//如果下发的路线中没有关键点，拒绝
+		if(i>=vector_size(rfidQ))
+		{
+			return 0;
+		}
+		else
+		{
+			EPCfromByteArray(&firstrouteepc, rfidQ[i].byte);
+
+			//如果当前位置离第一个关键点距离前后小于3m，修改失败
+			if( abs((int32_t)firstrouteepc.distance - (int32_t)MotoGetCarDistance()) < 30)
 			{
 				return 0;
 			}
-    	}
-    }
+		}
+	}
 
     index = -1;
     for(i=0;i<size;i++)
