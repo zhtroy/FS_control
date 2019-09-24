@@ -731,10 +731,10 @@ static void MotoRecvTask(void)
                 	RPMzeroCount = 0;
                 }
 
-                //如果目标速度大于0，且给过固定刹车，直接松刹车给原有油门的1.5倍
+                //如果目标速度大于0，且给过固定刹车，直接松刹车给原有油门的2倍
                 if(calcRpm > 0 && fixedBrakeGiven)
                 {
-                	hisThrottle = balanceThrottle * 1.5;
+                	hisThrottle = balanceThrottle * 2;
             		fixedBrakeGiven = 0;
                 }
 
