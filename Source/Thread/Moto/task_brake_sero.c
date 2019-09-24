@@ -1002,7 +1002,7 @@ void StartStationStopRoutine()
 }
 
 #define STOP_STATION_WAIT_PHOTON_DISTANCE (50) //5m
-#define STOP_DISTANCE_AFTER_PHTON    (32)   //在光电对管3.2m后必须停下
+#define STOP_DISTANCE_AFTER_PHTON    (33)   //在光电对管3.3m后必须停下
 static void TaskEnterStationStopRoutine()
 {
 	Bool result;
