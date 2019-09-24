@@ -32,6 +32,7 @@
 #include "Sensor/CellCommunication/CellCommunication.h"
 #include "logLib.h"
 #include "Command/CommandDriver.h"
+#include "Periph/system_param.h"
 
 
 
@@ -364,7 +365,7 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 		{
             MotoSetPidOn(0);
             MotoSetThrottle(0);
-            BrakeSetBrake(80);
+            BrakeSetBrake(sysParam.idleBrake);
 			g_fbData.FSMstate =idle;
 			return 0;
 		}

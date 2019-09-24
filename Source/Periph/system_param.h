@@ -18,6 +18,7 @@ typedef struct{
     uint32_t wheelPerimeter;  //车轮周长(mm)
     uint32_t encoderWheelPerimeter; //编码器测距轮周长(0.1mm)
     uint8_t changeRailDirection;  //变轨方向
+    uint8_t idleBrake;    //车辆在idle状态下的固定刹车量
 }systemParameter_t;
 #pragma pack()
 
