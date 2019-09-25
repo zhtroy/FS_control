@@ -29,6 +29,7 @@ typedef struct {
 }packet_routenode_t;
 #pragma STRUCT_ALIGN(packet_routenode_t, 8)
 
+packet_routenode_t * RouteGetRouteList();
 void RouteUpdate(packet_routenode_t * vnode);
 void RouteUpdateCopy(packet_routenode_t * vnode);
 packet_routenode_t RoutePop();

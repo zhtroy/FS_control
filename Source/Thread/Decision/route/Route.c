@@ -64,6 +64,13 @@ void RouteUpdate(packet_routenode_t * vnode)
 }
 
 /*
+ * 直接返回路径列表
+ */
+packet_routenode_t * RouteGetRouteList()
+{
+	return m_vnode;
+}
+/*
  * 更新路径（拷贝的方式）
  */
 void RouteUpdateCopy(packet_routenode_t * vnode)

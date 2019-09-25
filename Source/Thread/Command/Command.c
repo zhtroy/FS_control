@@ -224,13 +224,56 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 			case COMMAND_TYPE_CHANGE_ROUTE_END:
 			{
                 uint16_t routeLen;
-                uint8_t success;
+                uint8_t success = 0;
+                int i,j;
+                packet_routenode_t * currentRoute;
+
                 routeLen = packet.data[0] * 256 + packet.data[1];
 
                 if(routeLen ==  vector_size(vmap))
                 {
+                	/*
+                	 * 下发的第一个变轨点必须要和当前执行路径中第一个变轨点一致
+                	 */
+                	for(i = 0; i<vector_size(vroute) ; i++)
+                	{
+                		//如果是第一个变轨点，跳出
+                		if( ROUTE_WS_INA == RouteGetNodeWS(vroute[i])  || ROUTE_WS_OUTA == RouteGetNodeWS(vroute[i]))
+                		{
+                			break;
+                		}
+                	}
+                	currentRoute = RouteGetRouteList();
+                  	for(j = 0; j<vector_size(currentRoute) ; j++)
+					{
+						//如果是第一个变轨点，跳出
+						if( ROUTE_WS_INA == RouteGetNodeWS(currentRoute[j])  || ROUTE_WS_OUTA == RouteGetNodeWS(currentRoute[j]))
+						{
+							break;
+						}
+					}
+                  	//如果两个路径中都有变轨点，则比较,其他情况不过滤
+                  	if(i<vector_size(vroute) && j<vector_size(currentRoute))
+                  	{
+                  		if(vroute[i].nid == currentRoute[j].nid)
+                  		{
+                  			success = 1;
+                  		}
+                  		else
+                  		{
+                  			success = 0;
+                  		}
+                  	}
+                  	else
+                  	{
+                  		success = 1;
+                  	}
 
-                    success = RFIDAppendQueue(vmap);
+                  	//如果之前的检查成功，继续检查
+                	if(success)
+                	{
+                		success = RFIDAppendQueue(vmap);
+                	}
 
                     if(success)
                     {

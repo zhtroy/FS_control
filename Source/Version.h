@@ -9,6 +9,6 @@
 #define VERSION_H_
 
 //程序build号，每次提交都要加1
-#define BUILD_NUMBER (0)
+#define BUILD_NUMBER (1)
 
 #endif /* VERSION_H_ */
