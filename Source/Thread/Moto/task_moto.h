@@ -144,6 +144,8 @@ typedef struct{
  	uint8_t orderState;
  	uint8_t brakeErrorCode;
  	uint16_t ds;
+ 	uint32_t buildNumber;
+ 	float encoderSpeed;
 }fbdata_t;
 
 typedef struct{
@@ -313,8 +315,7 @@ void MotoSetCarDistance(uint32_t dist);
 void MotoUpdateCalibrationPoint(rfidPoint_t * calib);
 int16_t RPMfromSpeed(float speed);
 float SpeedfromRPM(uint16_t rpm);
-void MotoSetAdjustKAP(float kp);
-void MotoSetAdjustKAI(float ki);
+
 void MotoSetKP(float value);
 void MotoSetKI(float value);
 #endif

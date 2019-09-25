@@ -20,7 +20,6 @@
 #include "utils/Timeout.h"
 #include "task_moto.h"
 #include "task_brake_servo.h"
-#include "Moto/Parameter.h"
 #include "RFID/EPCdef.h"
 #include "Decision/route/Route.h"
 #include "Sensor/ZCP/V2C.h"
@@ -33,6 +32,7 @@
 #include "logLib.h"
 #include "Command/CommandDriver.h"
 #include "Periph/system_param.h"
+#include "Zigbee/Zigbee.h"
 
 
 
@@ -218,79 +218,65 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 	{
 		case REMOTE_SET_KI_EVT:
 		{
-			g_param.KI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_sysParam.KI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_KP_EVT:
 		{
-			g_param.KP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_sysParam.KP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_KU_EVT:
 		{
-			g_param.KU = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_sysParam.KU = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
         case REMOTE_SET_KI_STATION_EVT:
         {
-            g_param.KI_station = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+            g_sysParam.KI_station = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
             return 0;
         }
 
         case REMOTE_SET_KP_STATION_EVT:
         {
-            g_param.KP_station = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+            g_sysParam.KP_station = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
             return 0;
         }
 
 		case REMOTE_SET_KSP_EVT:
 		{
-			g_param.KSP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_sysParam.KSP = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_KSI_EVT:
 		{
-			g_param.KSI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
+			g_sysParam.KSI = EVT_CAST(msg, evt_remote_set_float_param_t)->value;
 			return 0;
 		}
 
 		case REMOTE_SET_KAP_EVT:
 		{
-			MotoSetAdjustKAP( EVT_CAST(msg, evt_remote_set_float_param_t)->value );
+			g_sysParam.KAP = ( EVT_CAST(msg, evt_remote_set_float_param_t)->value );
 			return 0;
 		}
 
 		case REMOTE_SET_KAI_EVT:
 		{
-			MotoSetAdjustKAI( EVT_CAST(msg, evt_remote_set_float_param_t)->value );
+			g_sysParam.KAI = ( EVT_CAST(msg, evt_remote_set_float_param_t)->value );
 			return 0;
 		}
 
 		case REMOTE_SET_STATION_ADDR:
 		{
-			g_param.station_addr = EVT_CAST(msg, evt_remote_set_u16_param_t)->value;
+			g_sysParam.station_addr = EVT_CAST(msg, evt_remote_set_u16_param_t)->value;
 			return 0;
 		}
 
-		case REMOTE_SET_ENABLE_CHANGERAIL_EVT:
-		{
-			g_param.cycleRoute = EVT_CAST(msg, evt_remote_set_u8_param_t) ->value;
-			return 0;
-		}
 
-		case REMOTE_SET_RPM_EVT:
-		{
-			evt_remote_set_rpm_t * p = EVT_CAST(msg, evt_remote_set_rpm_t);
-			if(p->statecode < EPC_FEAT_END)  //防止访问越界
-			{
-				g_param.StateRPM[ p->statecode] = p->rpm;
-			}
-			return 0;
-		}
 
 		case REMOTE_SET_ROUTENODE:
 		{
@@ -305,6 +291,26 @@ Msg const * TopSetting(car_hsm_t * me, Msg * msg)
 			//如果是新设置路径，将原来的路径删除
 
 			RouteFree();
+			return 0;
+		}
+
+		case REMOTE_SET_PARAM:
+		{
+			evt_placeholder_t * p = EVT_CAST(msg, evt_placeholder_t);
+
+			memcpy(&g_sysParam, p->mem, sizeof(systemParameter_t));
+
+			if(ParamWriteToEEPROM())
+			{
+				ZigbeeSend(0,ZIGBEE_PACKET_PARAM_FINISH,0);
+			}
+
+			return 0;
+		}
+
+		case REMOTE_READ_PARAM:
+		{
+		    ParamSendBack();
 			return 0;
 		}
 	}
@@ -365,7 +371,7 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 		{
             MotoSetPidOn(0);
             MotoSetThrottle(0);
-            BrakeSetBrake(sysParam.idleBrake);
+            BrakeSetBrake(g_sysParam.idleBrake);
 			g_fbData.FSMstate =idle;
 			return 0;
 		}
@@ -399,8 +405,8 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 		case ENTRY_EVT:
 		{
             MotoSetPidOn(1);
-            MotoSetKI(g_param.KI);
-            MotoSetKP(g_param.KP);
+            MotoSetKI(g_sysParam.KI);
+            MotoSetKP(g_sysParam.KP);
 
 			/*
 			 * 向站台申请前车ID
@@ -433,14 +439,14 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 
 					routenode = RoutePop();    //如果路径点匹配，弹出当前节点
 
-					if(g_param.cycleRoute == 1)
+					if(g_var.cycleRoute == 1)
 					{
 						RouteAddNode(routenode);
 					}
 
 					if( RouteGetNodeNT(curNode) == ROUTE_NT_STOP ) //终点
 					{
-						if(g_param.cycleRoute == 0)
+						if(g_var.cycleRoute == 0)
 						{
 							STATE_TRAN(me, &me->automode_arrived);
 						}
@@ -495,7 +501,7 @@ Msg const * AutoModeRunning(car_hsm_t * me, Msg * msg)
 			//RFID变化   一般->站台
 			if(lastEpc.areaType == EPC_AREATYPE_NORMAL && pEvt->epc.areaType == EPC_AREATYPE_STATION)
 			{
-				if(!g_param.cycleRoute)
+				if(!g_var.cycleRoute)
 				{
 					V2CEnterStation();
 				}
@@ -974,8 +980,8 @@ Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
 		{
 			g_fbData.FSMstate = stop;
 
-	        MotoSetKI(g_param.KI_station);
-	        MotoSetKP(g_param.KP_station);
+	        MotoSetKI(g_sysParam.KI_station);
+	        MotoSetKP(g_sysParam.KP_station);
 
 			StartStationStopRoutine();
 			return 0;

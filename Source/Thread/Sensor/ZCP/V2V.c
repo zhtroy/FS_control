@@ -23,7 +23,6 @@
 #include "Sensor/SonicRadar/SonicRadar.h"
 #include <ti/sysbios/knl/Clock.h>
 #include "logLib.h"
-#include "Moto/Parameter.h"
 
 #define V2V_ZCP_UART_DEV_NUM    (1)
 #define V2V_ZCP_DEV_NUM (0)
@@ -130,7 +129,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		if(myepc.areaType == EPC_AREATYPE_STATION)
 		{
 			//进站车辆安全距离设置为站台安全距离
-			if(g_param.cycleRoute == 0)
+			if(g_var.cycleRoute == 0)
 			{
 				MotoSetSafeDistance(MIN_SAFE_DISTANCE_STATION,MAX_SAFE_DISTANCE_STATION);
 			}

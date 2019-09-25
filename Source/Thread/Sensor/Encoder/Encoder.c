@@ -49,7 +49,7 @@ int16_t EncoderGetPointsIn50ms()
 float EncoderGetSpeed()
 {
 	float pointsIn50ms =  EncoderGetPointsIn50ms();
-	return ((float) sysParam.encoderWheelPerimeter) / 10000.0 * pointsIn50ms * 20.0f / (float) ENCODER_POINTS_CYCLE ;
+	return ((float) g_sysParam.encoderWheelPerimeter) / 10000.0 * pointsIn50ms * 20.0f / (float) ENCODER_POINTS_CYCLE ;
 }
 
 
@@ -81,7 +81,7 @@ static void TaskCheckEncoderStatus()
 			Message_postError(ERROR_ENCODER);
 		}
 
-		//g_fbData.encoderSpeed = EncoderGetSpeed();
+		g_fbData.encoderSpeed = EncoderGetSpeed();
 
 		//检测是否有溜坡
 		if( (MotoGetGear()==GEAR_DRIVE && EncoderGetSpeed()>=0)

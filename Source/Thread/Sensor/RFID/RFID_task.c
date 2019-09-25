@@ -29,7 +29,6 @@
 #include "logLib.h"
 #include "Lib/vector.h"
 #include "CarState.h"
-#include "Parameter.h"
 #include "ZCP/V2V.h"
 #include "Sensor/RFID/EPCdef.h"
 
@@ -332,7 +331,7 @@ void taskCreateRFID(UArg a0, UArg a1)
 
 
 
-            if(g_param.cycleRoute == 1)
+            if(g_var.cycleRoute == 1)
             {
                 /*
                  * 循环路线，将路线压入队尾

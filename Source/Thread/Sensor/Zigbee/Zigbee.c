@@ -6,6 +6,7 @@
  */
 
 #include "Zigbee/Zigbee.h"
+#include "ZCP/zcp_driver.h"
 #include "uartns550.h"
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Mailbox.h>
@@ -83,10 +84,44 @@ void ZigbeeInit()
 	UartNs550Recv(ZIGBEE_UART_NUM, recvDataObj.buffer, UART_REC_BUFFER_SIZE);
 
 }
-void ZigbeeSend(void * pData, int len)
+
+/*
+ * zigbee遥控发送回上位机软件
+ * pData :包指针
+ * type :包类型
+ * len :包长度
+ */
+void ZigbeeSend(void * pData,uint8_t type, int len)
 {
+
+	/*
+	 * 数据包格式为 包头(0xAA 0x42 0x55) + 类型 + 长度  + 数据 + CRC8 + 包尾(0x0D 0x99 0xCC)
+	 */
+	uint8_t  sendbuff[512];
+	int bufflen = len + 9;
+
+	sendbuff[0] = 0xAA;
+	sendbuff[1] = 0x42;
+	sendbuff[2] = 0x55;
+	sendbuff[3] = type;
+	sendbuff[4] = len;
+	sendbuff[bufflen-3] = 0x0D;
+	sendbuff[bufflen-2] = 0x99;
+	sendbuff[bufflen-1] = 0xCC;
+
+	if(pData && len)
+	{
+		memcpy(sendbuff+5, pData, len );
+	}
+
+	/*
+	 * 插入CRC8
+	 */
+	sendbuff[bufflen-4] = ZCPCrcCalc(pData, len);
+
 	Semaphore_pend(m_sem_zigbee_send, BIOS_WAIT_FOREVER);
-	UartNs550Send(ZIGBEE_UART_NUM, pData, len);
+
+	UartNs550Send(ZIGBEE_UART_NUM, sendbuff, bufflen);
 }
 
 Void taskZigbee(UArg a0, UArg a1)

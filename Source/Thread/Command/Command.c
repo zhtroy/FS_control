@@ -23,7 +23,6 @@
 #include "Moto/task_moto.h"
 #include "Moto/task_brake_servo.h"
 #include "Sensor/RFID/RFID_task.h"
-#include "Thread/Moto/Parameter.h"
 
 
 
@@ -354,7 +353,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 			{
 				uint8_t success = 1;
 
-				g_param.cycleRoute = packet.data[0];
+				g_var.cycleRoute = packet.data[0];
 				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_SETLOOP_RESPONSE);
 				break;
 			}

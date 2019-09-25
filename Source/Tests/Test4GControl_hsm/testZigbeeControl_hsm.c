@@ -30,7 +30,7 @@
 #include "Sensor/CellCommunication/CellCommunication.h"
 #include "Command/Command.h"
 #include "Sensor/RFID/RFID_task.h"
-
+#include "system_param.h"
 
 #define REMOTE_CMD_MODE          1
 #define REMOTE_CMD_MOTOR         2
@@ -55,6 +55,8 @@
 #define REMOTE_CMD_KAI           21
 #define REMOTE_CMD_KP_STATION    22
 #define REMOTE_CMD_KI_STATION    23
+#define REMOTE_CMD_SETPARAM      24   //设置参数，把所有参数都用一个命令来设置
+#define REMOTE_CMD_READPARAM     25   //读取所有参数
 
 //zigbee遥控超时
 #define ZIGBEE_TIMEOUT (10000)
@@ -324,6 +326,19 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 					case REMOTE_CMD_NEWROUTE:
 					{
 						EVT_SETTYPE(&hsmEvt, REMOTE_NEW_ROUTE);
+						break;
+					}
+
+					case REMOTE_CMD_SETPARAM:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_SET_PARAM);
+						memcpy(hsmEvt.mem, &pMsg->data[1], sizeof(systemParameter_t));
+						break;
+					}
+
+					case REMOTE_CMD_READPARAM:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_READ_PARAM);
 						break;
 					}
 

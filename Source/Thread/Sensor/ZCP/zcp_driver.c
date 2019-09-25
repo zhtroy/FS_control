@@ -114,7 +114,7 @@ static void ZCPUartIntrHandler(void *callBackRef, u32 event, unsigned int eventD
  * 返 回 值: 无
  * 备注: 多项式(x8+x5+x4+1)
 *****************************************************************************/
-static uint8_t ZCPCrcCalc(uint8_t *pData, uint8_t len)
+uint8_t ZCPCrcCalc(uint8_t *pData, uint8_t len)
 {
     uint8_t i,j;
     uint8_t crc;

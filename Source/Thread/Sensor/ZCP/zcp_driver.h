@@ -162,4 +162,6 @@ Bool ZCPSendPacket(ZCPInstance_t *pInst,
         Semaphore_Handle ackSem,
         UInt timeout
         );
+uint8_t ZCPCrcCalc(uint8_t *pData, uint8_t len);
+
 #endif /* ZCP_DRIVER_H_ */

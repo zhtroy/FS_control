@@ -74,6 +74,10 @@ int32_t mpu9250WriteBytes(uint8_t slvAddr, uint8_t regAddr, uint8_t numBytes, ui
     return 0;
 }
 
+/*
+ * 成功返回写入数量
+ * 失败返回-1
+ */
 int32_t mpu9250WriteBytesFreeLength(uint8_t slvAddr, uint8_t regAddr, uint8_t numBytes, uint8_t *dataPtr)
 {
 	int len;
@@ -98,7 +102,7 @@ int32_t mpu9250WriteBytesFreeLength(uint8_t slvAddr, uint8_t regAddr, uint8_t nu
 		regAddr += len;
 		Task_sleep(10);
 	}
-	return 0;
+	return numBytes;
 }
 
 /*****************************************************************************

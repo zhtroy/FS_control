@@ -15,7 +15,6 @@
 #include <math.h>
 #include "common.h"
 #include "task_brake_servo.h"
-#include "Parameter.h"
 #include "Zigbee/Zigbee.h"
 #include "Sensor/RFID/RFID_task.h"
 #include "Sensor/ZCP/V2V.h"
@@ -24,6 +23,9 @@
 #include "logLib.h"
 #include "speed_control.h"
 #include "Sensor/Encoder/Encoder.h"
+#include "Decision/CarState.h"
+#include "system_param.h"
+#include "Version.h"
 
 /* 宏定义 */
 #define RX_MBOX_DEPTH (32)
@@ -54,8 +56,7 @@ static float m_distance = 0;
 static float lastDistance = 0;
 static uint16_t maxSafeDistance = MAX_SAFE_DISTANCE;
 static uint16_t minSafeDistance = MIN_SAFE_DISTANCE;
-static float kap = 0.02;
-static float kai = 0.08;
+
 static float kp = 0.8;
 static float ki = 0.009;
 /********************************************************************************/
@@ -267,7 +268,7 @@ static void MotoUpdateDistanceTask(void)
         Task_sleep(UPDATE_INTERVAL);
         lastDistance = m_distance;
 
-		step = (float) EncoderGetDeltaPoint() *(sysParam.encoderWheelPerimeter / 1000.0) / (float) ENCODER_POINTS_CYCLE ;
+		step = (float) EncoderGetDeltaPoint() *(g_sysParam.encoderWheelPerimeter / 1000.0) / (float) ENCODER_POINTS_CYCLE ;
 
 		m_distance += step;
 
@@ -379,7 +380,7 @@ static void MotoUpdateDistanceTask(void)
                 *超出校准点，清除该校准点，并发送错误
                 */
                 g_calibFlag = 0;
-                if(g_param.cycleRoute == 1)
+                if(g_var.cycleRoute == 1)
                 {
                     calibRfid = calibrationQueue[0];
                     vector_erase(calibrationQueue,0);
@@ -431,7 +432,7 @@ static void MotoUpdateDistanceTask(void)
         g_calibFlag = 0;
         g_fbData.distance = m_distance;
 
-        if(g_param.cycleRoute == 1)
+        if(g_var.cycleRoute == 1)
         {
             calibRfid = calibrationQueue[0];
             vector_erase(calibrationQueue,0);
@@ -624,7 +625,7 @@ static void MotoRecvTask(void)
 		         * 限定最大油门
 		         */
 		        recvRpm = (frontRpm + rearRpm)/2;
-		        maxThrottle = sysParam.maxtThrottle;
+		        maxThrottle = g_sysParam.maxtThrottle;
 //		        recvCircle = (rearCircle + frontCircle)/2;
 
 		        /*
@@ -647,13 +648,13 @@ static void MotoRecvTask(void)
 		    {
 		        recvRpm = frontRpm;
 //		        recvCircle = frontCircle;
-		        maxThrottle = sysParam.maxtThrottle;
+		        maxThrottle = g_sysParam.maxtThrottle;
 		    }
 		    else if(rearValid == 1)
 		    {
 		        recvRpm = rearRpm;
 //		        recvCircle = rearCircle;
-		        maxThrottle = sysParam.maxtThrottle;
+		        maxThrottle = g_sysParam.maxtThrottle;
 		    }
 		    else;
 
@@ -667,7 +668,7 @@ static void MotoRecvTask(void)
              */
 
             encoderRpm = RPMfromSpeed(EncoderGetSpeed());
-            vg = MotoGoalSpeedGen(encoderRpm, g_param.KSP, g_param.KSI);
+            vg = MotoGoalSpeedGen(encoderRpm, g_sysParam.KSP, g_sysParam.KSI);
 
             pidModeOld = pidMode;
             pidMode = MotoGetPidOn();
@@ -749,10 +750,10 @@ static void MotoRecvTask(void)
                      */
                     MotoSetThrottle(0);
 
-                    adjbrake = sysParam.brakeOffset - hisThrottle;
+                    adjbrake = g_sysParam.brakeOffset - hisThrottle;
                     if(adjbrake > MAX_BRAKE_SIZE)
                     {
-                        hisThrottle = sysParam.brakeOffset - MAX_BRAKE_SIZE;
+                        hisThrottle = g_sysParam.brakeOffset - MAX_BRAKE_SIZE;
                         adjbrake = MAX_BRAKE_SIZE;
                     }
 
@@ -979,7 +980,7 @@ static uint16_t MotoGoalSpeedGen(int16_t vc, float ksp, float ksi)
         /*
          * 车辆处于同一调整区
          */
-        vd = kap*disDelta + kai*dis;
+        vd = g_sysParam.KAP *disDelta + g_sysParam.KAI *dis;
     }
     else
     {
@@ -1021,77 +1022,23 @@ static uint16_t MotoGoalSpeedGen(int16_t vc, float ksp, float ksi)
 
 #endif
 
-/*****************************************************************************
- * 函数名称: static uint8_t crc8Calc(uint8_t *pData, uint8_t len)
- * 函数说明: CRC-8计算
- * 输入参数:
- *          pData:数据指针地址
- *          len:长度
- * 输出参数: 无
- * 返 回 值: 无
- * 备注: 多项式(x8+x5+x4+1)
-*****************************************************************************/
-static uint8_t crc8Calc(uint8_t *pData, uint8_t len)
-{
-    uint8_t i,j;
-    uint8_t crc;
-    crc = 0xff;
 
-    for(j=0; j<len; j++)
-    {
-        crc = *pData ^ crc;  /* 每次先与需要计算的数据异或,计算完指向下一数据 */
-
-        for (i=0; i<8; i++)
-        {
-            if (crc & 0x01)
-                crc = (crc >> 1) ^ 0x8C;
-            else
-                crc = (crc >> 1);
-        }
-
-        pData++;
-    }
-
-
-    return (crc);
-
-}
 void MotoSendFdbkToCellTask()
 {
-	/*
-	 * 反馈数据包格式为 包头(0xAA 0x42 0x55) + 长度 + 数据 + CRC8 + 包尾(0x0D 0x99 0xCC)
-	 */
-	uint8_t  sendbuff[512];
-	int32_t tms;
-	int bufflen = sizeof(g_fbData)+8;
 
-	sendbuff[0] = 0xAA;
-	sendbuff[1] = 0x42;
-	sendbuff[2] = 0x55;
-	sendbuff[3] = sizeof(g_fbData);
-	sendbuff[bufflen-3] = 0x0D;
-	sendbuff[bufflen-2] = 0x99;
-	sendbuff[bufflen-1] = 0xCC;
+	int32_t tms;
 
 	while(1){
-		/*
-		fbData.motorDataR.ThrottleL++;
-		fbData.motorDataR.RPMH++;
-		fbData.motorDataF.ThrottleH++;
-		fbData.motorDataF.RPML++;
-		*/
+		g_fbData.buildNumber = BUILD_NUMBER;
 		g_fbData.brake = BrakeGetBrake();
 		g_fbData.railstate = RailGetRailState();
 		userGetMS(&tms);
 		g_fbData.rfidReadTime = tms;
-		memcpy(sendbuff+4,(char*) &g_fbData, sizeof(g_fbData) );
 
-		/*
-		 * 插入CRC8
-		 */
-		sendbuff[bufflen-4] = crc8Calc(&sendbuff[4],sizeof(g_fbData));
+	    g_fbData.myID = g_sysParam.carID;
 
-		ZigbeeSend(sendbuff, bufflen);
+
+		ZigbeeSend(&g_fbData, ZIGBEE_PACKET_CARINFO, sizeof(g_fbData));
 
 		Task_sleep(100);
 	}
@@ -1337,7 +1284,7 @@ float MotoGetSpeed()
  */
 int16_t RPMfromSpeed(float speed)
 {
-	return  (int16_t) (speed * WHEEL_SPEED_RATIO / (sysParam.wheelPerimeter / 1000.0) * 60.0);
+	return  (int16_t) (speed * WHEEL_SPEED_RATIO / (g_sysParam.wheelPerimeter / 1000.0) * 60.0);
 }
 
 /*
@@ -1346,7 +1293,7 @@ int16_t RPMfromSpeed(float speed)
  */
 float SpeedfromRPM(uint16_t rpm)
 {
-	return (float)rpm / 60.0 / WHEEL_SPEED_RATIO * (sysParam.wheelPerimeter / 1000.0);
+	return (float)rpm / 60.0 / WHEEL_SPEED_RATIO * (g_sysParam.wheelPerimeter / 1000.0);
 }
 
 uint8_t MotoGetCarMode()
@@ -1384,15 +1331,6 @@ void MotoUpdateCalibrationPoint(rfidPoint_t * calib)
 	}
 }
 
-void MotoSetAdjustKAP(float kp)
-{
-    kap = kp;
-}
-
-void MotoSetAdjustKAI(float ki)
-{
-	kai = ki;
-}
 
 
 void MotoSetKP(float value)

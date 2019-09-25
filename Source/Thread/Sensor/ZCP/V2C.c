@@ -21,7 +21,6 @@
 #include "Sensor/RFID/EPCdef.h"
 #include "Message/Message.h"
 #include "Moto/task_moto.h"
-#include "Moto/Parameter.h"
 #include "CarState.h"
 #include "route/Route.h"
 #include "Lib/bitop.h"
@@ -163,7 +162,7 @@ static void V2CSendTask(UArg arg0, UArg arg1)
 		carstatus.railstate = RailGetRailState();
 		memcpy(carstatus.rfid, RFIDGetRaw(), EPC_SIZE);
 		memcpy(sendPacket.data, &carstatus, sizeof(carstatus));
-		sendPacket.addr = g_param.station_addr;
+		sendPacket.addr = g_sysParam.station_addr;
 		sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_CARSTATUS;
 		sendPacket.len = sizeof(carstatus);
 
@@ -189,7 +188,7 @@ static void V2COpenDoorTask(UArg arg0, UArg arg1)
 			/*
 			 * 构造请求报文
 			 */
-			sendPacket.addr = g_param.station_addr;
+			sendPacket.addr = g_sysParam.station_addr;
 			sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_DOOR;
 			sendPacket.data[0] = m_openOrCloseDoor;
 			sendPacket.len = 1;
@@ -261,7 +260,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			req.distance = RFIDGetEpc().distance;
 			memcpy(req.rfid, RFIDGetRaw(), EPC_SIZE);
 			memcpy(sendPacket.data, &req, sizeof(req));
-			sendPacket.addr = g_param.station_addr;
+			sendPacket.addr = g_sysParam.station_addr;
 			sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_FRONTCARID;
 			sendPacket.len = sizeof(req);
 
@@ -349,7 +348,7 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
 			req.roadId[3] = BF_GET(routeNode.nid,32,8);
 			req.roadId[4] = BF_GET(routeNode.nid,24,8);
 			memcpy(sendPacket.data, &req, sizeof(req));
-			sendPacket.addr = g_param.station_addr;
+			sendPacket.addr = g_sysParam.station_addr;
 			sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_ENTERSTATION;
 			sendPacket.len = sizeof(req);
 
@@ -430,7 +429,7 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
 			req.roadId[3] = BF_GET(routeNode.nid,32,8);
 			req.roadId[4] = BF_GET(routeNode.nid,24,8);
 			memcpy(sendPacket.data, &req, sizeof(req));
-			sendPacket.addr = g_param.station_addr;
+			sendPacket.addr = g_sysParam.station_addr;
 			sendPacket.type = ZCP_TYPE_V2C_REQ_CAR_LEAVESTATION;
 			sendPacket.len = sizeof(req);
 

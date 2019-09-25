@@ -719,7 +719,7 @@ void ServoBrakeRecvTask()
 	    	msg->type = error;
 	    	msg->data[0] = ERROR_BRAKE_TIMEOUT;
 	    	msg->dataLen = 1;
-	    	Message_post(msg);
+	    	//Message_post(msg);
 	    	continue;
 	    }
 
@@ -809,19 +809,19 @@ void ServoBrakeTask(void *param)
     	Semaphore_pend(txReadySem, BIOS_WAIT_FOREVER);
 
     	/*计算力矩*/
-    	if(sysParam.brakeDirection == 0)
+    	if(g_sysParam.brakeDirection == 0)
     	{
     	    /*2.3-2.4机车刹车方向*/
     	    brakeforce =  BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
     	    if(brakeforce <= 0)
-    	        brakeforce = - sysParam.brakeReverseRatio * 10;  //按百分比设置反向力矩 (10 = 1000/ 100)
+    	        brakeforce = - g_sysParam.brakeReverseRatio * 10;  //按百分比设置反向力矩 (10 = 1000/ 100)
     	}
     	else
     	{
     	    /*2.1机车刹车方向*/
     	    brakeforce =  -BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
     	    if(brakeforce >= 0)
-    	        brakeforce = sysParam.brakeReverseRatio * 10;  //按百分比设置反向力矩 (10 = 1000/ 100)
+    	        brakeforce = g_sysParam.brakeReverseRatio * 10;  //按百分比设置反向力矩 (10 = 1000/ 100)
     	}
 
     	canData.Data[5] = brakeforce & 0xFF;
@@ -1117,9 +1117,9 @@ static void ServoChangeRailTask(void)
          * 4.判断电机是否到位
          */
         if(RailGetRailState() == LEFTRAIL)
-            TTLWriteBit(RAIL_DIRECT,sysParam.changeRailDirection?1:0);
+            TTLWriteBit(RAIL_DIRECT,g_sysParam.changeRailDirection?1:0);
         else
-            TTLWriteBit(RAIL_DIRECT,sysParam.changeRailDirection?0:1);
+            TTLWriteBit(RAIL_DIRECT,g_sysParam.changeRailDirection?0:1);
 
         Task_sleep(10);
 
