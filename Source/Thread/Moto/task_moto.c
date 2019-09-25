@@ -732,10 +732,18 @@ static void MotoRecvTask(void)
                 	RPMzeroCount = 0;
                 }
 
-                //如果目标速度大于0，且给过固定刹车，直接松刹车给原有油门的2倍
+                //如果目标速度大于0，且给过固定刹车，直接松刹车
                 if(calcRpm > 0 && fixedBrakeGiven)
                 {
-                	hisThrottle = balanceThrottle * 2;
+                	//如果当前是上坡路段，给原有油门的3倍
+                	if(RFIDGetEpc().rampType ==  EPC_RAMPTYPE_UPHILL )
+                	{
+                		hisThrottle = balanceThrottle * 3;
+                	}
+                	else
+                	{
+                		hisThrottle = 0;
+                	}
             		fixedBrakeGiven = 0;
                 }
 

@@ -68,6 +68,12 @@ typedef enum{
 #define EPC_ROADBREAK_RIGHT_BEHIND 	(4)
 
 /*
+ * 坡道类型
+ */
+#define EPC_RAMPTYPE_FLAT  (0)
+#define EPC_RAMPTYPE_UPHILL  (1)
+
+/*
  * 功能区
  */
 #define EPC_FUNC_NORMAL 	(0)
@@ -107,6 +113,8 @@ typedef struct epc_tag
 	uint32_t distance;
 	//断头路信息
 	uint8_t roadBreak;
+	//坡道信息
+	uint8_t rampType;
 }epc_t;
 
 typedef struct
