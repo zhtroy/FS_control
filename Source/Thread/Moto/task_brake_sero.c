@@ -719,7 +719,7 @@ void ServoBrakeRecvTask()
 	    	msg->type = error;
 	    	msg->data[0] = ERROR_BRAKE_TIMEOUT;
 	    	msg->dataLen = 1;
-	    	//Message_post(msg);
+	    	Message_post(msg);
 	    	continue;
 	    }
 
