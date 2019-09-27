@@ -421,10 +421,12 @@ uint8_t RFIDAppendQueue(rfidPoint_t *rfidQ)
         if(EPCinSameRoad(&tempepc, &headepc) && tempepc.distance == headepc.distance)
         {
             index = i;
+            break;
         }
     }
 
-    if(index >= 0)
+    //下发的路径第一个点在当前路径列表中，且不是最后一个点
+    if(index >= 0 && index < size-1)
     {
         /*
          * 清除相同点之后的路点
