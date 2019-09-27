@@ -1040,6 +1040,7 @@ Msg const * AutoModeTempStop(car_hsm_t * me, Msg * msg)
 			//临停结束
 			if(pEvt->eventcode == IN_EVTCODE_TEMPSTOP_COMPLETE)
 			{
+				CommandSend(0, 0, COMMAND_TYPE_TEMPSTOP_FINISH);
 				STATE_TRAN(me, &me->automode_idle);
 				return 0;
 			}
