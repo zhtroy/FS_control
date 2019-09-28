@@ -248,6 +248,11 @@ typedef struct{
  */
 #define ERROR_ENCODER   		(31)
 
+/*
+ * 变轨电机故障
+ */
+#define ERROR_CHANGERAIL_MOTOR  (32)
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 

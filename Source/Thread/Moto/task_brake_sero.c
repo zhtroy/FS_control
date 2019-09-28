@@ -28,6 +28,8 @@ extern uint16_t getRPM(void);
 /*          静态全局变量                                                              */
 /********************************************************************************/
 static Semaphore_Handle txReadySem;
+static Semaphore_Handle RailtxReadySem = 0;
+static Semaphore_Handle RailrxReadySem = 0;
 static Semaphore_Handle changeRailSem;
 static uint8_t uBrake,uLastBrake;	//刹车信号
 static int8_t  deltaBrake;
@@ -1062,6 +1064,43 @@ static void TaskEnterStationStopRoutine()
 
 	}
 }
+#define CAN_RAIL_NO (3)
+#define CAN_RAIL_ID	(0x0101)
+static uint8_t rail_motor_readerror[4] =  {0x00, 0x0A, 0x00, 0x36};
+static uint8_t rail_motor_enable[6] =  {0x00, 0x1E, 0x00, 0x10, 0x00, 0x01};
+static uint8_t rail_motor_disable[6] = {0x00, 0x1E, 0x00, 0x10, 0x00, 0x00};
+static uint8_t rail_motor_forward[8] = {0x00, 0x3C, 0x02, 0x58, 0x00, 0x00,0xE4,0x84};
+static uint8_t rail_motor_reverse[8] = {0x00, 0x3C, 0x02, 0x58, 0xFF, 0xFF,0x1B,0x7C};
+
+static void RailCanIntrHandler(int32_t devsNum,int32_t event)
+{
+    canDataObj_t rxData;
+
+	if (event == 1)         /* 收到一帧数据 */
+    {
+        CanRead(devsNum, &rxData);
+        //如果故障码不为0
+        if(rxData.Data[1] == 0x0B &&
+           rxData.Data[2] == 0x00 &&
+           rxData.Data[3] == 0x36 &&
+           (rxData.Data[4] != 0x00 ||rxData.Data[5] != 0x00))
+        {
+        	Message_postError(ERROR_CHANGERAIL_MOTOR);
+        }
+        else
+        {
+			if(RailrxReadySem)
+				Semaphore_post(RailrxReadySem);
+        }
+	}
+    else if (event == 2)    /* 一帧数据发送完成 */
+    {
+    	if(RailtxReadySem)
+        /* 发送中断 */
+        	Semaphore_post(RailtxReadySem);
+    }
+
+}
 
 static void ServoChangeRailTask(void)
 {
@@ -1070,7 +1109,8 @@ static void ServoChangeRailTask(void)
     p_msg_t sendmsg;
 	static uint8_t change_en=1;
 	uint16_t changerail_timeout_cnt = 0;
-
+	canDataObj_t canSendData;
+	Semaphore_Params semParams;
 
 	uint8_t regv;
 	/* 获取轨道状态 */
@@ -1093,6 +1133,20 @@ static void ServoChangeRailTask(void)
 
 	expectedRailState = RailGetRailState();
 
+    /* 初始化信用量 */
+	Semaphore_Params_init(&semParams);
+	semParams.mode = Semaphore_Mode_BINARY;
+    RailtxReadySem = Semaphore_create(1, &semParams, NULL);
+    RailrxReadySem = Semaphore_create(0, &semParams, NULL);
+    /*初始化CAN设备*/
+    CanOpen(CAN_RAIL_NO, RailCanIntrHandler, CAN_RAIL_NO);
+
+    /*初始化帧类型*/
+    canSendData.ID = CAN_RAIL_ID;
+    canSendData.SendType = 0;
+    canSendData.RemoteFlag = 0;
+    canSendData.ExternFlag = 0;
+
 	while(1)
 	{
 		//Task_sleep(50);
@@ -1101,6 +1155,8 @@ static void ServoChangeRailTask(void)
 		/* 更新轨道状态 */
 	    regv = TTLRead();
         RailSetRailState(regv & 0x03);
+
+
 
 	    if(state == FALSE)
 	        continue;
@@ -1116,37 +1172,78 @@ static void ServoChangeRailTask(void)
          * 3.等待超时
          * 4.判断电机是否到位
          */
+        //读取电机错误码
+        Semaphore_pend(RailtxReadySem,100);
+		canSendData.DataLen = 4;
+		memcpy(canSendData.Data, rail_motor_readerror,4);
+		CanWrite(CAN_RAIL_NO, &canSendData);
+
+	    //使能
+        Semaphore_pend(RailtxReadySem,100);
+	    canSendData.DataLen = 6;
+	    memcpy(canSendData.Data, rail_motor_enable,6);
+	    CanWrite(CAN_RAIL_NO, &canSendData);
+//        //收到响应
+        state = Semaphore_pend(RailrxReadySem,200);
+	    if(state == FALSE)
+	        continue;
+
         if(RailGetRailState() == LEFTRAIL)
-            TTLWriteBit(RAIL_DIRECT,g_sysParam.changeRailDirection?1:0);
-        else
-            TTLWriteBit(RAIL_DIRECT,g_sysParam.changeRailDirection?0:1);
-
-        Task_sleep(10);
-
-        TTLWriteBit(RAIL_ENABLE, 1);
-
-        changerail_timeout_cnt = 0;
-        while(changerail_timeout_cnt < CHANGERAIL_TIMEOUT)
         {
-            Task_sleep(10);
-            changerail_timeout_cnt ++;
+        	if(!g_sysParam.changeRailDirection)
+        	{
+        		memcpy(canSendData.Data, rail_motor_forward,8);
+        	}
+        	else
+        	{
+        		memcpy(canSendData.Data, rail_motor_reverse,8);
+        	}
+        }
+        else
+        {
+        	if(!g_sysParam.changeRailDirection)
+			{
+				memcpy(canSendData.Data, rail_motor_reverse,8);
+			}
+			else
+			{
+				memcpy(canSendData.Data, rail_motor_forward,8);
+			}
+        }
+        //发出使能指令和电机真正使能之间有一定延时
+        Task_sleep(300);
+        Semaphore_pend(RailtxReadySem,100);
+        //写脉冲数
+        canSendData.DataLen = 8;
+		CanWrite(CAN_RAIL_NO, &canSendData);
+//        //收到响应
+        state = Semaphore_pend(RailrxReadySem,200);
+	    if(state == FALSE)
+	        continue;
 
-            regv = TTLRead();
+        Task_sleep(1000);
 
-            if((RailGetRailState() == LEFTRAIL && (regv & 0x03) == RIGHTRAIL) ||
-                (RailGetRailState() != LEFTRAIL && (regv & 0x03) == LEFTRAIL))
-            {
-                RailSetRailState(regv & 0x03);		/* 更新轨道状态 */
-                changerail_timeout_cnt = 0;		/* 超时计数器清零 */
 
-                expectedRailState = RailGetRailState();
+        regv = TTLRead();
+        if((RailGetRailState() == LEFTRAIL && (regv & 0x03) == RIGHTRAIL) ||
+            (RailGetRailState() != LEFTRAIL && (regv & 0x03) == LEFTRAIL))
+        {
+            RailSetRailState(regv & 0x03);      /* 更新轨道状态 */
 
-                break;
-            }
-
+            expectedRailState = RailGetRailState();
         }
 
-        TTLWriteBit(RAIL_ENABLE, 0);	/* 关闭电机使能 */
+	    /* 关闭电机使能 */
+        Semaphore_pend(RailtxReadySem, 100);
+        canSendData.DataLen = 6;
+		memcpy(canSendData.Data, rail_motor_disable,6);
+		CanWrite(CAN_RAIL_NO, &canSendData);
+
+		//收到响应
+		state = Semaphore_pend(RailrxReadySem,200);
+		if(state == FALSE)
+			continue;
+
 
 		//}/*if(1 == changeRail)*/
 
@@ -1355,6 +1452,8 @@ void ServoTaskInit()
 	UartNs550RS485TxDisable(SERVOR_MOTOR_UART);
 
     UartNs550Recv(SERVOR_MOTOR_UART, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+
+
 
 
     /* 初始化接收邮箱 */
