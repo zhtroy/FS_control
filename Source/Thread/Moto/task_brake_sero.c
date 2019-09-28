@@ -863,6 +863,8 @@ static void TaskChangeRailRoutine()
 	uint8_t lastRailState;
 	uint32_t startPos;
 	uint8_t dontchangerail  = 0;
+	uint32_t photonPos;
+
 	while(1)
 	{
 		Semaphore_pend(sem_startChangeRail, BIOS_WAIT_FOREVER);
@@ -883,6 +885,23 @@ static void TaskChangeRailRoutine()
 			result = Semaphore_pend(g_sem_photoelectric, WAIT_PHOTON_TIMEOUT );
 			if(result == TRUE)
 			{
+				//读到对管后再等2m开始变轨
+				photonPos = MotoGetCarDistance();
+				while(1)
+				{
+					Task_sleep(10);
+					if( (int)MotoGetCarDistance() - (int) photonPos > 20)
+					{
+						break;
+					}
+					//如果退出自动模式，退出变轨流程
+					if( MotoGetCarMode() != Auto)
+					{
+						dontchangerail = 1;
+						break;
+					}
+				}
+
 				break;
 			}
 			if((int32_t)MotoGetCarDistance() - (int32_t)startPos > WAIT_PHOTON_DISTANCE)
