@@ -468,7 +468,8 @@ static void MotoRecvTask(void)
     int volLowCount = 0;
 	float voltage;
 	int RPMzeroCount = 0;
-	uint8_t fixedBrakeGiven = 0;
+	int8_t brakeClearDelayCount = 0;
+	uint8_t stopCarPhase = 0;
 	float balanceThrottle = 0;
 
 	int frontReverseStartDistance = 0;
@@ -712,41 +713,69 @@ static void MotoRecvTask(void)
 
                 hisThrottle += adjThrottle;
 
-                //如果目标速度和实际速度连续几帧都为0，给一个固定刹车量,每次为0只给一次
-                if(calcRpm==0 && MotoGetRealRPM() == 0)
+                //跟车停车流程
+                switch(stopCarPhase)
                 {
-                	RPMzeroCount ++;
-                	if( RPMzeroCount >= 3)
+                	case 0:
                 	{
-                		RPMzeroCount = 0;
-                		if( !fixedBrakeGiven)
+                		//vg为零，当前速度小于1迈时，如果是上坡或者平道，清零控制量，相当于松开油门和刹车，等车辆自己滑停
+                		if(calcRpm == 0 && MotoGetSpeed() < 0.3)
                 		{
-                			balanceThrottle = hisThrottle;
-							hisThrottle = -FORCE_BRAKE_SIZE;
-							fixedBrakeGiven = 1;
+                			stopCarPhase = 1;
+                			if(RFIDGetEpc().rampType ==  EPC_RAMPTYPE_UPHILL ||
+                					RFIDGetEpc().rampType ==  EPC_RAMPTYPE_FLAT	)
+                			{
+                				hisThrottle = 0;
+                			}
                 		}
+                		break;
                 	}
-                }
-                else
-                {
-                	RPMzeroCount = 0;
-                }
 
-                //如果目标速度大于0，且给过固定刹车，直接松刹车
-                if(calcRpm > 0 && fixedBrakeGiven)
-                {
-                	//如果当前是上坡路段，给原有油门的3倍
-                	if(RFIDGetEpc().rampType ==  EPC_RAMPTYPE_UPHILL )
+                	case 1:
                 	{
-                		hisThrottle = balanceThrottle * 3;
-                	}
-                	else
-                	{
-                		hisThrottle = 0;
-                	}
-            		fixedBrakeGiven = 0;
-                }
+                		//如果目标速度和实际速度连续几帧都为0，给一个固定刹车量,每次为0只给一次
+						if(calcRpm==0 && MotoGetRealRPM() == 0)
+						{
+							RPMzeroCount ++;
+							if( RPMzeroCount >= 3)
+							{
+								RPMzeroCount = 0;
 
+								balanceThrottle = hisThrottle;
+								hisThrottle = -FORCE_BRAKE_SIZE;
+
+								stopCarPhase = 2;
+							}
+						}
+						else
+						{
+							RPMzeroCount = 0;
+						}
+
+						break;
+                	}
+
+                	case 2:
+                	{
+                		//如果目标速度大于0，直接松刹车
+						if(calcRpm > 0 )
+						{
+							stopCarPhase = 0;
+							//如果当前是上坡路段，给原有油门的3倍
+							if(RFIDGetEpc().rampType ==  EPC_RAMPTYPE_UPHILL )
+							{
+								hisThrottle = balanceThrottle * 3;
+								brakeClearDelayCount = 5;  // 5帧后再松开刹车
+							}
+							else
+							{
+								hisThrottle = 0;
+							}
+
+						}
+						break;
+                	}
+                }
 
                 if(hisThrottle < 0)
                 {
@@ -772,10 +801,18 @@ static void MotoRecvTask(void)
                 {
                     /*
                      * 油门模式:
-                     *  a)放开刹车
+                     *  a)放开刹车(带延迟的)
                      *  b)设置油门
                      */
-                    BrakeSetBrake(0);
+                	if(brakeClearDelayCount <= 0 )
+                	{
+                        BrakeSetBrake(0);
+                	}
+                	else
+                	{
+                		brakeClearDelayCount -- ;
+                	}
+
 
                     if(hisThrottle > maxThrottle)
                     {
