@@ -49,6 +49,7 @@ Mailbox_Handle bSecMbox;
 
 static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 {
+#if 0
     p_msg_t msg;  
     /*
     * RFID设备连接超时，发送错误消息到主线程
@@ -58,7 +59,9 @@ static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 	msg->data[0] = ERROR_RFID_TIMEOUT;
 	msg->dataLen = 1;
 	Message_post(msg);
-	timeout_flag = 1;
+#endif
+    timeout_flag = 1;
+
     
     //setErrorCode(ERROR_CONNECT_TIMEOUT);
 }
