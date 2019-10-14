@@ -35,6 +35,9 @@
 
 #define CHANGERAIL_TIMEOUT (600)
 
+#define HANDBRAKE_FORWORD (2)
+#define HANDBRAKE_BACKWORD (3)
+
 
 //#define RAIL_ENABLE (0)
 #define RAIL_ENABLE (0)
@@ -95,5 +98,6 @@ extern void StartStationStopRoutine();
  */
 extern void StartTempStopRoutine();
 
+void BrakeSetHandBrakeCommand(uint8_t val);
 #endif
 

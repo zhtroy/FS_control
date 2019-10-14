@@ -202,6 +202,18 @@ Msg const * TopManual(car_hsm_t * me, Msg* msg)
 			return 0;
 		}
 
+		case REMOTE_HANDBRAKE_EVT:
+		{
+			if(EVT_CAST(msg,evt_remote_set_u8_param_t)->value == 0)  //松开
+			{
+				BrakeSetHandBrakeCommand(1);
+			}
+			else
+			{
+				BrakeSetHandBrakeCommand(0);
+			}
+			return 0;
+		}
 
 	}
 

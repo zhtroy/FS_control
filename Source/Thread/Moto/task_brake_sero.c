@@ -42,11 +42,13 @@ static uint8_t railState;
 static uint8_t keyState;
 static uint8_t expectedRailState;    //预期的轨道状态
 static uint8_t shouldCheckRail = 1;
+static uint8_t handBrakeCommand = 0;
 
 
 static Semaphore_Handle sem_txData;
 static Semaphore_Handle sem_rxData;
 static Semaphore_Handle sem_modbus;
+Semaphore_Handle sem_handBrake;
 static Semaphore_Handle sem_startChangeRail;
 static Semaphore_Handle sem_startStopStation;
 static Semaphore_Handle sem_startTempStop;
@@ -58,6 +60,7 @@ static Mailbox_Handle rxDataMbox = NULL;
 static uint8_t ackStatus = MODBUS_ACK_OK;
 
 static uint8_t changeRail = 0;
+static void TaskHandBrake(UArg arg0, UArg arg1);
 
 static brake_ctrl_t m_brakeCtrl = {
 		.Brake = 0,
@@ -116,6 +119,7 @@ static void ServoInitSem(void)
     sem_rxData = Semaphore_create(0, &semParams, NULL);
     sem_txData = Semaphore_create(0, &semParams, NULL);
     sem_modbus = Semaphore_create(1, &semParams, NULL);
+    sem_handBrake = Semaphore_create(0, &semParams, NULL);
     sem_startChangeRail = Semaphore_create(0, &semParams, NULL);
     sem_startStopStation = Semaphore_create(0, &semParams, NULL);
     sem_startTempStop = Semaphore_create(0, &semParams, NULL);
@@ -1418,6 +1422,12 @@ void ServoTaskInit()
 	   BIOS_exit(0);
 	}
 
+	task = Task_create(TaskHandBrake, &taskParams, NULL);
+    if (task == NULL) {
+       System_printf("Task_create() failed!\n");
+       BIOS_exit(0);
+    }
+
 
 }
 
@@ -1456,3 +1466,41 @@ uint8_t BrakeGetReady()
 {
 	return m_brakeCtrl.BrakeReady;
 }
+
+
+static uint8_t BrakeGetHandBrakeCommand()
+{
+    return handBrakeCommand;
+}
+
+void BrakeSetHandBrakeCommand(uint8_t val)
+{
+    handBrakeCommand = val;
+    Semaphore_post(sem_handBrake);
+}
+
+static void TaskHandBrake(UArg arg0, UArg arg1)
+{
+    uint8_t op;
+    while(1)
+    {
+        Semaphore_pend(sem_handBrake,BIOS_WAIT_FOREVER);
+        op = BrakeGetHandBrakeCommand();
+        if(op == 0)
+        {
+            /*继电器导通*/
+            TTLWriteBit(HANDBRAKE_FORWORD,1);
+            Task_sleep(3000);
+            TTLWriteBit(HANDBRAKE_FORWORD,0);
+        }
+        else
+        {
+            /*继电器导通*/
+            TTLWriteBit(HANDBRAKE_BACKWORD,1);
+            Task_sleep(3000);
+            TTLWriteBit(HANDBRAKE_BACKWORD,0);
+        }
+    }
+
+}
+

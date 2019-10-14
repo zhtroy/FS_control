@@ -57,6 +57,8 @@
 #define REMOTE_CMD_KI_STATION    23
 #define REMOTE_CMD_SETPARAM      24   //设置参数，把所有参数都用一个命令来设置
 #define REMOTE_CMD_READPARAM     25   //读取所有参数
+#define REMOTE_CMD_HANDBRAKE     26   //手刹
+
 
 //zigbee遥控超时
 #define ZIGBEE_TIMEOUT (10000)
@@ -341,6 +343,14 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 						EVT_SETTYPE(&hsmEvt, REMOTE_READ_PARAM);
 						break;
 					}
+
+					case REMOTE_CMD_HANDBRAKE:
+					{
+						EVT_SETTYPE(&hsmEvt, REMOTE_HANDBRAKE_EVT);
+						EVT_CAST(&hsmEvt, evt_remote_set_u8_param_t)->value = pMsg->data[1];
+						break;
+					}
+
 
 
 				}
