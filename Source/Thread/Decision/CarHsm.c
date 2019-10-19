@@ -203,6 +203,20 @@ Msg const * TopManual(car_hsm_t * me, Msg* msg)
 			return 0;
 		}
 
+		case REMOTE_DOOR_EVT:
+		{
+			uint8_t value = EVT_CAST(msg, evt_remote_set_u8_param_t) ->value;
+			if(value == 1)
+			{
+				DoorOpen();
+			}
+			else
+			{
+				DoorClose();
+			}
+			return 0;
+		}
+
 
 	}
 
