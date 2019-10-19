@@ -31,6 +31,7 @@
 #include "Command/Command.h"
 #include "Sensor/RFID/RFID_task.h"
 #include "system_param.h"
+#include "Moto/door_control.h"
 
 #define REMOTE_CMD_MODE          1
 #define REMOTE_CMD_MOTOR         2
@@ -511,4 +512,7 @@ void testZigbeeControlHSM_init()
 
 	//F码接口
 	CommandInit();
+
+	//车门
+	DoorCtrlInit();
 }

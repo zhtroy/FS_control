@@ -60,6 +60,8 @@
 #define COMMAND_TYPE_CAR_INFO (0x80)
 //路线运行结束
 #define COMMAND_TYPE_ROUTE_FINISH (0x81)
+//车门状态反馈
+#define COMMAND_TYPE_DOOR_STATE (0x82)
 //临停结束
 #define COMMAND_TYPE_TEMPSTOP_FINISH (0x83)
 

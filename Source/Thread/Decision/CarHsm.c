@@ -33,6 +33,7 @@
 #include "Command/CommandDriver.h"
 #include "Periph/system_param.h"
 #include "Zigbee/Zigbee.h"
+#include "Moto/door_control.h"
 
 
 
@@ -381,8 +382,15 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 		}
 		case REMOTE_AUTO_START_EVT:
 		{
-			STATE_TRAN(me, &me->automode_running);
-			g_calibFlag = 0;           /*清除上一次的校准过程*/
+			if(DoorGetState() == DOOR_STATE_CLOSE)
+			{
+				STATE_TRAN(me, &me->automode_running);
+				g_calibFlag = 0;           /*清除上一次的校准过程*/
+			}
+			else
+			{
+				Message_postError(ERROR_DOOR_TRY_START_WHILE_OPEN);
+			}
 			return 0;
 		}
 	}
@@ -1000,7 +1008,7 @@ Msg const * AutoModeArrived(car_hsm_t * me, Msg * msg)
 				m_isInStation = 1;
 
 				//发送消息给CellHsm
-				CommandSend(0, 0, COMMAND_TYPE_ROUTE_FINISH);
+				DoorOpen();
 				CellHsmPost(carhsm_arrived);
 				STATE_TRAN(me, &me->automode_idle);
 				return 0;

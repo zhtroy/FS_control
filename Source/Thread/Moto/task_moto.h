@@ -248,6 +248,23 @@ typedef struct{
  */
 #define ERROR_ENCODER   		(31)
 
+/*开车门超时*/
+#define ERROR_DOOR_OPEN_TIMEOUT  (32)
+
+/*关车门超时*/
+#define ERROR_DOOR_CLOSE_TIMEOUT  (33)
+
+/*行进过程中开门*/
+#define ERROR_DOOR_OPEN_WHILE_RUNNING  (34)
+
+/*未关门就启动*/
+#define ERROR_DOOR_TRY_START_WHILE_OPEN  (35)
+
+/*车门控制器超时*/
+#define ERROR_DOOR_CONTROLLER_TIMEOUT  (36)
+
+/*================ERRORS END======================*/
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 

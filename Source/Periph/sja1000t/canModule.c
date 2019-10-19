@@ -112,7 +112,7 @@ canCfgTable_t can_cfg_table[]=
         3,
         {
         /*总线基地址 总线位宽(8/16/32/64) CAN帧模式 滤波屏蔽码 滤波掩码 波特率设置*/
-        {FPGA_CAN_DEV3,16,CAN_FRAME_TYPE_STD,0xffffffff,0xffffffff,BAUDTATE_500K},
+        {FPGA_CAN_DEV3,16,CAN_FRAME_TYPE_STD,0xffffffff,0xffffffff,BAUDTATE_250K},
         /*中断事件号 路由规则    CAN中断类型 中断回调函数(模块维护) 回调参数*/
         {56,RIE|TIE,NULL,NULL}
         }
