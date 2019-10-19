@@ -403,7 +403,8 @@ Msg const * AutoModeIdle(car_hsm_t * me, Msg * msg)
 			}
 			else
 			{
-				Message_postError(ERROR_DOOR_TRY_START_WHILE_OPEN);
+				MotoSetErrorCode(ERROR_DOOR_TRY_START_WHILE_OPEN);
+				STATE_TRAN(me, &me->forcebrake);
 			}
 			return 0;
 		}
