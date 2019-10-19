@@ -97,7 +97,6 @@ static void RoutineDoorOpen()
         if(_doorState == DOOR_STATE_OPEN)
         {
         	CommandSend(&_doorState,sizeof(uint8_t), COMMAND_TYPE_DOOR_STATE);
-			CommandSend(0, 0, COMMAND_TYPE_ROUTE_FINISH);
         }
         else   //超时
         {
