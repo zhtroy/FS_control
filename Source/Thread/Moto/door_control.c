@@ -20,6 +20,7 @@
 #include "Message/Message.h"
 #include "Command/CommandDriver.h"
 #include "Moto/task_moto.h"
+#include "CarState.h"
 /*
  * 0 关闭
  * 1 打开
@@ -212,8 +213,9 @@ static void DoorStateCheckTask()
 	{
 		Task_sleep(100);
 
-		//如果速度大于0.1 且开门，则报错
+		//如果自动模式下速度大于0.1 且开门，则报错
 		if(EncoderGetSpeed()>0.1 &&
+		   MotoGetCarMode() == Auto &&
 		   (DOOR_STATE_OPENING == _doorState || DOOR_STATE_OPEN == _doorState) )
 		{
 			Message_postError(ERROR_DOOR_OPEN_WHILE_RUNNING);
