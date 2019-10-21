@@ -174,6 +174,16 @@ static void DoorRecvTask()
 			continue;
 		}
 
+		if(BF_GET(canRecvData.Data[1],0,1) == 1)
+		{
+			_doorState = DOOR_STATE_OPENING;
+		}
+
+		if(BF_GET(canRecvData.Data[1],1,1) == 1)
+		{
+			_doorState = DOOR_STATE_CLOSING;
+		}
+
 		if(BF_GET(canRecvData.Data[1],2,1) == 1)
 		{
 			_doorState = DOOR_STATE_OPEN;
@@ -196,6 +206,21 @@ static void DoorRecvTask()
 	}
 }
 
+static void DoorStateCheckTask()
+{
+	while(1)
+	{
+		Task_sleep(100);
+
+		//如果速度大于0.1 且开门，则报错
+		if(EncoderGetSpeed()>0.1 &&
+		   (DOOR_STATE_OPENING == _doorState || DOOR_STATE_OPEN == _doorState) )
+		{
+			Message_postError(ERROR_DOOR_OPEN_WHILE_RUNNING);
+		}
+	}
+}
+
 uint8_t DoorGetState()
 {
 	return _doorState;
@@ -209,7 +234,6 @@ uint8_t DoorOpen()
 	}
 	if(EncoderGetSpeed()>0)
 	{
-		Message_postError(ERROR_DOOR_OPEN_WHILE_RUNNING);
 		return 0;
 	}
 
@@ -266,6 +290,11 @@ void DoorCtrlInit()
   		BIOS_exit(0);
   	}
 
+    task = Task_create(DoorStateCheckTask, &taskParams, NULL);
+  	if (task == NULL) {
+  		System_printf("Task_create() failed!\n");
+  		BIOS_exit(0);
+  	}
 
   	/*
   	 * 初始化信号量
