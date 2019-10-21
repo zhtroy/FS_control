@@ -1088,8 +1088,8 @@ static void TaskEnterStationStopRoutine()
 static uint8_t rail_motor_readerror[4] =  {0x00, 0x0A, 0x00, 0x36};
 static uint8_t rail_motor_enable[6] =  {0x00, 0x1E, 0x00, 0x10, 0x00, 0x01};
 static uint8_t rail_motor_disable[6] = {0x00, 0x1E, 0x00, 0x10, 0x00, 0x00};
-static uint8_t rail_motor_forward[8] = {0x00, 0x3C, 0x02, 0x58, 0x00, 0x00,0xE4,0x84};
-static uint8_t rail_motor_reverse[8] = {0x00, 0x3C, 0x02, 0x58, 0xFF, 0xFF,0x1B,0x7C};
+static uint8_t rail_motor_forward[8] = {0x00, 0x3C, 0x01, 0x90, 0x00, 0x00,0xE4,0x84};
+static uint8_t rail_motor_reverse[8] = {0x00, 0x3C, 0x01, 0x90, 0xFF, 0xFF,0x1B,0x7C};
 
 static void RailCanIntrHandler(int32_t devsNum,int32_t event)
 {
@@ -1240,17 +1240,28 @@ static void ServoChangeRailTask(void)
 	    if(state == FALSE)
 	        continue;
 
-        Task_sleep(1000);
 
-
-        regv = TTLRead();
-        if((RailGetRailState() == LEFTRAIL && (regv & 0x03) == RIGHTRAIL) ||
-            (RailGetRailState() != LEFTRAIL && (regv & 0x03) == LEFTRAIL))
+        changerail_timeout_cnt = 0;
+        while(changerail_timeout_cnt < CHANGERAIL_TIMEOUT)
         {
-            RailSetRailState(regv & 0x03);      /* 更新轨道状态 */
+            Task_sleep(10);
+            changerail_timeout_cnt ++;
 
-            expectedRailState = RailGetRailState();
+            regv = TTLRead();
+
+            if((RailGetRailState() == LEFTRAIL && (regv & 0x03) == RIGHTRAIL) ||
+                (RailGetRailState() != LEFTRAIL && (regv & 0x03) == LEFTRAIL))
+            {
+                RailSetRailState(regv & 0x03);		/* 更新轨道状态 */
+                changerail_timeout_cnt = 0;		/* 超时计数器清零 */
+
+                expectedRailState = RailGetRailState();
+
+                break;
+            }
+
         }
+
 
 	    /* 关闭电机使能 */
         Semaphore_pend(RailtxReadySem, 100);
