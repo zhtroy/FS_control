@@ -48,11 +48,13 @@ static void timerWatchdogTask(void)
     {
         // 复位看门狗定时器 “喂狗”
 
+#if 1
 		if(enableWatchDog == 1)
 			TimerWatchdogReactivate(SOC_TMR_1_REGS);
 		else;
+#endif
 
-        Task_sleep(4000);
+        Task_sleep(2000);
 
     }
 }
@@ -70,7 +72,7 @@ void testWatchDogTaskInit()
 
 	Error_init(&eb);
     Task_Params_init(&taskParams);
-	taskParams.priority = 15;
+	taskParams.priority = 5;
 	taskParams.stackSize = 2048;
 	task = Task_create(timerWatchdogTask, &taskParams, &eb);
 	if (task == NULL) {

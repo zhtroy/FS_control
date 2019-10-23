@@ -24,7 +24,7 @@ extern "C" {
 #define configASSERT(expr) assert(expr)
 #define pvPortMalloc(size) malloc(size)
 #define vSerialPutString(pTxBuffer,numBytesToWrite) LogPuts(pTxBuffer, numBytesToWrite)
-#define xSerialGetChar() UARTGetc()
+#define xSerialGetChar(val,timeout) UARTSemGetc(val,timeout)
 //#define xSerialPutChar(byteTx) UARTPutc(byteTx)
 
 typedef long BaseType_t;

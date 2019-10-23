@@ -133,7 +133,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 		INCLUDE_vTaskSuspend is not set to 1 - in which case portMAX_DELAY will
 		be a genuine block time rather than an infinite block time. */
 		//while( xSerialGetChar( xPort, &cRxedChar, portMAX_DELAY ) != pdPASS );
-		cRxedChar = xSerialGetChar();
+		while(xSerialGetChar(&cRxedChar,BIOS_WAIT_FOREVER) != TRUE);
 
         /* Echo the character back. */
         if( cRxedChar == 27 )
