@@ -1104,18 +1104,20 @@ void MototaskInit()
 uint16_t MotoGetRealRPM(void)
 {
 	uint16_t uCarRPM;
-	if (MotoGetMotoSel() == FRONT_ONLY)
-	{
-		uCarRPM = (g_fbData.motorDataF.RPMH << 8) + g_fbData.motorDataF.RPML;
-	}
-	else if (MotoGetMotoSel() == REAR_ONLY)
-	{
-		uCarRPM = (g_fbData.motorDataR.RPMH << 8) + g_fbData.motorDataR.RPML;
-	}
-	else if (MotoGetMotoSel() == FRONT_REAR)
+
+	if (frontValid == 1 && rearValid == 1)
 	{
 		uCarRPM = ((g_fbData.motorDataF.RPMH << 8) + g_fbData.motorDataF.RPML + (g_fbData.motorDataR.RPMH << 8) + g_fbData.motorDataR.RPML) / 2;
 	}
+	else if (frontValid == 1)
+	{
+		uCarRPM = (g_fbData.motorDataF.RPMH << 8) + g_fbData.motorDataF.RPML;
+	}
+	else if (rearValid == 1)
+	{
+		uCarRPM = (g_fbData.motorDataR.RPMH << 8) + g_fbData.motorDataR.RPML;
+	}
+
 
 	return uCarRPM;
 }
