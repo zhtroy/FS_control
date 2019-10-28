@@ -722,7 +722,7 @@ static void MotoRecvTask(void)
                 		if( !fixedBrakeGiven)
                 		{
                 			balanceThrottle = hisThrottle;
-							hisThrottle = -FORCE_BRAKE_SIZE;
+							hisThrottle = -g_sysParam.forcebrake;
 							fixedBrakeGiven = 1;
                 		}
                 	}

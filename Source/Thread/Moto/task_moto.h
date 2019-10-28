@@ -286,7 +286,6 @@ typedef struct{
 
 
 #define MAX_BRAKE_SIZE (255)
-#define FORCE_BRAKE_SIZE (150)
 
 
 #define FILTER_RPM (200)
