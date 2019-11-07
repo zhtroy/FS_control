@@ -34,16 +34,13 @@ void ParamSendBack()
 uint8_t ParamWriteToEEPROM()
 {
 	int result;
-	result = mpu9250WriteBytesFreeLength(EEPROM_PHY_ADDR, 128, sizeof(systemParameter_t),  (uint8_t*)(&g_sysParam));
+	result = mpu9250WriteBytesFreeLengthBlocking(EEPROM_PHY_ADDR, 128, sizeof(systemParameter_t),  (uint8_t*)(&g_sysParam));
 	return (result == -1) ?0:1;
 }
 
 static void ParamInitTask(UArg arg0, UArg arg1)
 {
-    mpu9250ReadBytes(EEPROM_PHY_ADDR,128, sizeof(systemParameter_t), (uint8_t*)(&g_sysParam));
-
-    //上电时发回一次参数
-    ParamSendBack();
+    mpu9250ReadBytesBlocking(EEPROM_PHY_ADDR,128, sizeof(systemParameter_t), (uint8_t*)(&g_sysParam));
 
 }
 
@@ -54,7 +51,7 @@ void ParamInit()
     Task_Params taskParams;
     Task_Params_init(&taskParams);
     taskParams.priority = 5;
-    taskParams.stackSize = 1024;
+    taskParams.stackSize = 2048;
     task = Task_create(ParamInitTask, &taskParams, NULL);
     if (task == NULL) {
         System_printf("Task_create() failed!\n");

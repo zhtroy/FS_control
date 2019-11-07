@@ -16,6 +16,7 @@ void IICCfgInit(IICObj_t *insPtr,const IICConfig_t *cfgPtr)
     insPtr->recvBuffer.requestedBytes = 0;
     insPtr->handler = cfgPtr->handler;
     insPtr->callBackRef = cfgPtr->callBackRef;
+    insPtr->intrEventID = cfgPtr->intrEventID;
 
     I2CMasterDisable(insPtr->baseAddr);
     I2CMasterInitExpClk(insPtr->baseAddr, cfgPtr->sysClk , cfgPtr->internalClk, cfgPtr->iicFreq);
