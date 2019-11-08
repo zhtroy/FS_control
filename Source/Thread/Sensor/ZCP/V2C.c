@@ -461,13 +461,35 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
  * API
  */
 
-void V2CInit()
+
+
+void V2CStartUpTask()
 {
     Task_Handle task;
     Task_Params taskParams;
 	Semaphore_Params semParams;
 
-	ZCPInit(&v2cInst, V2C_ZCP_DEV_NUM,V2C_ZCP_UART_DEV_NUM );
+	ZCPInit(&v2cInst, V2C_ZCP_DEV_NUM,V2C_ZCP_UART_DEV_NUM ,  g_sysParam.carID );
+
+
+	/*
+	 * 邮箱
+	 */
+	m_mb_forcarid = Mailbox_create(sizeof(ZCPUserPacket_t),4,NULL,NULL);
+	m_mb_enterstation = Mailbox_create(sizeof(ZCPUserPacket_t),4,NULL,NULL);
+	m_mb_opendoor= Mailbox_create(sizeof(ZCPUserPacket_t),4,NULL,NULL);
+	m_mb_leavestation = Mailbox_create(sizeof(ZCPUserPacket_t),4,NULL,NULL);
+
+	/*
+	 * sem
+	 */
+	Semaphore_Params_init(&semParams);
+    semParams.mode = Semaphore_Mode_BINARY;
+    m_sem_askfrontid = Semaphore_create(0, &semParams, NULL);
+    m_sem_enterstation = Semaphore_create(0, &semParams, NULL);
+    m_sem_openDoor= Semaphore_create(0, &semParams, NULL);
+	m_sem_leavestation =  Semaphore_create(0, &semParams, NULL);
+
 
     Task_Params_init(&taskParams);
 
@@ -511,24 +533,24 @@ void V2CInit()
 		BIOS_exit(0);
 	}
 
-	/*
-	 * 邮箱
-	 */
-	m_mb_forcarid = Mailbox_create(sizeof(ZCPUserPacket_t),4,NULL,NULL);
-	m_mb_enterstation = Mailbox_create(sizeof(ZCPUserPacket_t),4,NULL,NULL);
-	m_mb_opendoor= Mailbox_create(sizeof(ZCPUserPacket_t),4,NULL,NULL);
-	m_mb_leavestation = Mailbox_create(sizeof(ZCPUserPacket_t),4,NULL,NULL);
 
-	/*
-	 * sem
-	 */
-	Semaphore_Params_init(&semParams);
-    semParams.mode = Semaphore_Mode_BINARY;
-    m_sem_askfrontid = Semaphore_create(0, &semParams, NULL);
-    m_sem_enterstation = Semaphore_create(0, &semParams, NULL);
-    m_sem_openDoor= Semaphore_create(0, &semParams, NULL);
-	m_sem_leavestation =  Semaphore_create(0, &semParams, NULL);
 
+}
+
+void V2CInit()
+{
+	Task_Handle task;
+	Task_Params taskParams;
+
+	Task_Params_init(&taskParams);
+	taskParams.stackSize = 2048;
+	taskParams.priority = 5;
+
+	task = Task_create((Task_FuncPtr)V2CStartUpTask, &taskParams, NULL);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
 }
 
 /*

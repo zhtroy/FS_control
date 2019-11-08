@@ -50,7 +50,7 @@ void ParamInit()
     Task_Handle task;
     Task_Params taskParams;
     Task_Params_init(&taskParams);
-    taskParams.priority = 5;
+    taskParams.priority = 15;
     taskParams.stackSize = 2048;
     task = Task_create(ParamInitTask, &taskParams, NULL);
     if (task == NULL) {
