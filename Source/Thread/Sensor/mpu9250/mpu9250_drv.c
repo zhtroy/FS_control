@@ -13,7 +13,8 @@ static void mpu9250IntrHandler(void *callBackRef, uint32_t event, uint32_t event
 
 /* 全局变量定义 */
 IICObj_t mpu9250IICInst;
-static Semaphore_Handle transCompSem;
+static Semaphore_Handle I2CfreeSem;
+static uint8_t tranComp = 0;
 static const IICConfig_t cfg = {
     .devAddr     = SOC_I2C_0_REGS,
     .sysClk      = 24000000,
@@ -26,6 +27,25 @@ static const IICConfig_t cfg = {
 
 /* 宏定义 */
 #define I2C_TIMEOUT_MS  (2500)
+
+#define I2C_TIMEOUT_LOOPNUM  (40000000)
+
+
+static int32_t mpu9250WaitTranComplete()
+{
+	int i;
+	for(i=0;i<I2C_TIMEOUT_LOOPNUM;i++)
+	{
+		if(tranComp)
+		{
+			tranComp = 0;
+			return 0;
+		}
+
+	}
+
+	return -1;
+}
 
 
 
@@ -46,7 +66,7 @@ void mpu9250I2CInit(void)
     Semaphore_Params semParams;
 	Semaphore_Params_init(&semParams);
     semParams.mode = Semaphore_Mode_BINARY;
-    transCompSem = Semaphore_create(0, &semParams, NULL);
+    I2CfreeSem = Semaphore_create(1, &semParams, NULL);
 }
 
 /*****************************************************************************
@@ -69,9 +89,23 @@ int32_t mpu9250WriteBytes(uint8_t slvAddr, uint8_t regAddr, uint8_t numBytes, ui
     /* 发送寄存器地址和数据 */
     IICSendBytes(&mpu9250IICInst, regAddr, dataPtr,numBytes+1);
 
-    if(FALSE == Semaphore_pend(transCompSem,I2C_TIMEOUT_MS))
-        return -1;
-    return 0;
+    return mpu9250WaitTranComplete();
+}
+
+/*
+ * 线程安全
+ */
+int32_t mpu9250WriteBytesBlocking(uint8_t slvAddr,uint8_t regAddr, uint8_t numBytes, uint8_t *dataPtr)
+{
+	int32_t ret;
+
+	Semaphore_pend(I2CfreeSem, BIOS_WAIT_FOREVER);
+
+	ret = mpu9250WriteBytes( slvAddr, regAddr,  numBytes, dataPtr) ;
+
+	Semaphore_post(I2CfreeSem);
+
+	return ret;
 }
 
 /*
@@ -105,6 +139,22 @@ int32_t mpu9250WriteBytesFreeLength(uint8_t slvAddr, uint8_t regAddr, uint8_t nu
 	return numBytes;
 }
 
+/*
+ * 线程安全
+ */
+int32_t mpu9250WriteBytesFreeLengthBlocking(uint8_t slvAddr,uint8_t regAddr, uint8_t numBytes, uint8_t *dataPtr)
+{
+	int32_t ret;
+
+	Semaphore_pend(I2CfreeSem, BIOS_WAIT_FOREVER);
+
+	ret = mpu9250WriteBytesFreeLength( slvAddr, regAddr,  numBytes, dataPtr) ;
+
+	Semaphore_post(I2CfreeSem);
+
+	return ret;
+}
+
 /*****************************************************************************
  * 函数名称: int32_t mpu9250ReadBytes(uint8_t slvAddr,uint8_t regAddr, uint8_t numBytes, uint8_t *dataPtr)
  * 函数说明: mpu9250的IIC读取函数
@@ -114,7 +164,7 @@ int32_t mpu9250WriteBytesFreeLength(uint8_t slvAddr, uint8_t regAddr, uint8_t nu
  * 		  numBytes: 读取字节数
  * 输出参数: dataPtr: 接收数据缓冲的指针
  * 返 回 值: 0(成功)/-1(失败)
- * 备注:
+ * 备注:  线程不安全
 *****************************************************************************/
 int32_t mpu9250ReadBytes(uint8_t slvAddr,uint8_t regAddr, uint8_t numBytes, uint8_t *dataPtr)
 {
@@ -123,15 +173,33 @@ int32_t mpu9250ReadBytes(uint8_t slvAddr,uint8_t regAddr, uint8_t numBytes, uint
     
     /* 发送寄存器地址 */
     IICSendBytes(&mpu9250IICInst, regAddr,NULL, 1);
-    if(FALSE == Semaphore_pend(transCompSem,I2C_TIMEOUT_MS))
+    if(mpu9250WaitTranComplete() != 0)
     	return -1;
     
     /* 接收数据 */
     IICRecvBytes(&mpu9250IICInst, dataPtr, numBytes);
-    if(FALSE == Semaphore_pend(transCompSem,I2C_TIMEOUT_MS))
-        return -1;
+    if(mpu9250WaitTranComplete() != 0)
+    	return -1;
 
     return 0;
+}
+
+/*
+ * 阻塞读取，在BIOS 任务中调用
+ * 线程安全
+ */
+
+int32_t mpu9250ReadBytesBlocking(uint8_t slvAddr,uint8_t regAddr, uint8_t numBytes, uint8_t *dataPtr)
+{
+	int32_t ret;
+
+	Semaphore_pend(I2CfreeSem, BIOS_WAIT_FOREVER);
+
+	ret = mpu9250ReadBytes( slvAddr, regAddr,  numBytes, dataPtr) ;
+
+	Semaphore_post(I2CfreeSem);
+
+	return ret;
 }
 
 /*****************************************************************************
@@ -173,16 +241,16 @@ static void mpu9250IntrHandler(void *callBackRef, uint32_t event, uint32_t event
 	if(IIC_EVENT_RECV_ERROR == event)
 	{
 		/* TODO:接收错误，暂未做处理  */
-		Semaphore_post(transCompSem);
+		tranComp =1;
 	}
 	else if(IIC_EVENT_SEND_ERROR == event)
 	{
 		/* TODO:发送错误，暂未做处理  */
-		Semaphore_post(transCompSem);
+		tranComp =1;
 	}
 	else if(IIC_EVENT_TRANS_COMP == event)
 	{
-		Semaphore_post(transCompSem);
+		tranComp =1;
 	}
 	else;
 }

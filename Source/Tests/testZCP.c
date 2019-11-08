@@ -9,6 +9,7 @@
 #include <xdc/runtime/System.h>
 #include <xdc/std.h>
 #include "ZCP/zcp_driver.h"
+#include "system_param.h"
 
 #define CAR_ZCP_UART_DEV_NUM    (5)
 #define CAR_ZCP_DEV_NUM (0)
@@ -113,7 +114,7 @@ void testZCPInit()
     Task_Handle task;
     Task_Params taskParams;
 
-    ZCPInit(&carInst,CAR_ZCP_DEV_NUM,CAR_ZCP_UART_DEV_NUM);
+    ZCPInit(&carInst,CAR_ZCP_DEV_NUM,CAR_ZCP_UART_DEV_NUM, g_sysParam.carID);
 
 
 
