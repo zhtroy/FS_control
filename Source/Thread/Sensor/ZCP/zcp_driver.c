@@ -239,7 +239,7 @@ static void ZCPReciveTask(UArg arg0, UArg arg1)
                 case STS_USR_LEN:
                     recvPacket.len = *pc;
                     if(recvPacket.len < MAX_ZCP_PACKET_SIZE &&
-                            recvPacket.len >= 6)
+                            recvPacket.len >= 8)
                     {
                         state = STS_USR_TYPE;
                     }

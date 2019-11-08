@@ -16,7 +16,7 @@
 #define UART_INT_MASK_ADDR      FPGA_RS232_INT_MASK
 
 /* 串口接收Buffer的大小 */
-#define UART_REC_BUFFER_SIZE (32)
+#define UART_REC_BUFFER_SIZE (64)
 
 /* 串口设备硬件复位 */
 #define UartNs550HardReset(deviceNum) do {\
