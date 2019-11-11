@@ -327,6 +327,12 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 			case ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE:
 			{
+				//如果收到的包不是前车发来的，不处理
+				if(recvPacket.addr != m_param.frontId)
+				{
+					break;
+				}
+
 				Semaphore_post(m_sem_handshakefrontcar_resp);
 
 				m_isFrontCarDataUpdated = 1;
