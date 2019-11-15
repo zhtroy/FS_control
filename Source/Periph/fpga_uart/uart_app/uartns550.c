@@ -11,7 +11,7 @@ uartCfgTable_t uartCfgTable[] = {
          /*设备号,设备基地址ַ,设备驱动时钟<Hz>*/
          0,FPGA_RS232_DEV0,80000000,
          /*波特率,数据长度,校验位,ֹͣ停止位*/
-         {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_NO_PARITY,XUN_FORMAT_1_STOP_BIT},
+         {115200,XUN_FORMAT_8_BITS,XUN_FORMAT_EVEN_PARITY,XUN_FORMAT_1_STOP_BIT},
          /*设备OPTIONS*/
          XUN_OPTION_DATA_INTR | XUN_OPTION_FIFOS_ENABLE,
          /*FIFO触发深度*/
