@@ -173,6 +173,8 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 //		if( Semaphore_pend( xTxMutex, BIOS_WAIT_FOREVER ) == pdPASS )
         if(1)
 		{
+            /*取消CTRL-C导致的复位，防止由于串口接收错误导致的误复位*/
+#if 0
             if(cRxedChar == cmdASCII_CTRL_C)    /*CTRL-C:rst command*/
             {   
                 memset( cInputString, 0x00, cmdMAX_INPUT_SIZE );
@@ -181,6 +183,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
                 cRxedChar = '\r';
             }
             else;
+#endif
             
             if(cCombKey == COMBKEY_UPARROW || cCombKey == COMBKEY_DOWNARROW)
             {
