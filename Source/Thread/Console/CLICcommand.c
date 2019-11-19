@@ -40,7 +40,7 @@ void vRegisterSampleCLICommands( void )
     FreeRTOS_CLIRegisterCommand( &xMessageSend );
     FreeRTOS_CLIRegisterCommand( &xMessageStatus );
     FreeRTOS_CLIRegisterCommand( &xSpeedSet );
-    FreeRTOS_CLIRegisterCommand( &xSetCarID );
+   // FreeRTOS_CLIRegisterCommand( &xSetCarID );
     FreeRTOS_CLIRegisterCommand( &xGetCarID );
     FreeRTOS_CLIRegisterCommand( &xEEPROMWrite );
     FreeRTOS_CLIRegisterCommand( &xEEPROMRead );
