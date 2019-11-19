@@ -239,7 +239,7 @@ static void ZCPReciveTask(UArg arg0, UArg arg1)
                 case STS_USR_LEN:
                     recvPacket.len = *pc;
                     if(recvPacket.len < MAX_ZCP_PACKET_SIZE &&
-                            recvPacket.len >= 6)
+                            recvPacket.len >= 8)
                     {
                         state = STS_USR_TYPE;
                     }
@@ -252,8 +252,16 @@ static void ZCPReciveTask(UArg arg0, UArg arg1)
                     break;
                 case STS_USR_TYPE:
                     recvPacket.type = *pc;
-                    cnt = 0;
+                    state = STS_SRC_ADDR_L;
+                    break;
+                case STS_SRC_ADDR_L:
+                    recvPacket.src_addr = *pc;
+                    state = STS_SRC_ADDR_H;
+                    break;
+                case STS_SRC_ADDR_H:
+                    recvPacket.src_addr += (*pc << 8);
                     state = STS_DATA;
+                    cnt = 0;
                     break;
                 case STS_DATA:
                     if(ZIGBEE_TYPE_ACK == zType)
@@ -266,7 +274,7 @@ static void ZCPReciveTask(UArg arg0, UArg arg1)
                         recvPacket.data[cnt] = *pc;
                         cnt++;
 
-                        if(cnt >= (recvPacket.len-2))
+                        if(cnt >= (recvPacket.len-4))
                         {
                             state = STS_USR_CRC;
                         }
@@ -465,7 +473,7 @@ static void ZCPSendTask(UArg arg0, UArg arg1)
  * 返 回 值: 无
  * 备注:
 *****************************************************************************/
-uint8_t ZCPInit(ZCPInstance_t *pInst, uint8_t devNum,uint8_t uartDevNum)
+uint8_t ZCPInit(ZCPInstance_t *pInst, uint8_t devNum,uint8_t uartDevNum,uint16_t src_addr)
 {
     Semaphore_Params semParams;
     Mailbox_Params mboxParams;
@@ -520,6 +528,11 @@ uint8_t ZCPInit(ZCPInstance_t *pInst, uint8_t devNum,uint8_t uartDevNum)
     pInst->stat.userPacketErr = 0;
     pInst->stat.userPacketCrcErr = 0;
     pInst->stat.zigbeePacketErr = 0;
+
+    /*
+     * 初始化发送源地址
+     */
+    pInst->src_addr = src_addr;
 
     /*
      * 初始化串口，并启动接收
@@ -590,6 +603,7 @@ Bool ZCPSendPacket(ZCPInstance_t *pInst,
     sendPacket.addrL = userPacket->addr & 0xff;
     sendPacket.addrH = (userPacket->addr >> 8) & 0xff;
     sendPacket.type = userPacket->type;
+    sendPacket.src_addr = pInst->src_addr;
     sendPacket.ackSem = ackSem;
 
     /*
@@ -604,9 +618,9 @@ Bool ZCPSendPacket(ZCPInstance_t *pInst,
     memcpy(&(sendPacket.data[userPacket->len]),&timeMs,sizeof(timeMs));
 
     /*
-     * 修正长度
+     * 修正长度(数据长度+len+type+src_addr)
      */
-    sendPacket.len = userPacket->len + 2 + sizeof(timeMs);
+    sendPacket.len = userPacket->len + 4 + sizeof(timeMs);
     return Mailbox_post(pInst->userSendMbox, (Ptr *)&sendPacket, timeout);
 }
 
@@ -635,20 +649,26 @@ Bool ZCPRecvPacket(ZCPInstance_t *pInst,
     state = Mailbox_pend(pInst->userRecvMbox, (Ptr *)&recvPacket, timeout);
 
     userPacket->addr = (recvPacket.addrH<<8) + recvPacket.addrL;
+    if(userPacket->addr != recvPacket.src_addr)
+    {
+        LogMsg("ZCP Source Address Error(%x->%x)\r\n",userPacket->addr,recvPacket.src_addr);
+        userPacket->addr = recvPacket.src_addr;
+    }
+
     userPacket->type = recvPacket.type;
 
     /*
      * 拷贝用户数据
      */
-    memcpy(userPacket->data, recvPacket.data, recvPacket.len-6);
-    userPacket->len = recvPacket.len - 6;
+    memcpy(userPacket->data, recvPacket.data, recvPacket.len-8);
+    userPacket->len = recvPacket.len - 8;
 
     /*
      * 获取时间戳
      */
     if(timestamp != NULL)
     {
-        memcpy(timestamp, &(recvPacket.data[recvPacket.len-6]), 4);
+        memcpy(timestamp, &(recvPacket.data[recvPacket.len-8]), 4);
     }
 
     return state;

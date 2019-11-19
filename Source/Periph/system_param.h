@@ -41,6 +41,9 @@ typedef struct{
     //站台zigbee地址
     uint16_t station_addr;
 
+    //急停刹车量
+    uint8_t forcebrake;
+
 }systemParameter_t;
 #pragma pack()
 

@@ -270,6 +270,11 @@ static void MotoUpdateDistanceTask(void)
 
 		step = (float) EncoderGetDeltaPoint() *(g_sysParam.encoderWheelPerimeter / 1000.0) / (float) ENCODER_POINTS_CYCLE ;
 
+		if(fabs(step) > 100/3.6 * UPDATE_INTERVAL/1000 * 10)   //帧与帧之间大于2.7m (速度大于100km/h)，认为编码器错误
+		{
+			Message_postError(ERROR_ENCODER);
+		}
+
 		m_distance += step;
 
 		if(m_distance<0)
@@ -742,7 +747,7 @@ static void MotoRecvTask(void)
 								RPMzeroCount = 0;
 
 								balanceThrottle = hisThrottle;
-								hisThrottle = -FORCE_BRAKE_SIZE;
+								hisThrottle = - g_sysParam.forcebrake;
 
 								stopCarPhase = 2;
 							}

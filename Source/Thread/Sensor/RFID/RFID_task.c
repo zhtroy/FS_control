@@ -210,7 +210,7 @@ Void taskRFID(UArg a0, UArg a1)
     /*
      * 从EEPROM中读取上次关机前的EP
      */
-    if(mpu9250ReadBytes(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
+    if(mpu9250ReadBytesBlocking(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
     {
     	LogPrintf("EEPROM: fail to load EPC\n");
     }
