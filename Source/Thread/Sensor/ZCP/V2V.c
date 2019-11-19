@@ -327,6 +327,12 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 
 			case ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE:
 			{
+				//如果收到的包不是前车发来的，不处理
+				if(recvPacket.addr != m_param.frontId)
+				{
+					break;
+				}
+
 				Semaphore_post(m_sem_handshakefrontcar_resp);
 
 				m_isFrontCarDataUpdated = 1;
@@ -410,14 +416,25 @@ static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
  * API
  */
 
-void V2VInit()
+
+
+
+void V2VStartUpTask()
 {
 	Task_Handle task;
 	Task_Params taskParams;
 	Semaphore_Params semParams;
 
-	ZCPInit(&v2vInst, V2V_ZCP_DEV_NUM,V2V_ZCP_UART_DEV_NUM );
+	ZCPInit(&v2vInst, V2V_ZCP_DEV_NUM,V2V_ZCP_UART_DEV_NUM, g_sysParam.carID );
 	InitTimer();
+
+	/*
+	 * sems
+	 */
+	Semaphore_Params_init(&semParams);
+	semParams.mode = Semaphore_Mode_BINARY;
+	m_sem_handshakefrontcar_start = Semaphore_create(0, &semParams, NULL);
+	m_sem_handshakefrontcar_resp = Semaphore_create(0, &semParams, NULL);
 
 	Task_Params_init(&taskParams);
 
@@ -442,14 +459,25 @@ void V2VInit()
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
-	/*
-	 * sems
-	 */
-	Semaphore_Params_init(&semParams);
-	semParams.mode = Semaphore_Mode_BINARY;
-	m_sem_handshakefrontcar_start = Semaphore_create(0, &semParams, NULL);
-	m_sem_handshakefrontcar_resp = Semaphore_create(0, &semParams, NULL);
+
 }
+
+void V2VInit()
+{
+	Task_Handle task;
+	Task_Params taskParams;
+
+	Task_Params_init(&taskParams);
+	taskParams.stackSize = 2048;
+	taskParams.priority = 5;
+
+	task = Task_create((Task_FuncPtr)V2VStartUpTask, &taskParams, NULL);
+	if (task == NULL) {
+		System_printf("Task_create() failed!\n");
+		BIOS_exit(0);
+	}
+}
+
 /*
  * 和前车frontid建立连接,通知前车向本车发送
  */

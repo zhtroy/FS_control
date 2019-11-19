@@ -144,7 +144,7 @@ BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char 
 
     /* Command Process*/
     memset( pcWriteBuffer, 0x00, xWriteBufferLen );
-    if(mpu9250ReadBytes(EEPROM_SLV_ADDR,0,2,&usValue) == -1)
+    if(mpu9250ReadBytes(EEPROM_SLV_ADDR,128,2,&usValue) == -1)
     {
         strncpy( pcWriteBuffer, "\r\nCar ID Get Failed\r\n", xWriteBufferLen );
     }

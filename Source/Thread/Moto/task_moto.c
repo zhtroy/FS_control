@@ -270,6 +270,11 @@ static void MotoUpdateDistanceTask(void)
 
 		step = (float) EncoderGetDeltaPoint() *(g_sysParam.encoderWheelPerimeter / 1000.0) / (float) ENCODER_POINTS_CYCLE ;
 
+		if(fabs(step) > 100/3.6 * UPDATE_INTERVAL/1000 * 10)   //帧与帧之间大于2.7m (速度大于100km/h)，认为编码器错误
+		{
+			Message_postError(ERROR_ENCODER);
+		}
+
 		m_distance += step;
 
 		if(m_distance<0)
@@ -719,7 +724,7 @@ static void MotoRecvTask(void)
                 	case 0:
                 	{
                 		//vg为零，当前速度小于1迈时，如果是上坡或者平道，清零控制量，相当于松开油门和刹车，等车辆自己滑停
-                		if(calcRpm == 0 && MotoGetSpeed() < 0.3)
+                		if(calcRpm == 0 && MotoGetSpeed() < 0.2)
                 		{
                 			stopCarPhase = 1;
                 			if(RFIDGetEpc().rampType ==  EPC_RAMPTYPE_UPHILL ||
@@ -737,12 +742,11 @@ static void MotoRecvTask(void)
 						if(calcRpm==0 && MotoGetRealRPM() == 0)
 						{
 							RPMzeroCount ++;
-							if( RPMzeroCount >= 3)
+							if( RPMzeroCount >= 1)
 							{
 								RPMzeroCount = 0;
 
-								balanceThrottle = hisThrottle;
-								hisThrottle = -FORCE_BRAKE_SIZE;
+								hisThrottle = - g_sysParam.forcebrake;
 
 								stopCarPhase = 2;
 							}
@@ -761,11 +765,11 @@ static void MotoRecvTask(void)
 						if(calcRpm > 0 )
 						{
 							stopCarPhase = 0;
-							//如果当前是上坡路段，给原有油门的3倍
+							//如果当前是上坡路段，给最大油门的1/2
 							if(RFIDGetEpc().rampType ==  EPC_RAMPTYPE_UPHILL )
 							{
-								hisThrottle = balanceThrottle * 3;
-								brakeClearDelayCount = 5;  // 5帧后再松开刹车
+								hisThrottle = g_sysParam.maxtThrottle/2 ;
+								brakeClearDelayCount = 8;  // 5帧后再松开刹车
 							}
 							else
 							{
