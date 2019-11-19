@@ -26,6 +26,7 @@
 
 
 //类型定义=====================
+#if 0
 typedef enum  {
 	Ready,
 	Head,
@@ -38,6 +39,26 @@ typedef enum  {
 	END2,
 	Recv
 }RFID_state;
+#else
+typedef enum  {
+    Prefix0,
+    Prefix1,
+    Head,
+    Type,
+    Len,
+    Data,
+    CRC,
+    CRCcorrect,
+    END1,
+    END2,
+    Recv
+}RFID_state;
+
+#define PREFIX0_CODE (0x56)
+#define PREFIX1_CODE (0x43)
+#define END0_CODE (0x0D)
+#define END1_CODE (0x0A)
+#endif
 
 typedef struct {
 	RFID_state state;

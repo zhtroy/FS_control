@@ -72,6 +72,7 @@ typedef enum{
  */
 #define EPC_RAMPTYPE_FLAT  (0)
 #define EPC_RAMPTYPE_UPHILL  (1)
+#define EPC_RAMPTYPE_DOWNHILL  (2)
 
 /*
  * 功能区

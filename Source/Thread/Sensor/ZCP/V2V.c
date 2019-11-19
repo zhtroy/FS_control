@@ -107,6 +107,7 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 	{
 		Task_sleep(INTERVAL);
 
+		memcpy(g_fbData.backCarIds, m_backId, sizeof(uint16_t) * BACK_CAR_NUM);
 		/*
 		 * 交替发送
 		 */

@@ -64,10 +64,11 @@ static unsigned char calculateCRC(unsigned char * data, int len)
 	return (unsigned char)(sum & 0xFF);
 }
 
+static unsigned char buffer[RFID_TX_BUFFER_SIZE];
 
 static int RFID_send_packet(uint16_t deviceNum, unsigned char *data , int len)
 {
-
+#if 0
 	assert((len+4)<=RFID_TX_BUFFER_SIZE);
 	RFID_instance_t * pinst;
 
@@ -84,13 +85,16 @@ static int RFID_send_packet(uint16_t deviceNum, unsigned char *data , int len)
 
 
 	UartNs550Send(pinst->uartDeviceNum, &(buffer[0]), len+4);
-
-
+#endif
+    RFID_instance_t * pinst;
+    pinst =getInstanceByDeviceNum(deviceNum);
+	memcpy(buffer, data, len);
+	UartNs550Send(pinst->uartDeviceNum, buffer, len);
 	return 1;
 }
 
 
-
+#if 0
 static void RFIDstateMachineReset(RFID_stateMachine_t * inst)
 {
     inst->crc = 0;
@@ -99,6 +103,16 @@ static void RFIDstateMachineReset(RFID_stateMachine_t * inst)
     inst->type = 0;
     inst->state = Ready;
 }
+#else
+static void RFIDstateMachineReset(RFID_stateMachine_t * inst)
+{
+    inst->crc = 0;
+    inst->curLen = 0;
+    inst->msgLen = 0;
+    inst->type = 0;
+    inst->state = Prefix0;
+}
+#endif
 
 
 static RFID_instance_t * getInstanceByDeviceNum(uint16_t deviceNum)
@@ -202,14 +216,7 @@ void RFIDRegisterReadCallBack(uint16_t deviceNum, RFIDcallback cb)
 
 int RFIDStartLoopCheckEpc(uint16_t deviceNum)
 {
-	unsigned char data[4];
-
-	data[0] = 0x17;
-	data[1] = 0x02;
-	data[2] = 0x00;
-	data[3] = 0x00;
-
-	return RFID_send_packet(deviceNum, data, 4);
+	return RFID_send_packet(deviceNum, "LON\r", 4);
 }
 
 /*****************************************************************************
@@ -224,18 +231,13 @@ int RFIDStartLoopCheckEpc(uint16_t deviceNum)
 
 int RFIDStopLoopCheckEpc(uint16_t deviceNum)
 {
-	unsigned char data[2];
-
-	data[0] = 0x18;
-	data[1] = 0x00;
-
-	return RFID_send_packet(deviceNum,data,2);
-
+	return RFID_send_packet(deviceNum,"LOFF\r",5);
 }
 
 
 
 
+#if 0
 //RFID 状态机
 static RFID_state protocolStateMachine(uint8_t c,uint16_t deviceNum)
 {
@@ -326,7 +328,131 @@ static RFID_state protocolStateMachine(uint8_t c,uint16_t deviceNum)
 	}
 	return inst->state;
 }
+#else
+//RFID 状态机
 
+static void code128ToRFID(uint8_t *dat)
+{
+    uint8_t val[12];
+    val[0]  = (dat[0] >> 0) | ((dat[1] & 0x01) << 7);
+
+    val[1]  = (dat[1] >> 1) | ((dat[2] & 0x03) << 6);
+
+    val[2]  = (dat[2] >> 2) | ((dat[3] & 0x07) << 5);
+
+    val[3]  = (dat[3] >> 3) | ((dat[4] & 0x0F) << 4);
+
+    val[4]  = (dat[4] >> 4) | ((dat[5] & 0x1F) << 3);
+
+    val[5]  = (dat[5] >> 5) | ((dat[6] & 0x3F) << 2);
+
+    val[6]  = (dat[6] >> 6) | ((dat[7] & 0x7F) << 1);
+
+    val[7]  = (dat[8] >> 0) | ((dat[9] & 0x01) << 7);
+
+    val[8]  = (dat[9] >> 1) | ((dat[10] & 0x03) << 6);
+
+    val[9]  = (dat[10] >> 2) | ((dat[11] & 0x07) << 5);
+
+    val[10] = (dat[11] >> 3) | ((dat[12] & 0x0F) << 4);
+
+    val[11] = (dat[12] >> 4) | ((dat[13] & 0x1F) << 3);
+
+    /*原RFID数据是从第2个开始的*/
+    memcpy(&dat[2],val,12);
+}
+static RFID_state protocolStateMachine(uint8_t c,uint16_t deviceNum)
+{
+
+    RFID_instance_t * pinst;
+    RFID_stateMachine_t *inst;
+    unsigned char calCRC;
+
+    pinst =getInstanceByDeviceNum(deviceNum);
+    inst = &(pinst->sminst);
+
+    switch(inst->state)
+    {
+        case Prefix0:
+            if(PREFIX0_CODE == c)
+            {
+                inst->state = Prefix1;
+            }
+            break;
+        case Prefix1:
+            if(PREFIX1_CODE == c)
+            {
+                inst->state = Len;
+                inst->msgLen = 14;
+                inst->type = 0x97;
+            }
+            else
+            {
+                inst->state = Prefix0;
+            }
+            break;
+        case Len:
+            inst->msg[inst->curLen++] = c;
+            if(inst->msgLen == inst->curLen)
+            {
+                inst->state = Data;
+            }
+            break;
+        case Data:
+            inst->crc = c;
+            inst->state = CRC;
+            break;
+        case CRC:
+            calCRC = calculateCRC(inst->msg, inst->msgLen);
+            if(inst->crc == (calCRC & 0x7f))
+            {
+                if (0x0D == c)
+                {
+                    inst->state = END1;
+                }
+                else {
+                    RFIDstateMachineReset(inst);
+                }
+            }
+            else
+            {
+                Log_warning2("RFID CRC error, recv %d ,calc %d\n",  inst->crc, calCRC);
+                RFIDstateMachineReset(inst);
+
+            }
+            break;
+
+        case END1:
+            if(0x0A == c)
+            {
+                inst->state = END2;
+            }
+            else{
+                RFIDstateMachineReset(inst);
+            }
+            break;
+
+        case END2:
+            if(pinst->callback==0)
+            {
+                Log_error0("RFID state machine error, need to register call back fucntion\n");
+            }
+            else{
+                code128ToRFID(inst->msg);
+                pinst->callback(deviceNum, inst->type, inst->msg, inst->msgLen);
+            }
+            RFIDstateMachineReset(inst);
+            break;
+
+        default:
+            Log_error1("RFID state machine error, unknown state: %d\n",  inst->state);
+
+    }
+    return inst->state;
+}
+
+
+#endif
 /*****************************************************************************
  * 函数名称: void RFIDProcess(uint16_t deviceNum)
  * 函数说明: 处理串口输入字符

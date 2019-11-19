@@ -17,7 +17,7 @@
 // 高32位
 #define TMR_PERIOD_MSB32  (0x0)
 
-static void timerWatchDogInit(void);
+void timerWatchDogInit(void);
 
 static uint8_t enableWatchDog = 1;
 /****************************************************************************/
@@ -25,7 +25,7 @@ static uint8_t enableWatchDog = 1;
 /*              定时器 / 计数器初始化                                       */
 /*                                                                          */
 /****************************************************************************/
-static void timerWatchDogInit(void)
+void timerWatchDogInit(void)
 {
     // 配置 定时器 / 计数器 1 为 看门狗模式
 	TimerConfigure(SOC_TMR_1_REGS, TMR_CFG_64BIT_WATCHDOG);
@@ -48,11 +48,13 @@ static void timerWatchdogTask(void)
     {
         // 复位看门狗定时器 “喂狗”
 
+#if 1
 		if(enableWatchDog == 1)
 			TimerWatchdogReactivate(SOC_TMR_1_REGS);
 		else;
+#endif
 
-        Task_sleep(4000);
+        Task_sleep(2000);
 
     }
 }
@@ -70,7 +72,7 @@ void testWatchDogTaskInit()
 
 	Error_init(&eb);
     Task_Params_init(&taskParams);
-	taskParams.priority = 15;
+	taskParams.priority = 5;
 	taskParams.stackSize = 2048;
 	task = Task_create(timerWatchdogTask, &taskParams, &eb);
 	if (task == NULL) {

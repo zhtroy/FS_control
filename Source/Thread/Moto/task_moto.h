@@ -146,6 +146,7 @@ typedef struct{
  	uint16_t ds;
  	uint32_t buildNumber;
  	float encoderSpeed;
+ 	uint16_t backCarIds[3];  //最多3个后车ID
 }fbdata_t;
 
 typedef struct{
