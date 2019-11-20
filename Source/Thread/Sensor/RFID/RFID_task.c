@@ -61,10 +61,10 @@ static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 	Message_post(msg);
 #endif
     timeout_flag = 1;
-    Clock_setTimeout(clock_rfid_heart,3000);
-    Clock_start(clock_rfid_heart);
+    //Clock_setTimeout(clock_rfid_heart,3000);
+    //Clock_start(clock_rfid_heart);
 
-    RFIDStartLoopCheckEpc(RFID_DEVICENUM);
+    //RFIDStartLoopCheckEpc(RFID_DEVICENUM);
     //setErrorCode(ERROR_CONNECT_TIMEOUT);
 }
 
@@ -122,8 +122,9 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			}
 
 			codeCnt++;
-			LogMsg("%d: %d\r\n",codeCnt,epc.distance);
-
+			LogMsg("RFID_CODE128 count %d, dist %d\r\n",codeCnt,epc.distance);
+			m_lastepc = epc;
+#if 0
 			/*
 			 * 物理RFID发送条件
 			 * 1.非自动模式 或
@@ -175,7 +176,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			 */
 //			userGetMS(&timeMs);
 //			epc.timeStamp = timeMs;
-
+#endif
 			break;
        case 0x40:
             Clock_setTimeout(clock_rfid_heart,3000);
