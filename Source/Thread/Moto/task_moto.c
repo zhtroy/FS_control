@@ -68,6 +68,8 @@ static Mailbox_Handle rxDataMbox = NULL;
 
 static canDataObj_t canSendData;
 
+static int32_t m_disIncrement;
+
 /*电机控制量*/
 static moto_ctrl_t m_motoCtrl = {
 		.MotoSel = FRONT_REAR,
@@ -286,8 +288,9 @@ static void MotoUpdateDistanceTask(void)
 			m_distance -= TOTAL_DISTANCE;
 		}
 
+		m_disIncrement += step;
 
-#if 0
+#if 1
         mode = MotoGetCarMode();
         /*
          * 非Auto模式下，采用物理RFID校准距离
@@ -1352,6 +1355,15 @@ uint8_t MotoGetCarMode()
     return g_fbData.mode;
 }
 
+/*
+ * 返回两次调用该函数之间车辆跑过的距离
+ */
+int32_t MotoGetCarDistanceIncrement()
+{
+	volatile int32_t temp = m_disIncrement;
+	m_disIncrement = 0;
+	return temp;
+}
 /*
  * 返回车辆在轨道上的距离
  */

@@ -249,6 +249,10 @@ typedef struct{
  */
 #define ERROR_ENCODER   		(31)
 
+#define ERROR_SCAN_CODE_DISTANCE_ERROR   (33)
+
+#define ERROR_SCAN_CODE_ROADINFO_ERROR   (34)
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
@@ -310,6 +314,7 @@ uint16_t MotoGetCircles();
 uint16_t MotoGetRpm();
 uint8_t MotoGetCarMode();
 uint32_t MotoGetCarDistance();
+int32_t MotoGetCarDistanceIncrement();
 float MotoGetSpeed();
 void MotoSetCarDistance(uint32_t dist);
 void MotoUpdateCalibrationPoint(rfidPoint_t * calib);

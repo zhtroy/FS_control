@@ -31,6 +31,8 @@
 #include "CarState.h"
 #include "ZCP/V2V.h"
 #include "Sensor/RFID/EPCdef.h"
+#include <xdc/runtime/Error.h>
+#include "Sensor/RFID/RFID_task.h"
 
 
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
@@ -42,9 +44,18 @@ static uint32_t circleNum = 0;
 static uint8_t lastrfid;
 static uint8_t rfidOnline = 0;
 static Mailbox_Handle RFIDV2vMbox;
+static Semaphore_Handle checkEpcSem;
+static Semaphore_Handle checkEpcCoroutineSem;
 static uint8_t m_rawrfid[12];
 static epc_t m_lastepc = {0};
 static epc_t m_lastlastepc = {0};
+/*
+ * 扫描得到的EPC
+ */
+static uint8_t m_scanEpcRaw[12];
+static epc_t m_scanEpc = {0};
+
+
 Mailbox_Handle bSecMbox;
 
 static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
@@ -104,8 +115,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 	switch(type)
 	{
 		case 0x97:
-			Clock_setTimeout(clock_rfid_heart,3000);
-			Clock_start(clock_rfid_heart);
+
 
 			//epc 从第2字节开始，长度12字节
 			EPCfromByteArray(&epc, &data[2]);
@@ -116,68 +126,63 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 				break;
 			}
 			/*筛除重复的EPC */
-			if(EPCequal(&m_lastepc, &epc))
+			if(EPCequal(&m_scanEpc, &epc))
 			{
 				break;
 			}
 
+			m_scanEpc = epc;
+			memcpy(m_scanEpcRaw, &data[2], EPC_SIZE);
+
 			codeCnt++;
 			LogMsg("RFID_CODE128 count %d, dist %d\r\n",codeCnt,epc.distance);
-			m_lastepc = epc;
-#if 0
 			/*
-			 * 物理RFID发送条件
-			 * 1.非自动模式 或
+			 * 物理RFID发送的条件
+			 * 1.非自动模式
 			 * 2.出轨点
 			 */
 			mode = MotoGetCarMode();
-			if(mode == Auto && epc.roadBreak == 0)
+			if(mode == Auto )
 			{
-			    break;
+				//启动检查线程
+				Semaphore_post(checkEpcSem);
+
+				if(epc.roadBreak != 0)   //自动模式下，如果是断头路EPC，也发送到消息队列中
+				{
+					//send to queue
+					msg = Message_getEmpty();
+					msg->type = rfid;
+					memcpy(msg->data, &epc, sizeof(epc_t));
+					msg->dataLen = sizeof(epc_t);
+					Message_post(msg);
+				}
 			}
-
-
-			//将读到的RFID反馈
-			memcpy(g_fbData.rfid, &data[2], EPC_SIZE);
-
-			m_lastlastepc = m_lastepc;
-			m_lastepc = epc;
-			memcpy(m_rawrfid, &data[2], EPC_SIZE);
-
-			/*
-			 * 每读到一个新的EPC值，都存入EEPROM
-			 */
-//			if(mpu9250WriteBytesFreeLength(EEPROM_SLV_ADDR,EEPROM_ADDR_EPC,EEPROM_LEN_EPC,m_rawrfid) == -1)
-//			{
-//				LogPrintf("EEPROM: fail to save EPC\n");
-//			}
-
-			//g_fbData.distance = epc.distance;
-			/*记录圈数*/
-			if(epc.distance == 0)
+			else    //非自动模式
 			{
-				circleNum++;
-			}
-			g_fbData.circleNum = circleNum;
+				//更新数据
+				RFIDSetRaw(m_scanEpcRaw);
 
-			if(epc.roadBreak == 0)
-			{
+				/*记录圈数*/
+				if(epc.distance == 0)
+				{
+					circleNum++;
+				}
+				g_fbData.circleNum = circleNum;
+
+				/*
+				 * 发送RFID至V2V模块
+				 */
 				Mailbox_post(RFIDV2vMbox,(Ptr*)&epc,BIOS_NO_WAIT);
+
+				msg = Message_getEmpty();
+				msg->type = rfid;
+				memcpy(msg->data, &epc, sizeof(epc_t));
+				msg->dataLen = sizeof(epc_t);
+				Message_post(msg);
 			}
 
-			msg = Message_getEmpty();
-			msg->type = rfid;
-			memcpy(msg->data, &epc, sizeof(epc_t));
-			msg->dataLen = sizeof(epc_t);
-			Message_post(msg);
-
-			/*
-			 * 发送RFID至V2V模块
-			 */
-//			userGetMS(&timeMs);
-//			epc.timeStamp = timeMs;
-#endif
 			break;
+#if 0
        case 0x40:
             Clock_setTimeout(clock_rfid_heart,3000);
             Clock_start(clock_rfid_heart);
@@ -188,6 +193,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
             	RFIDStartLoopCheckEpc(RFID_DEVICENUM);
             }
             break;
+#endif
 
 	}
 }
@@ -202,6 +208,81 @@ Mailbox_Handle RFIDGetV2vMailbox()
 /*              函数定义                                                        */
 /*                                                                          */
 /****************************************************************************/
+#define SCAN_DISTANCE_DIFF (40) //4m
+static void taskCheckScanEPC()
+{
+	epc_t virtualEpc;
+
+	while(1)
+	{
+        Semaphore_pend(checkEpcSem,  BIOS_WAIT_FOREVER);
+
+        virtualEpc = m_lastepc;
+
+        if(m_scanEpc.ab == virtualEpc.ab && EPCinSameRoad(&m_scanEpc, &virtualEpc))  //虚拟EPC和扫码EPC的道路信息一致
+        {
+        	if(abs( (int32_t)m_scanEpc.distance - (int32_t) MotoGetCarDistance()) > SCAN_DISTANCE_DIFF)  //如果现在距离和扫码距离相差SCAN_DISTANCE_DIFF以上
+        	{
+        		//更新EPC
+        		RFIDSetRaw(m_scanEpcRaw);
+
+        		Message_postError(ERROR_SCAN_CODE_DISTANCE_ERROR);
+        	}
+        	else
+        	{
+        		//扫码正确
+        		continue;
+        	}
+        }
+        else
+        {
+        	Semaphore_post(checkEpcCoroutineSem);
+        }
+	}
+
+
+}
+
+//在这个Task中，延迟3m后再检测一次道路信息
+#define SCAN_CHECK_DELAY_DISTANCE (30)  //3m
+static void taskCheckScanEPCcoroutine()
+{
+	int32_t deltaDis = 0;
+	epc_t virtualEpc;
+
+	while(1)
+	{
+		Semaphore_pend(checkEpcCoroutineSem,BIOS_WAIT_FOREVER);
+
+		deltaDis = 0;
+		MotoGetCarDistanceIncrement();
+		while(1)
+		{
+			deltaDis += MotoGetCarDistanceIncrement();
+			if(deltaDis > SCAN_CHECK_DELAY_DISTANCE)
+			{
+				break;
+			}
+			Task_sleep(200);
+		}
+
+		virtualEpc = m_lastepc;
+		if(m_scanEpc.ab == virtualEpc.ab && EPCinSameRoad(&m_scanEpc, &virtualEpc))  //虚拟EPC和扫码EPC的道路信息一致
+		{
+
+		}
+		else
+		{
+			 //更新EPC
+			RFIDSetRaw(m_scanEpcRaw);
+
+			Message_postError(ERROR_SCAN_CODE_ROADINFO_ERROR);
+		}
+
+	}
+
+}
+
 Void taskRFID(UArg a0, UArg a1)
 {
 
@@ -209,11 +290,37 @@ Void taskRFID(UArg a0, UArg a1)
 	RFIDRegisterReadCallBack(RFID_DEVICENUM, RFIDcallBack);   //回调函数会在RFIDProcess里面调用
 
 	RFIDStartLoopCheckEpc(RFID_DEVICENUM);
-    InitTimer();
-    Clock_start(clock_rfid_heart);
 
     RFIDV2vMbox = Mailbox_create (sizeof (epc_t),4, NULL, NULL);
 
+    Semaphore_Params semParams;
+	Semaphore_Params_init(&semParams);
+	semParams.mode = Semaphore_Mode_BINARY;
+    checkEpcCoroutineSem = Semaphore_create(0, &semParams, NULL);
+    checkEpcSem =  Semaphore_create(0, &semParams, NULL);
+    /*
+     * 初始化EPC校验任务
+     */
+	Task_Handle task;
+	Error_Block eb;
+	Task_Params taskParams;
+
+
+	Error_init(&eb);
+    Task_Params_init(&taskParams);
+	taskParams.priority = 5;
+	taskParams.stackSize = 2048;
+	task = Task_create(taskCheckScanEPC, &taskParams, &eb);
+	if (task == NULL) {
+		BIOS_exit(0);
+	}
+
+	task = Task_create(taskCheckScanEPCcoroutine, &taskParams, &eb);
+	if (task == NULL) {
+		BIOS_exit(0);
+	}
+
+#if 0
     /*
      * 从EEPROM中读取上次关机前的EP
      */
@@ -226,6 +333,8 @@ Void taskRFID(UArg a0, UArg a1)
     	EPCfromByteArray(&m_lastepc, m_rawrfid);
 		Mailbox_post(RFIDV2vMbox,(Ptr*)&m_lastepc,BIOS_NO_WAIT);
     }
+#endif
+
 
 	while(1)
 	{
@@ -234,6 +343,7 @@ Void taskRFID(UArg a0, UArg a1)
 	}
 
 }
+
 
 
 static rfidPoint_t *rfidQueue=0;
@@ -360,6 +470,7 @@ void taskCreateRFID(UArg a0, UArg a1)
     }
 }
 
+
 void RFIDUpdateQueue(rfidPoint_t *rfidQ)
 {
 	uint8_t size;
@@ -485,6 +596,8 @@ void RFIDSetRaw(uint8_t* pRaw)
 {
 	//将读到的RFID反馈
 	memcpy(g_fbData.rfid, pRaw, EPC_SIZE);
+
+	m_lastlastepc = m_lastepc;
 
 	EPCfromByteArray(&m_lastepc, pRaw);
 
