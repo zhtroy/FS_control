@@ -331,6 +331,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 				//如果收到的包不是前车发来的，不处理
 				if(recvPacket.addr != m_param.frontId)
 				{
+					LogMsg("V2V handShake resp from (%x), not equal to my frontCar (%x), ignore\n",recvPacket.addr, m_param.frontId);
 					break;
 				}
 
@@ -489,7 +490,7 @@ void V2VHandShakeFrontCar()
 
 void V2VSetDeltaDistance(int32_t delta)
 {
-	LogDebug("Delta distance: %d", delta);
+	//LogDebug("Delta distance: %d", delta);
 	m_deltaDistance = delta;
 }
 
