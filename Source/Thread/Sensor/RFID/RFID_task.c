@@ -105,6 +105,7 @@ int32_t GetMs()
 }
 
 static uint32_t codeCnt=0;
+static uint8_t hasScanner = 0;  //有扫码器
 static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint32_t len )
 {
 	p_msg_t msg;
@@ -116,7 +117,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 	{
 		case 0x97:
 
-
+			hasScanner = 1;
 			//epc 从第2字节开始，长度12字节
 			EPCfromByteArray(&epc, &data[2]);
 
@@ -212,15 +213,25 @@ Mailbox_Handle RFIDGetV2vMailbox()
 static void taskCheckScanEPC()
 {
 	epc_t virtualEpc;
+	epc_t lastScanEpc;
 	int32_t diff;
+
+	lastScanEpc.ab = EPC_AB_A;
 	while(1)
 	{
+		lastScanEpc = m_scanEpc;
+
         Semaphore_pend(checkEpcSem,  BIOS_WAIT_FOREVER);
 
         virtualEpc = m_lastepc;
 
         if(m_scanEpc.ab == virtualEpc.ab && EPCinSameRoad(&m_scanEpc, &virtualEpc))  //虚拟EPC和扫码EPC的道路信息一致
         {
+        	if(EPC_AB_A==lastScanEpc.ab && EPC_AB_B == m_scanEpc.ab) //如果是刚扫到B段第一个点，忽略距离检查
+        	{
+        		continue;
+        	}
+
         	diff = abs( (int32_t)m_scanEpc.distance - (int32_t) MotoGetCarDistance());
         	if( diff < SCAN_DISTANCE_DIFF ||
         		(diff > (TOTAL_DISTANCE - SCAN_DISTANCE_DIFF) && diff <= TOTAL_DISTANCE))  //如果现在距离和扫码距离相差SCAN_DISTANCE_DIFF以下
@@ -233,9 +244,13 @@ static void taskCheckScanEPC()
 
         		//更新EPC
 				RFIDSetRaw(m_scanEpcRaw);
+
 				LogMsg("EPC check distance wrong, scaned EPC distance: %d, self distance: %d\n",
 						m_scanEpc.distance,
 						MotoGetCarDistance());
+
+				//更新距离
+				MotoSetCarDistance(m_scanEpc.distance);
 
 				Message_postError(ERROR_SCAN_CODE_DISTANCE_ERROR);
         	}
@@ -255,6 +270,7 @@ static void taskCheckScanEPCcoroutine()
 {
 	int32_t deltaDis = 0;
 	epc_t virtualEpc;
+	uint32_t newDis = 0;
 
 	while(1)
 	{
@@ -269,7 +285,7 @@ static void taskCheckScanEPCcoroutine()
 			{
 				break;
 			}
-			Task_sleep(200);
+			Task_sleep(100);
 		}
 
 		virtualEpc = m_lastepc;
@@ -282,15 +298,24 @@ static void taskCheckScanEPCcoroutine()
 			 //更新EPC
 			RFIDSetRaw(m_scanEpcRaw);
 
+
 			LogMsg("EPC check roadinfo wrong\n scaned EPC info:[ab %d, roadID %d%d%d] , self info:[ab %d, roadID %d%d%d]\n",
 					m_scanEpc.ab,
+					m_scanEpc.mainNo,
 					m_scanEpc.firstNo,
 					m_scanEpc.secondNo,
-					m_scanEpc.thirdNo,
 					virtualEpc.ab,
+					virtualEpc.mainNo,
 					virtualEpc.firstNo,
-					virtualEpc.secondNo,
-					virtualEpc.thirdNo);
+					virtualEpc.secondNo);
+
+			//更新距离
+			newDis = m_scanEpc.distance + deltaDis;
+			if(newDis > TOTAL_DISTANCE)
+			{
+				newDis -= TOTAL_DISTANCE;
+			}
+			MotoSetCarDistance(newDis);
 
 			Message_postError(ERROR_SCAN_CODE_ROADINFO_ERROR);
 		}
@@ -399,6 +424,15 @@ void taskCreateRFID(UArg a0, UArg a1)
         lastPos = carPos;
         carPos = MotoGetCarDistance();
 
+
+ 	   /*
+ 		* 非自动模式不产生标签
+ 		*/
+        mode = MotoGetCarMode();
+ 		if(mode != Auto && hasScanner)
+ 		{
+ 		   continue;
+ 		}
 
         /*
          * 队列为空，无法产生RFID;
