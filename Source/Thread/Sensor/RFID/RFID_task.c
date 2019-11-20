@@ -212,7 +212,7 @@ Mailbox_Handle RFIDGetV2vMailbox()
 static void taskCheckScanEPC()
 {
 	epc_t virtualEpc;
-
+	int32_t diff;
 	while(1)
 	{
         Semaphore_pend(checkEpcSem,  BIOS_WAIT_FOREVER);
@@ -221,17 +221,23 @@ static void taskCheckScanEPC()
 
         if(m_scanEpc.ab == virtualEpc.ab && EPCinSameRoad(&m_scanEpc, &virtualEpc))  //虚拟EPC和扫码EPC的道路信息一致
         {
-        	if(abs( (int32_t)m_scanEpc.distance - (int32_t) MotoGetCarDistance()) > SCAN_DISTANCE_DIFF)  //如果现在距离和扫码距离相差SCAN_DISTANCE_DIFF以上
-        	{
-        		//更新EPC
-        		RFIDSetRaw(m_scanEpcRaw);
-
-        		Message_postError(ERROR_SCAN_CODE_DISTANCE_ERROR);
-        	}
-        	else
+        	diff = abs( (int32_t)m_scanEpc.distance - (int32_t) MotoGetCarDistance());
+        	if( diff < SCAN_DISTANCE_DIFF ||
+        		(diff > (TOTAL_DISTANCE - SCAN_DISTANCE_DIFF) && diff <= TOTAL_DISTANCE))  //如果现在距离和扫码距离相差SCAN_DISTANCE_DIFF以下
         	{
         		//扫码正确
         		continue;
+        	}
+        	else
+        	{
+
+        		//更新EPC
+				RFIDSetRaw(m_scanEpcRaw);
+				LogMsg("EPC check distance wrong, scaned EPC distance: %d, self distance: %d\n",
+						m_scanEpc.distance,
+						MotoGetCarDistance());
+
+				Message_postError(ERROR_SCAN_CODE_DISTANCE_ERROR);
         	}
         }
         else
@@ -276,6 +282,16 @@ static void taskCheckScanEPCcoroutine()
 			 //更新EPC
 			RFIDSetRaw(m_scanEpcRaw);
 
+			LogMsg("EPC check roadinfo wrong\n scaned EPC info:[ab %d, roadID %d%d%d] , self info:[ab %d, roadID %d%d%d]\n",
+					m_scanEpc.ab,
+					m_scanEpc.firstNo,
+					m_scanEpc.secondNo,
+					m_scanEpc.thirdNo,
+					virtualEpc.ab,
+					virtualEpc.firstNo,
+					virtualEpc.secondNo,
+					virtualEpc.thirdNo);
+
 			Message_postError(ERROR_SCAN_CODE_ROADINFO_ERROR);
 		}
 
@@ -285,11 +301,12 @@ static void taskCheckScanEPCcoroutine()
 
 Void taskRFID(UArg a0, UArg a1)
 {
+	int i = 5;
 
 	RFIDDeviceOpen (RFID_DEVICENUM);
 	RFIDRegisterReadCallBack(RFID_DEVICENUM, RFIDcallBack);   //回调函数会在RFIDProcess里面调用
 
-	RFIDStartLoopCheckEpc(RFID_DEVICENUM);
+
 
     RFIDV2vMbox = Mailbox_create (sizeof (epc_t),4, NULL, NULL);
 
@@ -298,6 +315,16 @@ Void taskRFID(UArg a0, UArg a1)
 	semParams.mode = Semaphore_Mode_BINARY;
     checkEpcCoroutineSem = Semaphore_create(0, &semParams, NULL);
     checkEpcSem =  Semaphore_create(0, &semParams, NULL);
+
+
+	while(i>0)
+	{
+		i--;
+		RFIDStartLoopCheckEpc(RFID_DEVICENUM);
+		Task_sleep(500);
+
+	}
+
     /*
      * 初始化EPC校验任务
      */
