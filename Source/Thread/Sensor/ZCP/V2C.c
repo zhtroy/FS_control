@@ -232,6 +232,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
     Bool pendResult;
     int retryNum;
     int i;
+    uint8_t frontcarChanged = 0;
 
     while(1)
     {
@@ -288,17 +289,19 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
 			memcpy(&resp, recvPacket.data, sizeof(resp));
 			if(resp.status == 1)  //有前车
 			{
-				if(V2VGetFrontCarId() != resp.forwardid)   //只有在申请到的前车ID变化时才改变ID
-				{
+				LogMsg("V2C recv frontID: %x %x\n",resp.forwardid[0],resp.forwardid[1]);
+				//设置新的前车ID
+				frontcarChanged = V2VSetFrontCarId(resp.forwardid);
+				V2VSetLeftRoadID(resp.leftRoadID);
 
-					//设置新的前车ID
-					V2VSetFrontCarId(resp.forwardid);
-					V2VSetLeftRoadID(resp.leftRoadID);
+				if(frontcarChanged)
+				{
+					V2VHandShakeFrontCar();
 				}
-				V2VHandShakeFrontCar();
 			}
 			else
 			{
+				LogDebug("no front car\n");
 				V2VSetFrontCarId(V2V_ID_NONE);
 			}
 		}

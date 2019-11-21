@@ -43,10 +43,11 @@ static uint16_t m_backId[BACK_CAR_NUM] = {0};
 static int m_nextBackCarIdx = 0;
 
 //前车状态
-static v2v_req_carstatus_t m_frontCarStatus;
-static uint8_t m_isFrontCarDataUpdated = 0;
-static uint32_t m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
+static v2v_req_carstatus_t m_frontCarStatus[V2V_MAX_FRONT_CAR];
+static uint8_t m_isFrontCarDataUpdated[V2V_MAX_FRONT_CAR] = {0};
+static uint32_t m_distanceToFrontCar[V2V_MAX_FRONT_CAR] = {V2V_DISTANCE_INFINITY, V2V_DISTANCE_INFINITY};
 static int32_t m_deltaDistance;
+static int m_nearestFrontCarIdx = -1;
 //ZCP驱动实例
 static ZCPInstance_t v2vInst;
 static uint8_t isSameAdjustArea = 0;
@@ -58,8 +59,21 @@ static Task_Handle m_task_handshakefrontcar = NULL;
 /*
  * sems
  */
-static Semaphore_Handle m_sem_handshakefrontcar_resp;
+static Semaphore_Handle m_sem_handshakefrontcar_resp[V2V_MAX_FRONT_CAR];
 static Semaphore_Handle m_sem_handshakefrontcar_start;
+
+
+static int V2VIdxOfFrontCar(uint16_t carid)
+{
+	int i;
+	for(i = V2V_MAX_FRONT_CAR-1;i>=0;i--)
+	{
+		if(m_param.frontId[i] == carid)
+			break;
+	}
+
+	return i;
+}
 
 static void V2VFillCarStatusPacket(ZCPUserPacket_t* psendPacket, uint16_t backCarId)
 {
@@ -102,6 +116,8 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 	uint8_t backCarIndex = 0;
 
 	int backIdx = 0;
+	int i;
+	uint32_t minDistance;
 
 	while(1)
 	{
@@ -156,96 +172,119 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		/*
 		 * 定时计算前车距离
 		 */
-		if(m_isFrontCarDataUpdated)
+		for(i=0;i<V2V_MAX_FRONT_CAR;i++)
 		{
-		    isSameAdjustArea = 0;
-			if(m_param.frontId == V2V_ID_NONE)
+			if(m_isFrontCarDataUpdated[i])
 			{
-				m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
-			}
-			else
-			{
-
-				EPCfromByteArray(&frontepc, m_frontCarStatus.epc);
-
-				if(m_frontCarStatus.distance< MotoGetCarDistance())
+				isSameAdjustArea = 0;
+				if(m_param.frontId[i] == V2V_ID_NONE)
 				{
-					distanceDiff = m_frontCarStatus.distance + TOTAL_DISTANCE - MotoGetCarDistance();
+					m_distanceToFrontCar[i] = V2V_DISTANCE_INFINITY;
 				}
 				else
 				{
-					distanceDiff = m_frontCarStatus.distance - MotoGetCarDistance();
-				}
-				if(EPCinSameRoad(&myepc, &frontepc))  //在同一条路上
-				{
-					if(EPC_AB_A == myepc.ab && EPC_AB_B == frontepc.ab)
+
+					EPCfromByteArray(&frontepc, m_frontCarStatus[i].epc);
+
+					if(m_frontCarStatus[i].distance< MotoGetCarDistance())
 					{
-						m_distanceToFrontCar = distanceDiff  - m_frontCarStatus.deltadistance;
+						distanceDiff = m_frontCarStatus[i].distance + TOTAL_DISTANCE - MotoGetCarDistance();
 					}
 					else
 					{
-						m_distanceToFrontCar = distanceDiff;
+						distanceDiff = m_frontCarStatus[i].distance - MotoGetCarDistance();
 					}
-				}
-				else  //不在同一条路
-				{
-					if(myepc.funcType == EPC_FUNC_NORMAL)
+					if(EPCinSameRoad(&myepc, &frontepc))  //在同一条路上
 					{
-						m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
-					}
-					else
-					{
-						if( (myepc.funcType == EPC_FUNC_LADJUST || myepc.funcType == EPC_FUNC_RADJUST)
-						   && (frontepc.funcType == EPC_FUNC_LADJUST || frontepc.funcType == EPC_FUNC_RADJUST)
-						   && myepc.adjustAreaNo == frontepc.adjustAreaNo)
+						if(EPC_AB_A == myepc.ab && EPC_AB_B == frontepc.ab)
 						{
-						    isSameAdjustArea = 1;
-							//如果和前车在同一调整区，距离不翻转
-							if(m_frontCarStatus.distance < MotoGetCarDistance())
+							m_distanceToFrontCar[i] = distanceDiff  - m_frontCarStatus[i].deltadistance;
+						}
+						else
+						{
+							m_distanceToFrontCar[i] = distanceDiff;
+						}
+					}
+					else  //不在同一条路
+					{
+						if(myepc.funcType == EPC_FUNC_NORMAL)
+						{
+							m_distanceToFrontCar[i] = V2V_DISTANCE_INFINITY;
+						}
+						else
+						{
+							if( (myepc.funcType == EPC_FUNC_LADJUST || myepc.funcType == EPC_FUNC_RADJUST)
+							   && (frontepc.funcType == EPC_FUNC_LADJUST || frontepc.funcType == EPC_FUNC_RADJUST)
+							   && myepc.adjustAreaNo == frontepc.adjustAreaNo)
 							{
-								m_distanceToFrontCar = 0;
+								isSameAdjustArea = 1;
+								//如果和前车在同一调整区，距离不翻转
+								if(m_frontCarStatus[i].distance < MotoGetCarDistance())
+								{
+									m_distanceToFrontCar[i] = 0;
+								}
+								else
+								{
+									m_distanceToFrontCar[i] = m_frontCarStatus[i].distance - MotoGetCarDistance();
+								}
+
+							}
+							else if(0 == memcmp(&m_frontCarStatus[i].epc[1],&m_param.leftRoadID,sizeof(roadID_t)) &&
+									EPC_AB_B == frontepc.ab)
+							{
+								/*
+								 * 1.前车处于相邻轨道(主轨)
+								 * 2.前车处于B段
+								 */
+								m_distanceToFrontCar[i] = distanceDiff  - m_frontCarStatus[i].deltadistance;
 							}
 							else
 							{
-								m_distanceToFrontCar = m_frontCarStatus.distance - MotoGetCarDistance();
+								m_distanceToFrontCar[i] = distanceDiff;
 							}
-
 						}
-						else if(0 == memcmp(&m_frontCarStatus.epc[1],&m_param.leftRoadID,sizeof(roadID_t)) &&
-					            EPC_AB_B == frontepc.ab)
-					    {
-					        /*
-					         * 1.前车处于相邻轨道(主轨)
-					         * 2.前车处于B段
-					         */
-					        m_distanceToFrontCar = distanceDiff  - m_frontCarStatus.deltadistance;
-					    }
-					    else
-					    {
-					        m_distanceToFrontCar = distanceDiff;
-					    }
 					}
 				}
+
+
+
+				if(isSameAdjustArea == 0 && m_distanceToFrontCar[i] < DANGER_DISTANCE && MotoGetCarMode() == Auto )
+				{
+					/*
+					 * 自动模式下，非同一调整区，前车距离小于碰撞距离
+					 */
+					Message_postError(ERROR_SAFE_DISTANCE);
+				}
 			}
-
-
-
-			if(isSameAdjustArea == 0 && m_distanceToFrontCar < DANGER_DISTANCE && MotoGetCarMode() == Auto )
+			else
 			{
-				/*
-				 * 自动模式下，非同一调整区，前车距离小于碰撞距离
-				 */
-				Message_postError(ERROR_SAFE_DISTANCE);
+				//如果前车数据无效，则将前车距离设置为无穷大
+				m_distanceToFrontCar[i] = V2V_DISTANCE_INFINITY;
 			}
+		}
+
+		//找到最小距离的前车
+		minDistance = V2V_DISTANCE_INFINITY;
+		for(i=0; i < V2V_MAX_FRONT_CAR; i++)
+		{
+			if(m_distanceToFrontCar[i]<=minDistance)
+			{
+				m_nearestFrontCarIdx = i;
+				minDistance = m_distanceToFrontCar[i];
+			}
+		}
+
+		g_fbData.forwardCarDistance[0] = m_distanceToFrontCar[0];
+		g_fbData.forwardCarDistance[1] = m_distanceToFrontCar[1];
+
+		if(m_nearestFrontCarIdx>=0)
+		{
+			g_fbData.forwardCarRPM = m_frontCarStatus[m_nearestFrontCarIdx].rpm;
 		}
 		else
 		{
-			//如果前车数据无效，则将前车距离设置为无穷大
-			m_distanceToFrontCar = V2V_DISTANCE_INFINITY;
+			g_fbData.forwardCarRPM = 0;
 		}
-
-		g_fbData.forwardCarDistance = m_distanceToFrontCar;
-		g_fbData.forwardCarRPM = m_frontCarStatus.rpm;
 
 	}
 }
@@ -266,7 +305,7 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 {
     int32_t timestamp;
     ZCPUserPacket_t recvPacket, sendPacket;
-    epc_t lastFrontEpc, frontEpc;
+    epc_t lastFrontEpc[V2V_MAX_FRONT_CAR], frontEpc[V2V_MAX_FRONT_CAR];
     int i;
 
 	while(1)
@@ -329,16 +368,24 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 			case ZCP_TYPE_V2V_RESP_FRONT_HANDSHAKE:
 			{
 				//如果收到的包不是前车发来的，不处理
-				if(recvPacket.addr != m_param.frontId)
+				int idx = V2VIdxOfFrontCar(recvPacket.addr);
+				if(idx <0)
 				{
-					LogMsg("V2V handShake resp from (%x), not equal to my frontCar (%x), ignore\n",recvPacket.addr, m_param.frontId);
+					LogMsg("V2V handShake resp from (%x), not equal to my frontCar (%x|%x), ignore\n",
+							recvPacket.addr,
+							m_param.frontId[0],
+							m_param.frontId[1]);
 					break;
 				}
+				else
+				{
+					LogMsg("V2V handshake accepted from: %x \n",recvPacket.addr);
+				}
 
-				Semaphore_post(m_sem_handshakefrontcar_resp);
+				Semaphore_post(m_sem_handshakefrontcar_resp[idx]);
 
-				m_isFrontCarDataUpdated = 1;
-				memcpy(&m_frontCarStatus, recvPacket.data, sizeof(m_frontCarStatus));
+				m_isFrontCarDataUpdated[idx] = 1;
+				memcpy(&m_frontCarStatus[idx], recvPacket.data, sizeof(v2v_req_carstatus_t));
 
 				break;
 			}
@@ -347,20 +394,26 @@ static void V2VRecvTask(UArg arg0, UArg arg1)
 			{
 
 				//如果收到的包不是前车发来的，不处理
-				if(recvPacket.addr != m_param.frontId)
+				int idx = V2VIdxOfFrontCar(recvPacket.addr);
+				if(idx <0)
 				{
+//					LogMsg("V2V carstatus resp from (%x), not equal to my frontCar (%x|%x), ignore\n",
+//							recvPacket.addr,
+//							m_param.frontId[0],
+//							m_param.frontId[1]);
 					break;
 				}
-				m_isFrontCarDataUpdated = 1;
-				memcpy(&m_frontCarStatus, recvPacket.data, sizeof(m_frontCarStatus));
+
+				m_isFrontCarDataUpdated[idx] = 1;
+				memcpy(&m_frontCarStatus[idx], recvPacket.data, sizeof(v2v_req_carstatus_t));
 
 				//如果前车上一次在分离区，这次在普通区，即离开分离区，发送消息
-				EPCfromByteArray(&frontEpc, m_frontCarStatus.epc);
-				if(EPC_FUNC_NORMAL == frontEpc.funcType && EPC_FUNC_SEPERATE == lastFrontEpc.funcType)
+				EPCfromByteArray(&frontEpc[idx], m_frontCarStatus[idx].epc);
+				if(EPC_FUNC_NORMAL == frontEpc[idx].funcType && EPC_FUNC_SEPERATE == lastFrontEpc[idx].funcType)
 				{
 					Message_postEvent(internal, IN_EVTCODE_V2V_FRONTCAR_LEAVE_SEPERATE);
 				}
-				lastFrontEpc = frontEpc;
+				lastFrontEpc[idx] = frontEpc[idx];
 
 
 				break;
@@ -377,38 +430,47 @@ static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
 	ZCPUserPacket_t sendPacket;
     Bool pendResult;
     int retryNum;
+    int i;
 
     while(1)
     {
     	Semaphore_pend(m_sem_handshakefrontcar_start,BIOS_WAIT_FOREVER);
 
-    	Semaphore_reset(m_sem_handshakefrontcar_resp,0);
+    	for(i=0;i<V2V_MAX_FRONT_CAR;i++	)
+    	{
+    		if(m_param.frontId[i] != V2V_ID_NONE)
+    		{
+				Semaphore_reset(m_sem_handshakefrontcar_resp[i],0);
 
-		retryNum = RETRY_NUM;
-		do
-		{
-			/*
-			 * 构造请求报文
-			 */
+				retryNum = RETRY_NUM;
+				do
+				{
+					/*
+					 * 构造请求报文
+					 */
 
-			sendPacket.addr = m_param.frontId;
-			sendPacket.type = ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE;
-			sendPacket.len = 0;
+					sendPacket.addr = m_param.frontId[i];
+					sendPacket.type = ZCP_TYPE_V2V_REQ_BACK_HANDSHAKE;
+					sendPacket.len = 0;
 
-			/*
-			 * 发送请求
-			 */
-			ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+					/*
+					 * 发送请求
+					 */
+					ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
 
-			pendResult = Semaphore_pend(m_sem_handshakefrontcar_resp, TIMEOUT);
-			retryNum --;
-		}
-		while(retryNum>0 && pendResult==FALSE);
+					pendResult = Semaphore_pend(m_sem_handshakefrontcar_resp[i], TIMEOUT);
+					retryNum --;
+				}
+				while(retryNum>0 && pendResult==FALSE);
 
-		if(pendResult == FALSE)
-		{
-			Message_postError(ERROR_V2V);
-		}
+				LogMsg("V2V handshake with: %x \n",m_param.frontId[i]);
+
+				if(pendResult == FALSE)
+				{
+					Message_postError(ERROR_V2V);
+				}
+    		}
+    	}
     }
 
 
@@ -423,6 +485,7 @@ static void V2VHandShakeFrontCarTask(UArg arg0, UArg arg1)
 
 void V2VStartUpTask()
 {
+	int i;
 	Task_Handle task;
 	Task_Params taskParams;
 	Semaphore_Params semParams;
@@ -436,7 +499,10 @@ void V2VStartUpTask()
 	Semaphore_Params_init(&semParams);
 	semParams.mode = Semaphore_Mode_BINARY;
 	m_sem_handshakefrontcar_start = Semaphore_create(0, &semParams, NULL);
-	m_sem_handshakefrontcar_resp = Semaphore_create(0, &semParams, NULL);
+	for(i=0;i<V2V_MAX_FRONT_CAR;i++)
+	{
+		m_sem_handshakefrontcar_resp[i] = Semaphore_create(0, &semParams, NULL);
+	}
 
 	Task_Params_init(&taskParams);
 
@@ -490,31 +556,65 @@ void V2VHandShakeFrontCar()
 
 void V2VSetDeltaDistance(int32_t delta)
 {
-	//LogDebug("Delta distance: %d", delta);
 	m_deltaDistance = delta;
 }
 
-void V2VSetFrontCarId(uint16_t frontid)
+uint8_t V2VSetFrontCarId(uint16_t frontid[])
 {
+	int i,j;
 	ZCPUserPacket_t sendPacket;
+	uint8_t frontCarChanged = 0;
+	uint16_t _frontid[V2V_MAX_FRONT_CAR];
 
-	g_fbData.frontCarID = frontid;
-
-	//先向原来的前车发停止发送命令
-	if(V2VGetFrontCarId()!=V2V_ID_NONE)
+	if(frontid == V2V_ID_NONE)
 	{
-		sendPacket.addr = V2VGetFrontCarId();
-		sendPacket.type = ZCP_TYPE_V2V_REQ_BACK_STOPSENDING;
-		sendPacket.len = 0;
-		/*
-		 * 发送请求
-		 */
-		ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+		memset(_frontid,0,sizeof(_frontid));
+	}
+	else
+	{
+		memcpy(_frontid,frontid, sizeof(_frontid));
 	}
 
-	m_param.frontId = frontid;
-	//清除前车信息
-	m_isFrontCarDataUpdated = 0;
+	//先向原来的前车发停止发送命令
+	for(i=0;i<V2V_MAX_FRONT_CAR;i++)
+	{
+		if(m_param.frontId[i]!=V2V_ID_NONE)
+		{
+			for(j=0;j<V2V_MAX_FRONT_CAR;j++)
+			{
+				if(m_param.frontId[i]== _frontid[j])
+				{
+					break;
+				}
+			}
+			if(j>=V2V_MAX_FRONT_CAR) // m_param.frontId[i] 不再是前车
+			{
+				frontCarChanged = 1;
+
+				sendPacket.addr =  m_param.frontId[i];
+				sendPacket.type = ZCP_TYPE_V2V_REQ_BACK_STOPSENDING;
+				sendPacket.len = 0;
+				/*
+				 * 发送请求
+				 */
+				ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+			}
+		}
+	}
+
+	if(frontCarChanged)
+	{
+		memcpy(m_param.frontId, _frontid, V2V_MAX_FRONT_CAR*sizeof(uint16_t));
+
+		memcpy(g_fbData.frontCarID, _frontid, V2V_MAX_FRONT_CAR*sizeof(uint16_t));
+
+		//清除前车信息
+		memset(m_isFrontCarDataUpdated ,0, V2V_MAX_FRONT_CAR*sizeof(uint8_t));
+
+		LogMsg("V2V setfrontID: %x %x\n",m_param.frontId[0],m_param.frontId[1]);
+	}
+
+	return frontCarChanged;
 }
 
 void V2VSetLeftRoadID(roadID_t raodID)
@@ -524,23 +624,23 @@ void V2VSetLeftRoadID(roadID_t raodID)
 
 uint16_t V2VGetFrontCarId()
 {
-	return m_param.frontId;
+	return m_param.frontId[0];
 }
 
 uint32_t V2VGetDistanceToFrontCar()
 {
-	return m_distanceToFrontCar;
+	return m_distanceToFrontCar[m_nearestFrontCarIdx];
 }
 
 uint16_t V2VGetFrontCarSpeed()
 {
-	return m_frontCarStatus.rpm;
+	return m_frontCarStatus[m_nearestFrontCarIdx].rpm;
 }
 
 epc_t V2VGetFrontCarEpc()
 {
 	epc_t epc;
-	EPCfromByteArray(&epc, m_frontCarStatus.epc);
+	EPCfromByteArray(&epc, m_frontCarStatus[0].epc);
 
 	return epc;
 }
@@ -549,3 +649,5 @@ uint8_t V2VIsSameAdjustArea()
 {
     return isSameAdjustArea;
 }
+
+
