@@ -1082,6 +1082,7 @@ void MotoSendFdbkToCellTask()
 
 	while(1){
 		g_fbData.buildNumber = BUILD_NUMBER;
+		g_fbData.gitclean = GIT_CLEAN;
 		g_fbData.brake = BrakeGetBrake();
 		g_fbData.railstate = RailGetRailState();
 		userGetMS(&tms);
