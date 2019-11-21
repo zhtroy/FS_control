@@ -240,7 +240,7 @@ static rfidPoint_t *calibrationQueue;
  * 最大校准误差10m
  */
 #define MAX_CALIBRATION_DISTANCE (100)
-
+#define DELTA_B_DIS  (160)
 static void MotoUpdateDistanceTask(void)
 {
     uint16_t lastCircleNum = 0;
@@ -309,18 +309,27 @@ static void MotoUpdateDistanceTask(void)
                 /*
                  * 进入B段，计算deltaS
                  */
-                if(EPC_AB_A == lastEpc.ab && EPC_AB_B == epc.ab)
+                if( EPC_AB_B == epc.ab)
                 {
-                    V2VSetDeltaDistance((int32_t)(epc.distance)-(int32_t)m_distance);
+                    V2VSetDeltaDistance(DELTA_B_DIS);
                 }
                 else if(EPC_AB_A == epc.ab)
                 {
                     V2VSetDeltaDistance(0);
                 }
 
+
                 //校正距离
                 lastCircleNum = MotoGetCircles();
-                m_distance = epc.distance;
+
+                if( EPC_AB_B == epc.ab && epc.distance == 1800)
+                {
+                	m_distance = epc.distance + DELTA_B_DIS;
+                }
+                else
+                {
+                	m_distance = epc.distance;
+                }
 
                 lastEpc = epc;
             }
