@@ -31,7 +31,7 @@
  */
 #define V2V_RECV_TASK_PRIO 		(5)
 #define V2V_SESSION_TASK_PRIO   (V2V_RECV_TASK_PRIO + 1)
-#define BACK_CAR_NUM (3)
+#define BACK_CAR_NUM (6)
 
 //通信参数
 static v2v_param_t m_param = {
@@ -111,13 +111,14 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 	epc_t myepc;
 	epc_t frontepc;
 
-	uint32_t distanceDiff;
+	uint32_t distanceDiff[V2V_MAX_FRONT_CAR];
 	uint16_t backCarId = 0;
 	uint8_t backCarIndex = 0;
 
 	int backIdx = 0;
 	int i;
 	uint32_t minDistance;
+	int cyclecount = 0;
 
 	while(1)
 	{
@@ -127,17 +128,19 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 		/*
 		 * 交替发送
 		 */
-
-		backCarId = m_backId[backIdx];
-
-		backIdx = (backIdx+1) % BACK_CAR_NUM;
-
-		//发送carstatus报文给后车
-		if(backCarId != V2V_ID_NONE)
+		for(i = 0; i<BACK_CAR_NUM; i++)
 		{
-			V2VFillCarStatusPacket(&sendPacket, backCarId);
-			sendPacket.type = ZCP_TYPE_V2V_REQ_FRONT_CARSTATUS;
-			ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+			backCarId = m_backId[(backIdx+i) % BACK_CAR_NUM];
+
+			if(backCarId != V2V_ID_NONE)
+			{
+				V2VFillCarStatusPacket(&sendPacket, backCarId);
+				sendPacket.type = ZCP_TYPE_V2V_REQ_FRONT_CARSTATUS;
+				ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
+
+				backIdx = (backIdx+i+1) % BACK_CAR_NUM;
+				break;
+			}
 		}
 
 
@@ -188,21 +191,21 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 					if(m_frontCarStatus[i].distance< MotoGetCarDistance())
 					{
-						distanceDiff = m_frontCarStatus[i].distance + TOTAL_DISTANCE - MotoGetCarDistance();
+						distanceDiff[i] = m_frontCarStatus[i].distance + TOTAL_DISTANCE - MotoGetCarDistance();
 					}
 					else
 					{
-						distanceDiff = m_frontCarStatus[i].distance - MotoGetCarDistance();
+						distanceDiff[i] = m_frontCarStatus[i].distance - MotoGetCarDistance();
 					}
 					if(EPCinSameRoad(&myepc, &frontepc))  //在同一条路上
 					{
 						if(EPC_AB_A == myepc.ab && EPC_AB_B == frontepc.ab)
 						{
-							m_distanceToFrontCar[i] = distanceDiff  - m_frontCarStatus[i].deltadistance;
+							m_distanceToFrontCar[i] = distanceDiff[i]  - m_frontCarStatus[i].deltadistance;
 						}
 						else
 						{
-							m_distanceToFrontCar[i] = distanceDiff;
+							m_distanceToFrontCar[i] = distanceDiff[i];
 						}
 					}
 					else  //不在同一条路
@@ -236,11 +239,11 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 								 * 1.前车处于相邻轨道(主轨)
 								 * 2.前车处于B段
 								 */
-								m_distanceToFrontCar[i] = distanceDiff  - m_frontCarStatus[i].deltadistance;
+								m_distanceToFrontCar[i] = distanceDiff[i]  - m_frontCarStatus[i].deltadistance;
 							}
 							else
 							{
-								m_distanceToFrontCar[i] = distanceDiff;
+								m_distanceToFrontCar[i] = distanceDiff[i];
 							}
 						}
 					}
@@ -576,22 +579,15 @@ uint8_t V2VSetFrontCarId(uint16_t frontid[])
 	}
 
 	//确定前车是否修改过了
-	for(i=0;i<V2V_MAX_FRONT_CAR;i++)
+	if( (_frontid[0] == m_param.frontId[0] && _frontid[1] == m_param.frontId[1])
+		|| (_frontid[0] == m_param.frontId[1] && _frontid[1] == m_param.frontId[0])	)
 	{
 
-		for(j=0;j<V2V_MAX_FRONT_CAR;j++)
-		{
-			if(_frontid[i]== m_param.frontId[j])
-			{
-				break;
-			}
-		}
-		if(j>=V2V_MAX_FRONT_CAR)
-		{
-			frontCarChanged = 1;
-		}
 	}
-
+	else
+	{
+		frontCarChanged = 1;
+	}
 
 
 	if(frontCarChanged)
