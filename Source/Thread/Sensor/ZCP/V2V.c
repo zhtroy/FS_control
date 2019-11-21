@@ -575,21 +575,40 @@ uint8_t V2VSetFrontCarId(uint16_t frontid[])
 		memcpy(_frontid,frontid, sizeof(_frontid));
 	}
 
-	//先向原来的前车发停止发送命令
+	//确定前车是否修改过了
 	for(i=0;i<V2V_MAX_FRONT_CAR;i++)
 	{
-		if(m_param.frontId[i]!=V2V_ID_NONE)
+
+		for(j=0;j<V2V_MAX_FRONT_CAR;j++)
+		{
+			if(_frontid[i]== m_param.frontId[j])
+			{
+				break;
+			}
+		}
+		if(j>=V2V_MAX_FRONT_CAR)
+		{
+			frontCarChanged = 1;
+		}
+	}
+
+
+
+	if(frontCarChanged)
+	{
+		//先向原来的前车发停止发送命令
+		for(i=0;i<V2V_MAX_FRONT_CAR;i++)
 		{
 			for(j=0;j<V2V_MAX_FRONT_CAR;j++)
 			{
-				if(m_param.frontId[i]== _frontid[j])
+				if(m_param.frontId[i] == _frontid[j])
 				{
 					break;
 				}
 			}
-			if(j>=V2V_MAX_FRONT_CAR) // m_param.frontId[i] 不再是前车
+
+			if(j>=V2V_MAX_FRONT_CAR && m_param.frontId[i]!=V2V_ID_NONE)
 			{
-				frontCarChanged = 1;
 
 				sendPacket.addr =  m_param.frontId[i];
 				sendPacket.type = ZCP_TYPE_V2V_REQ_BACK_STOPSENDING;
@@ -600,10 +619,7 @@ uint8_t V2VSetFrontCarId(uint16_t frontid[])
 				ZCPSendPacket(&v2vInst, &sendPacket, NULL, BIOS_NO_WAIT);
 			}
 		}
-	}
 
-	if(frontCarChanged)
-	{
 		memcpy(m_param.frontId, _frontid, V2V_MAX_FRONT_CAR*sizeof(uint16_t));
 
 		memcpy(g_fbData.frontCarID, _frontid, V2V_MAX_FRONT_CAR*sizeof(uint16_t));
