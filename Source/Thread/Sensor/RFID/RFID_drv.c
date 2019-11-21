@@ -382,7 +382,7 @@ static RFID_state protocolStateMachine(uint8_t c,uint16_t deviceNum)
         case Prefix1:
             if(PREFIX1_CODE == c)
             {
-                inst->state = Len;
+                inst->state = Data;
                 inst->msgLen = 14;
                 inst->type = 0x97;
             }
@@ -391,24 +391,24 @@ static RFID_state protocolStateMachine(uint8_t c,uint16_t deviceNum)
                 inst->state = Prefix0;
             }
             break;
-        case Len:
+        case Data:
             inst->msg[inst->curLen++] = c;
             if(inst->msgLen == inst->curLen)
             {
-                inst->state = Data;
+                inst->state = CRC;
             }
             break;
-        case Data:
-            inst->crc = c;
-            inst->state = CRC;
-            break;
         case CRC:
+            inst->crc = c;
+            inst->state = END1;
+            break;
+        case END1:
             calCRC = calculateCRC(inst->msg, inst->msgLen);
             if(inst->crc == (calCRC & 0x7f))
             {
                 if (0x0D == c)
                 {
-                    inst->state = END1;
+                    inst->state = END2;
                 }
                 else {
                     RFIDstateMachineReset(inst);
@@ -422,27 +422,23 @@ static RFID_state protocolStateMachine(uint8_t c,uint16_t deviceNum)
             }
             break;
 
-        case END1:
+        case END2:
             if(0x0A == c)
             {
-                inst->state = END2;
+                if(pinst->callback==0)
+                {
+                    Log_error0("RFID state machine error, need to register call back fucntion\n");
+                }
+                else{
+                    code128ToRFID(inst->msg);
+                    pinst->callback(deviceNum, inst->type, inst->msg, inst->msgLen);
+                }
+
+                inst->state = Prefix0;
             }
-            else{
-                RFIDstateMachineReset(inst);
-            }
+			RFIDstateMachineReset(inst);
             break;
 
-        case END2:
-            if(pinst->callback==0)
-            {
-                Log_error0("RFID state machine error, need to register call back fucntion\n");
-            }
-            else{
-                code128ToRFID(inst->msg);
-                pinst->callback(deviceNum, inst->type, inst->msg, inst->msgLen);
-            }
-            RFIDstateMachineReset(inst);
-            break;
 
         default:
             Log_error1("RFID state machine error, unknown state: %d\n",  inst->state);

@@ -136,9 +136,9 @@ typedef struct{
 	uint32_t rfidReadTime;
 	uint32_t calcRPM;
  	uint32_t recvRPM;
- 	uint32_t forwardCarDistance;
+ 	uint32_t forwardCarDistance[2];
  	uint32_t forwardCarRPM;
- 	uint16_t frontCarID;
+ 	uint16_t frontCarID[2];
  	uint8_t rfid[12];
  	uint16_t myID;
  	uint8_t orderState;
@@ -147,6 +147,7 @@ typedef struct{
  	uint32_t buildNumber;
  	float encoderSpeed;
  	uint16_t backCarIds[3];  //最多3个后车ID
+ 	uint8_t gitclean;   //是否和最新版本一致
 }fbdata_t;
 
 typedef struct{
@@ -254,6 +255,11 @@ typedef struct{
  */
 #define ERROR_CHANGERAIL_MOTOR  (32)
 
+#define ERROR_SCAN_CODE_DISTANCE_ERROR   (33)
+
+#define ERROR_SCAN_CODE_ROADINFO_ERROR   (34)
+
+
 #define DIFF_RPM_UPSCALE (4000)
 #define DIFF_RPM_DWSCALE (-4000)
 
@@ -315,6 +321,7 @@ uint16_t MotoGetCircles();
 uint16_t MotoGetRpm();
 uint8_t MotoGetCarMode();
 uint32_t MotoGetCarDistance();
+int32_t MotoGetCarDistanceIncrement();
 float MotoGetSpeed();
 void MotoSetCarDistance(uint32_t dist);
 void MotoUpdateCalibrationPoint(rfidPoint_t * calib);

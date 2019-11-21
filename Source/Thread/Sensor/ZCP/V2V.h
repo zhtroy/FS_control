@@ -17,9 +17,11 @@
 #define V2V_CARSTATUS_STOP  (0)
 #define TIMEOUT_FRONT_CAR_DISCONNECT    (5000)
 
+#define V2V_MAX_FRONT_CAR (2)
+
 typedef struct
 {
-	uint16_t frontId;
+	uint16_t frontId[V2V_MAX_FRONT_CAR];
 	roadID_t leftRoadID;
 }v2v_param_t;
 
@@ -36,7 +38,7 @@ typedef struct
  */
 extern void V2VInit();
 extern void V2VHandShakeFrontCar();
-extern void V2VSetFrontCarId(uint16_t frontid);
+extern uint8_t V2VSetFrontCarId(uint16_t frontid[]);
 extern uint16_t V2VGetFrontCarId();
 extern uint32_t V2VGetDistanceToFrontCar();
 extern uint16_t V2VGetFrontCarSpeed();

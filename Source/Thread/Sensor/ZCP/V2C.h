@@ -11,6 +11,7 @@
 
 #include "stdint.h"
 #include <ti/sysbios/knl/Task.h>
+#include "V2V.h"
 
 /*
  * 请求===================================
@@ -69,7 +70,7 @@ typedef struct
 typedef struct
 {
 	uint8_t status;
-	uint16_t forwardid;
+	uint16_t forwardid[V2V_MAX_FRONT_CAR];
 	roadID_t leftRoadID;
 }v2c_resp_forward_id_t;
 

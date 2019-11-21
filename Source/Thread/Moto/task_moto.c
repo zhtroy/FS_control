@@ -68,6 +68,8 @@ static Mailbox_Handle rxDataMbox = NULL;
 
 static canDataObj_t canSendData;
 
+static int32_t m_disIncrement;
+
 /*电机控制量*/
 static moto_ctrl_t m_motoCtrl = {
 		.MotoSel = FRONT_REAR,
@@ -238,7 +240,7 @@ static rfidPoint_t *calibrationQueue;
  * 最大校准误差10m
  */
 #define MAX_CALIBRATION_DISTANCE (100)
-
+#define DELTA_B_DIS  (160)
 static void MotoUpdateDistanceTask(void)
 {
     uint16_t lastCircleNum = 0;
@@ -286,8 +288,9 @@ static void MotoUpdateDistanceTask(void)
 			m_distance -= TOTAL_DISTANCE;
 		}
 
+		m_disIncrement += step;
 
-#if 0
+#if 1
         mode = MotoGetCarMode();
         /*
          * 非Auto模式下，采用物理RFID校准距离
@@ -306,18 +309,27 @@ static void MotoUpdateDistanceTask(void)
                 /*
                  * 进入B段，计算deltaS
                  */
-                if(EPC_AB_A == lastEpc.ab && EPC_AB_B == epc.ab)
+                if( EPC_AB_B == epc.ab)
                 {
-                    V2VSetDeltaDistance((int32_t)(epc.distance)-(int32_t)m_distance);
+                    V2VSetDeltaDistance(DELTA_B_DIS);
                 }
                 else if(EPC_AB_A == epc.ab)
                 {
                     V2VSetDeltaDistance(0);
                 }
 
+
                 //校正距离
                 lastCircleNum = MotoGetCircles();
-                m_distance = epc.distance;
+
+                if( EPC_AB_B == epc.ab && epc.distance == 1800)
+                {
+                	m_distance = epc.distance + DELTA_B_DIS;
+                }
+                else
+                {
+                	m_distance = epc.distance;
+                }
 
                 lastEpc = epc;
             }
@@ -1079,6 +1091,7 @@ void MotoSendFdbkToCellTask()
 
 	while(1){
 		g_fbData.buildNumber = BUILD_NUMBER;
+		g_fbData.gitclean = GIT_CLEAN;
 		g_fbData.brake = BrakeGetBrake();
 		g_fbData.railstate = RailGetRailState();
 		userGetMS(&tms);
@@ -1352,6 +1365,15 @@ uint8_t MotoGetCarMode()
     return g_fbData.mode;
 }
 
+/*
+ * 返回两次调用该函数之间车辆跑过的距离
+ */
+int32_t MotoGetCarDistanceIncrement()
+{
+	volatile int32_t temp = m_disIncrement;
+	m_disIncrement = 0;
+	return temp;
+}
 /*
  * 返回车辆在轨道上的距离
  */
