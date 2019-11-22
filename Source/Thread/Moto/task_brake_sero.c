@@ -926,7 +926,7 @@ static void ServoBrakeTask(void)
     BraketxReadySem = Semaphore_create(1, &semParams, NULL);
     BrakerxReadySem = Semaphore_create(0, &semParams, NULL);
     /*初始化CAN设备*/
-    CanOpen(CAN_BRAKE_NO, BrakeCanIntrHandler, CAN_BRAKE_NO);
+    //CanOpen(CAN_BRAKE_NO, BrakeCanIntrHandler, CAN_BRAKE_NO);
 
     /*初始化帧类型*/
     canSendData.ID = CAN_BRAKE_ID;
@@ -937,13 +937,13 @@ static void ServoBrakeTask(void)
     while(1)
     {
         //读取电机错误码
-        Semaphore_pend(BraketxReadySem,100);
+        Semaphore_pend(BraketxReadySem,200);
         canSendData.DataLen = 4;
         memcpy(canSendData.Data, brake_motor_readerror,4);
         CanWrite(CAN_BRAKE_NO, &canSendData);
 
         //使能
-        Semaphore_pend(BraketxReadySem,100);
+        Semaphore_pend(BraketxReadySem,200);
         canSendData.DataLen = 6;
         memcpy(canSendData.Data, brake_motor_enable,6);
         CanWrite(CAN_BRAKE_NO, &canSendData);
@@ -961,12 +961,12 @@ static void ServoBrakeTask(void)
         Task_sleep(BRAKETIME);
 
         //读取电机错误码
-        Semaphore_pend(BraketxReadySem,100);
+        Semaphore_pend(BraketxReadySem,200);
         canSendData.DataLen = 4;
         memcpy(canSendData.Data, brake_motor_readerror,4);
         CanWrite(CAN_BRAKE_NO, &canSendData);
 
-        Semaphore_pend(BraketxReadySem, BIOS_WAIT_FOREVER);
+        Semaphore_pend(BraketxReadySem, 200);
         /*计算力矩*/
         brakeforce =  BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
 
@@ -988,8 +988,9 @@ static void ServoBrakeTask(void)
 
         memcpy(canSendData.Data, brake_motor_torque,4);
 
-        canSendData.Data[5] = (brakeforce>>8) & 0xFF;
-        canSendData.Data[6] = brakeforce & 0xFF;
+        canSendData.DataLen = 6;
+        canSendData.Data[4] = (brakeforce>>8) & 0xFF;
+        canSendData.Data[5] = brakeforce & 0xFF;
 
         CanWrite(CAN_BRAKE_NO, &canSendData);
     }
@@ -1518,7 +1519,7 @@ void ServoTaskInit()
 
     UartNs550Recv(SERVOR_MOTOR_UART, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 
-
+    CanOpen(CAN_BRAKE_NO, BrakeCanIntrHandler, CAN_BRAKE_NO);
     /* 初始化接收邮箱 */
     rxDataMbox = Mailbox_create (sizeof (canDataObj_t),4, NULL, NULL);
 

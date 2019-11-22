@@ -26,7 +26,7 @@
 #define KM 3.285714												//速比
 #define DELTA 1.0												//减速度差阈值
 #define AMAX 10.0												//最大减速度10m/s2
-#define BRAKETIME (20)											//刹车计算时间
+#define BRAKETIME (50)											//刹车计算时间
 #define MAXSTEP 100												//刹车行程总步数
 
 #define STEP_EXIT (5)
