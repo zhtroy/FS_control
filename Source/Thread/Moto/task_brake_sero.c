@@ -801,8 +801,7 @@ void ServoBrakeTask(void *param)
 	semParams.mode = Semaphore_Mode_COUNTING;
     txReadySem = Semaphore_create(1, &semParams, NULL);
 
-    /*初始化CAN设备*/
-    CanOpen(CAN_DEV_BRAKE, BrakeCanIntrHandler, CAN_DEV_BRAKE);
+
 
     while(1)
     {
@@ -1483,7 +1482,8 @@ void ServoTaskInit()
 
     UartNs550Recv(SERVOR_MOTOR_UART, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 
-
+    /*初始化CAN设备*/
+    CanOpen(CAN_DEV_BRAKE, BrakeCanIntrHandler, CAN_DEV_BRAKE);
 
 
     /* 初始化接收邮箱 */
