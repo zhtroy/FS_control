@@ -329,7 +329,7 @@ static void ServoRecvDataTask(void)
  * 2:直流电机模式
  * 3:直流电机(CAN)
  */
-#define SERVO_MODE (3)
+#define SERVO_MODE (4)
 
 #if SERVO_MODE == 0
 void ServoBrakeTask(void *param)
@@ -831,7 +831,169 @@ void ServoBrakeTask(void *param)
     	CanWrite(CAN_DEV_BRAKE, &canData);
     }
 }
+#elif SERVO_MODE == 4
+#define BRAKE_MAX (255)
 
+#define BRAKE_SLOTS (1000)
+
+#define CAN_BRAKE_NO (CAN_DEV_BRAKE)
+#define CAN_BRAKE_ID (0x0101)
+static uint8_t brake_motor_readerror[4] =  {0x00, 0x0A, 0x00, 0x36};
+static uint8_t brake_motor_enable[6] =  {0x00, 0x1E, 0x00, 0x10, 0x00, 0x01};
+static uint8_t brake_motor_disable[6] = {0x00, 0x1E, 0x00, 0x10, 0x00, 0x00};
+static uint8_t brake_motor_forward[8] = {0x00, 0x3C, 0x01, 0x90, 0x00, 0x00,0x2E,0xE0};
+static uint8_t brake_motor_reverse[8] = {0x00, 0x3C, 0x01, 0x90, 0xFF, 0xFF,0xD1,0x20};
+static uint8_t brake_motor_torque[4] = {0x00, 0x28, 0x00, 0x01};
+
+static Semaphore_Handle BrakerxReadySem;
+static Semaphore_Handle BraketxReadySem;
+static void BrakeCanIntrHandler(int32_t devsNum,int32_t event)
+{
+    canDataObj_t rxData;
+
+    if (event == 1)         /* 收到一帧数据 */
+    {
+        CanRead(devsNum, &rxData);
+        //如果故障码不为0
+        if(rxData.Data[1] == 0x0B &&
+           rxData.Data[2] == 0x00 &&
+           rxData.Data[3] == 0x36 &&
+           (rxData.Data[4] != 0x00 ||rxData.Data[5] != 0x00))
+        {
+            Message_postError(ERROR_BRAKE_ERROR);
+        }
+        else
+        {
+            if(BrakerxReadySem)
+                Semaphore_post(BrakerxReadySem);
+        }
+    }
+    else if (event == 2)    /* 一帧数据发送完成 */
+    {
+        if(BraketxReadySem)
+        /* 发送中断 */
+            Semaphore_post(BraketxReadySem);
+    }
+
+}
+
+void ServoBrakeRecvTask()
+{
+    /*空任务*/
+}
+
+static void TaskCheckBrakeStatus()
+{
+    uint16_t lastRPM, curRPM;
+    int count = 0;
+
+    while(1)
+    {
+        Task_sleep(500);
+
+        curRPM = MotoGetRealRPM();
+
+        if(BrakeGetBrake()>200)
+        {
+            if(curRPM>lastRPM)
+            {
+                count++;
+            }
+            else
+            {
+                count = 0;
+            }
+            if(count > 5)
+            {
+                Message_postError(ERROR_BRAKE_NO_ERR_CODE);
+                count = 0;
+            }
+        }
+
+        lastRPM = curRPM;
+    }
+}
+
+static void ServoBrakeTask(void)
+{
+    int16_t brakeforce;
+    canDataObj_t canSendData;
+    Semaphore_Params semParams;
+
+    /* 初始化信用量 */
+    Semaphore_Params_init(&semParams);
+    semParams.mode = Semaphore_Mode_BINARY;
+    BraketxReadySem = Semaphore_create(1, &semParams, NULL);
+    BrakerxReadySem = Semaphore_create(0, &semParams, NULL);
+    /*初始化CAN设备*/
+    CanOpen(CAN_BRAKE_NO, BrakeCanIntrHandler, CAN_BRAKE_NO);
+
+    /*初始化帧类型*/
+    canSendData.ID = CAN_BRAKE_ID;
+    canSendData.SendType = 0;
+    canSendData.RemoteFlag = 0;
+    canSendData.ExternFlag = 0;
+
+    while(1)
+    {
+        //读取电机错误码
+        Semaphore_pend(BraketxReadySem,100);
+        canSendData.DataLen = 4;
+        memcpy(canSendData.Data, brake_motor_readerror,4);
+        CanWrite(CAN_BRAKE_NO, &canSendData);
+
+        //使能
+        Semaphore_pend(BraketxReadySem,100);
+        canSendData.DataLen = 6;
+        memcpy(canSendData.Data, brake_motor_enable,6);
+        CanWrite(CAN_BRAKE_NO, &canSendData);
+
+        //收到响应：使能成功
+        if(Semaphore_pend(BrakerxReadySem,200))
+            break;
+    }/*while(1)*/
+
+    /*电机初始化成功后需要等待300ms*/
+    Task_sleep(300);
+
+    while(1)
+    {
+        Task_sleep(BRAKETIME);
+
+        //读取电机错误码
+        Semaphore_pend(BraketxReadySem,100);
+        canSendData.DataLen = 4;
+        memcpy(canSendData.Data, brake_motor_readerror,4);
+        CanWrite(CAN_BRAKE_NO, &canSendData);
+
+        Semaphore_pend(BraketxReadySem, BIOS_WAIT_FOREVER);
+        /*计算力矩*/
+        brakeforce =  BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
+
+        /*计算力矩*/
+        if(g_sysParam.brakeDirection == 0)
+        {
+            /*2.3-2.4机车刹车方向*/
+            brakeforce =  BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
+            if(brakeforce <= 0)
+                brakeforce = - g_sysParam.brakeReverseRatio * 10;  //按百分比设置反向力矩 (10 = 1000/ 100)
+        }
+        else
+        {
+            /*2.1机车刹车方向*/
+            brakeforce =  -BrakeGetBrake() * BRAKE_SLOTS/BRAKE_MAX;
+            if(brakeforce >= 0)
+                brakeforce = g_sysParam.brakeReverseRatio * 10;  //按百分比设置反向力矩 (10 = 1000/ 100)
+        }
+
+        memcpy(canSendData.Data, brake_motor_torque,4);
+
+        canSendData.Data[5] = (brakeforce>>8) & 0xFF;
+        canSendData.Data[6] = brakeforce & 0xFF;
+
+        CanWrite(CAN_BRAKE_NO, &canSendData);
+    }
+}
 #endif
 void RailChangeStart()
 {

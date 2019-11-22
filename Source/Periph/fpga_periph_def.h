@@ -162,4 +162,11 @@
 #define FPGA_S2_WIDTH_HIGH   (FPGA_BASE_ADDR + (0x75<<1))
 #define FPGA_S3_WIDTH_LOW    (FPGA_BASE_ADDR + (0x76<<1))
 #define FPGA_S3_WIDTH_HIGH   (FPGA_BASE_ADDR + (0x77<<1))
+
+#define FPGA_PCO_1_LOW         (FPGA_BASE_ADDR + (0x78<<1))
+#define FPGA_PCO_1_HIGH        (FPGA_BASE_ADDR + (0x79<<1))
+#define FPGA_DCO_1_LOW         (FPGA_BASE_ADDR + (0x7A<<1))
+#define FPGA_DCO_1_HIGH        (FPGA_BASE_ADDR + (0x7B<<1))
+#define FPGA_SCO_1_LOW         (FPGA_BASE_ADDR + (0x7C<<1))
+#define FPGA_SCO_1_HIGH        (FPGA_BASE_ADDR + (0x7D<<1))
 #endif /* FPGA_PERIPH_DEF_H_ */
