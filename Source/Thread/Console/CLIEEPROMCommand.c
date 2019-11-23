@@ -186,7 +186,7 @@ BaseType_t prvGetGitCommitID( char *pcWriteBuffer, size_t xWriteBufferLen, const
     /* Command Process*/
     memset( pcWriteBuffer, 0x00, xWriteBufferLen );
 
-    char star = (GIT_CLEAN==0)?'*':'';
+    char star = (GIT_CLEAN==0)?'*':' ';
 	sprintf(pcWriteBuffer,"[version:%x%c]",BUILD_NUMBER,star);
 
     xReturn = pdFALSE;
