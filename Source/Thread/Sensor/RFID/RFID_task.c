@@ -74,14 +74,14 @@ static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 	Message_post(msg);
 #endif
     timeout_flag = 1;
-    if(hasScanner == 0)
+    if(hasScanner == 1)
     {
-        Clock_setTimeout(clock_rfid_heart,5000);
-        Clock_start(clock_rfid_heart);
-
+        Clock_stop(clock_rfid_heart);
+    }
+    else
+    {
         RFIDStartLoopCheckEpc(RFID_DEVICENUM);
     }
-    //setErrorCode(ERROR_CONNECT_TIMEOUT);
 }
 
 static void InitTimer()
@@ -90,10 +90,10 @@ static void InitTimer()
 
 
 	Clock_Params_init(&clockParams);
-	clockParams.period = 0;       // one shot
+	clockParams.period = 5000;       // one shot
 	clockParams.startFlag = TRUE;
 
-	clock_rfid_heart = Clock_create(RFIDConnectionClosed, 5000, &clockParams, NULL);
+	clock_rfid_heart = Clock_create(RFIDConnectionClosed, 0, &clockParams, NULL);
 }
 
 int32_t GetMs()
