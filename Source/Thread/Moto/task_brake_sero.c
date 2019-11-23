@@ -834,7 +834,7 @@ void ServoBrakeTask(void *param)
 #elif SERVO_MODE == 4
 #define BRAKE_MAX (255)
 
-#define BRAKE_SLOTS (1000)
+#define BRAKE_SLOTS (500)
 
 #define CAN_BRAKE_NO (CAN_DEV_BRAKE)
 #define CAN_BRAKE_ID (0x0101)
