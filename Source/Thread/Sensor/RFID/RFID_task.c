@@ -93,7 +93,7 @@ static void InitTimer()
 	clockParams.period = 5000;       // one shot
 	clockParams.startFlag = TRUE;
 
-	clock_rfid_heart = Clock_create(RFIDConnectionClosed, 0, &clockParams, NULL);
+	clock_rfid_heart = Clock_create(RFIDConnectionClosed, 5000, &clockParams, NULL);
 }
 
 int32_t GetMs()
