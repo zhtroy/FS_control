@@ -15,9 +15,11 @@
 #include "FreeRTOS_CLI.h"
 #include "mpu9250/mpu9250_drv.h"
 #include <ti/sysbios/knl/Task.h>
+#include "Version.h"
 
 BaseType_t prvSetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+BaseType_t prvGetGitCommitID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
 BaseType_t prvEEPROMRead( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
 BaseType_t prvEEPROMWrite( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
@@ -36,6 +38,15 @@ const CLI_Command_Definition_t xGetCarID =
     "\r\n Setting Station Status. \
     ex:getID\r\n",
     prvGetCarID, /* The function to run. */
+    0
+};
+
+const CLI_Command_Definition_t xGetGitCommitID =
+{
+    "getVersion",
+    "\r\n get git commit id. \
+    ex:getVersion\r\n",
+    prvGetGitCommitID, /* The function to run. */
     0
 };
 
@@ -150,13 +161,40 @@ BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char 
     }
     else
     {
-        sprintf(pcWriteBuffer,"%x",usValue);
+        sprintf(pcWriteBuffer,"[ID:0x%x]",usValue);
     }
     xReturn = pdFALSE;
 
 
     return xReturn;
 }
+
+BaseType_t prvGetGitCommitID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
+{
+    const char *pcParameter;
+    BaseType_t xParameterStringLength, xReturn;
+    static UBaseType_t uxParameterNumber = 0;
+    static uint16_t usValue = 0;
+
+    /* Remove compile time warnings about unused parameters, and check the
+    write buffer is not NULL.  NOTE - for simplicity, this example assumes the
+    write buffer length is adequate, so does not check for buffer overflows. */
+    ( void ) pcCommandString;
+    ( void ) xWriteBufferLen;
+    configASSERT( pcWriteBuffer );
+
+    /* Command Process*/
+    memset( pcWriteBuffer, 0x00, xWriteBufferLen );
+
+    char star = (GIT_CLEAN==0)?'*':'';
+	sprintf(pcWriteBuffer,"[version:%x%c]",BUILD_NUMBER,star);
+
+    xReturn = pdFALSE;
+
+
+    return xReturn;
+}
+
 
 BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
 {
