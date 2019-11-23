@@ -251,12 +251,22 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 
 
-				if(isSameAdjustArea == 0 && m_distanceToFrontCar[i] < DANGER_DISTANCE && MotoGetCarMode() == Auto )
+				if(m_distanceToFrontCar[i] < DANGER_DISTANCE && MotoGetCarMode() == Auto )
 				{
-					/*
-					 * 自动模式下，非同一调整区，前车距离小于碰撞距离
-					 */
-					Message_postError(ERROR_SAFE_DISTANCE);
+					if(isSameAdjustArea == 0)
+					{
+						/*
+						 * 自动模式下，非同一调整区，前车距离小于碰撞距离
+						 */
+						Message_postError(ERROR_SAFE_DISTANCE);
+					}
+					if(isSameAdjustArea == 1 && myepc.funcType == frontepc.funcType)
+					{
+						/*
+						 * 自动模式下，同一调整区,同一轨道，前车距离小于碰撞距离
+						 */
+						Message_postError(ERROR_SAFE_DISTANCE);
+					}
 				}
 			}
 			else
