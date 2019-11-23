@@ -49,6 +49,8 @@ static Semaphore_Handle checkEpcCoroutineSem;
 static uint8_t m_rawrfid[12];
 static epc_t m_lastepc = {0};
 static epc_t m_lastlastepc = {0};
+static uint32_t codeCnt=0;
+static uint8_t hasScanner = 0;  //有扫码器
 /*
  * 扫描得到的EPC
  */
@@ -72,10 +74,13 @@ static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 	Message_post(msg);
 #endif
     timeout_flag = 1;
-    //Clock_setTimeout(clock_rfid_heart,3000);
-    //Clock_start(clock_rfid_heart);
+    if(hasScanner == 0)
+    {
+        Clock_setTimeout(clock_rfid_heart,5000);
+        Clock_start(clock_rfid_heart);
 
-    //RFIDStartLoopCheckEpc(RFID_DEVICENUM);
+        RFIDStartLoopCheckEpc(RFID_DEVICENUM);
+    }
     //setErrorCode(ERROR_CONNECT_TIMEOUT);
 }
 
@@ -86,9 +91,9 @@ static void InitTimer()
 
 	Clock_Params_init(&clockParams);
 	clockParams.period = 0;       // one shot
-	clockParams.startFlag = FALSE;
+	clockParams.startFlag = TRUE;
 
-	clock_rfid_heart = Clock_create(RFIDConnectionClosed, 10000, &clockParams, NULL);
+	clock_rfid_heart = Clock_create(RFIDConnectionClosed, 5000, &clockParams, NULL);
 }
 
 int32_t GetMs()
@@ -104,8 +109,7 @@ int32_t GetMs()
 	return  timecycle/(freqency/1000);
 }
 
-static uint32_t codeCnt=0;
-static uint8_t hasScanner = 0;  //有扫码器
+
 static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint32_t len )
 {
 	p_msg_t msg;
@@ -342,13 +346,7 @@ Void taskRFID(UArg a0, UArg a1)
     checkEpcSem =  Semaphore_create(0, &semParams, NULL);
 
 
-	while(i>0)
-	{
-		i--;
-		RFIDStartLoopCheckEpc(RFID_DEVICENUM);
-		Task_sleep(500);
-
-	}
+    InitTimer();
 
     /*
      * 初始化EPC校验任务
