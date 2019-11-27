@@ -159,6 +159,8 @@ int32_t UartNs550Init(uint16_t deviceNum,XUartNs550_Handler funcPtr)
     /* 清除历史状态 */
     XUartNs550_ClearStats(instancePtr);
     
+    UartNs550HardIntMask(deviceNum);
+    UartNs550HardIntEnable();
     return XST_SUCCESS;
 }
 

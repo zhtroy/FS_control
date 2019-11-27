@@ -258,8 +258,14 @@ int32_t CanOpen(uint8_t devsNum,isrFuncPtr_t canIsrCall,int32_t arg)
 	if(status==0)
 	{
 		can_dev_table[devsNum].devStatus=CAN_DEV_OPENED;
+
+	    /*使能对应设备中断*/
+	    CanHardIntMask(devsNum);
+	    /*打开全局中断*/
+	    CanHardIntEnable();
 		return DEV_OK;
 	}
+
 	return status;
 }
 

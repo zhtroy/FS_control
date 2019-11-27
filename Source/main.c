@@ -75,11 +75,12 @@ void PeriphInit()
 		UARTprintf("ERROR: EMIFA Test Failed!!!\r\n");
 	}
 
-    UartNs550HardIntMaskAll();
-    UartNs550HardIntEnable ();
+	/*关闭串口和CAN中断*/
+    UartNs550HardIntUnMaskAll();
+    UartNs550HardIntDisable ();
+    CanHardIntUnMaskAll();
+    CanHardIntDisable();
 
-    CanHardIntMaskAll();
-    CanHardIntEnable ();
     CanTableInit();
     TTLInit();
     SignalInit();
