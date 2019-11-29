@@ -17,6 +17,13 @@
 #include <ti/sysbios/BIOS.h>
 #include <xdc/runtime/System.h>
 #include "Message/Message.h"
+#include "math.h"
+
+
+static float _pointsToSpeed(int16_t point)
+{
+	return ((float) g_sysParam.encoderWheelPerimeter) / 10000.0 * point * 20.0f / (float) ENCODER_POINTS_CYCLE ;
+}
 
 int16_t EncoderGetDeltaPoint()
 {
@@ -42,21 +49,51 @@ int16_t EncoderGetPointsIn50ms()
 	return *sptr;
 }
 
+int16_t Encoder1GetDeltaPoint()
+{
+    uint16_t dco = 0;
+    int16_t * dptr;
+
+    dco = EMIFAReadWord(FPGA_DCO_1_LOW,0);
+    dco += (EMIFAReadWord(FPGA_DCO_1_HIGH,0) << 8);
+    dptr = &dco;
+
+    return *dptr;
+}
+
+int16_t Encoder1GetPointsIn50ms()
+{
+    uint16_t sco = 0;
+    int16_t * sptr;
+
+    sco = EMIFAReadWord(FPGA_SCO_1_LOW,0);
+	sco += (EMIFAReadWord(FPGA_SCO_1_HIGH,0) << 8);
+	sptr = &sco;
+
+	return *sptr;
+}
+
+float Encoder1GetSpeed()
+{
+	return _pointsToSpeed(Encoder1GetPointsIn50ms());
+}
+
 /*
  * 返回编码器测量速度 m/s
  * 有正负
  */
 float EncoderGetSpeed()
 {
-	float pointsIn50ms =  EncoderGetPointsIn50ms();
-	return ((float) g_sysParam.encoderWheelPerimeter) / 10000.0 * pointsIn50ms * 20.0f / (float) ENCODER_POINTS_CYCLE ;
+	return _pointsToSpeed(EncoderGetPointsIn50ms());
 }
 
 
 static void TaskCheckEncoderStatus()
 {
 	int abnormalcount = 0;
-	const float SPEED_DIFF =  0.5;
+	int encoderabnormalCount = 0;
+	const float SPEED_DIFF_ENCODER_MOTOR =  0.5;
+	const float SPEED_DIFF_ENCODER_ENCODER =  0.2;
 	const int ABNORMAL_TIMES = 20;
 	const int REVERSE_THR = 10; // 1m
 	int reversingStartPos;
@@ -67,7 +104,7 @@ static void TaskCheckEncoderStatus()
 		Task_sleep(100);
 
 		//检测编码器返回速度和电机返回速度是否有0.5m/s以上的差别，如果有，则报故障
-		if(fabs( fabs(EncoderGetSpeed()) - MotoGetSpeed() ) > SPEED_DIFF)
+		if(fabs( fabs(EncoderGetSpeed()) - MotoGetSpeed() ) > SPEED_DIFF_ENCODER_MOTOR)
 		{
 			abnormalcount ++;
 		}
@@ -106,7 +143,20 @@ static void TaskCheckEncoderStatus()
 			Message_postError(ERROR_REVERSING);
 		}
 
-
+		//检测两个编码器之间的数据是否有大差异
+		if( fabs(EncoderGetSpeed() - Encoder1GetSpeed()) >  SPEED_DIFF_ENCODER_ENCODER)
+		{
+			encoderabnormalCount ++;
+		}
+		else
+		{
+			encoderabnormalCount =0;
+		}
+		if(encoderabnormalCount >= 3)
+		{
+			encoderabnormalCount = 0;
+			Message_postError(ERROR_ENCODER);
+		}
 
 	}
 
