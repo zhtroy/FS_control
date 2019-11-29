@@ -9,6 +9,7 @@
 #include <ti/sysbios/knl/Semaphore.h>
 #include <xdc/runtime/Error.h>
 
+#include "CLICommon.h"
 #include "FreeRTOS_CLI.h"
 
 /* Dimensions the buffer into which input characters are placed. */
@@ -92,7 +93,7 @@ void vUARTCommandConsoleStart( uint16_t usStackSize, UBaseType_t uxPriority )
 	taskParams.priority = uxPriority;
 	taskParams.stackSize = usStackSize;
 	/* Create that task that handles the console itself. */
-    taskHdl = Task_create(prvUARTCommandConsoleTask, &taskParams, &eb);
+    taskHdl = Task_create((ti_sysbios_knl_Task_FuncPtr)prvUARTCommandConsoleTask, &taskParams, &eb);
 	configASSERT( taskHdl );
 }
 /*-----------------------------------------------------------*/
@@ -125,7 +126,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 	//xPort = xSerialPortInitMinimal( configCLI_BAUD_RATE, cmdQUEUE_LENGTH );
 
 	/* Send the welcome message. */
-	vSerialPutString(  ( signed char * ) pcWelcomeMessage, ( unsigned short ) strlen( pcWelcomeMessage ) );
+	vSerialPutString((char * ) pcWelcomeMessage, ( unsigned short ) strlen( pcWelcomeMessage ) );
 
 	for( ;; )
 	{
@@ -201,20 +202,20 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 
                 for(i = 0;i<ucInputIndex;i++)
                 {
-                    vSerialPutString(( signed char * ) pcDelchar, ( unsigned short ) strlen( pcDelchar ) );
+                    vSerialPutString((char * ) pcDelchar, ( unsigned short ) strlen( pcDelchar ) );
                 }
                 
 				memset( cInputString, 0x00, cmdMAX_INPUT_SIZE );
 
                 strcpy( cInputString, cLastInputString[ucHisPos] );
                 ucInputIndex = strlen( cInputString );
-                vSerialPutString(( signed char * ) cInputString,ucInputIndex);
+                vSerialPutString((char * ) cInputString,ucInputIndex);
                
             }
 			else if( cRxedChar == '\n' || cRxedChar == '\r' )
 			{
 				/* Just to space the output from the input. */
-				vSerialPutString(( signed char * ) pcNewLine, ( unsigned short ) strlen( pcNewLine ) );
+				vSerialPutString((char * ) pcNewLine, ( unsigned short ) strlen( pcNewLine ) );
 
 				/* Pass the received command to the command interpreter.  The
 				command interpreter is called repeatedly until it returns
@@ -228,7 +229,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 						xReturned = FreeRTOS_CLIProcessCommand( cInputString, pcOutputString, configCOMMAND_INT_MAX_OUTPUT_SIZE );
 
 						/* Write the generated string to the UART. */
-						vSerialPutString( ( signed char * ) pcOutputString, ( unsigned short ) strlen( pcOutputString ) );
+						vSerialPutString( (char * ) pcOutputString, ( unsigned short ) strlen( pcOutputString ) );
 
 					} while( xReturned != pdFALSE );
 
@@ -242,7 +243,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 				}
 				else;
 
-                vSerialPutString(( signed char * ) pcEndOfOutputMessage, ( unsigned short ) strlen( pcEndOfOutputMessage ) );
+                vSerialPutString((char * ) pcEndOfOutputMessage, ( unsigned short ) strlen( pcEndOfOutputMessage ) );
 			}
 			else
 			{
@@ -252,7 +253,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 					string - if any. */
 					if( ucInputIndex > 0 )
 					{
-                        vSerialPutString(( signed char * ) pcDelchar, ( unsigned short ) strlen( pcDelchar ) );
+                        vSerialPutString((char * ) pcDelchar, ( unsigned short ) strlen( pcDelchar ) );
 						ucInputIndex--;
 						cInputString[ ucInputIndex ] = '\0';
 					}
@@ -265,7 +266,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 					if( ( cRxedChar >= ' ' ) && ( cRxedChar <= '~' ) )
 					{
                         //xSerialPutChar( cRxedChar);
-						vSerialPutString(&cRxedChar, 1 );
+						vSerialPutString((char *)&cRxedChar, 1 );
 
 						if( ucInputIndex < cmdMAX_INPUT_SIZE )
 						{

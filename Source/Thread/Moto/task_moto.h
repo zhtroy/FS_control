@@ -296,7 +296,7 @@ typedef struct{
 
 extern fbdata_t g_fbData;
 uint16_t MotoGetRealRPM(void);
-uint8_t MotoSetErrorCode(uint8_t code);
+void MotoSetErrorCode(uint8_t code);
 extern void MotoSetMotoSel(enum motoSel sel);
 extern enum motoSel MotoGetMotoSel();
 extern void MotoSetControlMode(enum motoMode mode);

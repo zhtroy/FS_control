@@ -17,8 +17,6 @@
 #include "assert.h"
 #include "common.h"
 
-
-
 #define RFID_MBOX_DEPTH (16)
 /****************************************************************************/
 /*                                                                          */
@@ -47,11 +45,13 @@ static RFID_instance_t * getInstanceByDeviceNum(uint16_t deviceNum);
 
 
 //utils function====================
-
+#if 0
 static unsigned char calculateCRCAdd(unsigned char A, unsigned char B)
 {
 	return (unsigned char)(A + B)&(0xFF);
 }
+#endif
+
 static unsigned char calculateCRC(unsigned char * data, int len)
 {
 	int sum = 0;
@@ -136,7 +136,7 @@ static RFID_instance_t * getInstanceByDeviceNum(uint16_t deviceNum)
 static uint16_t getRFIDnumByUartNum(uint16_t uartNum)
 {
 	uint16_t i;
-	RFID_instance_t * pinst;
+//	RFID_instance_t * pinst;
 	int rfid_cfg_num;
 
 	rfid_cfg_num = sizeof(rfid_cfg_table)/ sizeof (rfid_cfg_table[0]);
@@ -181,7 +181,7 @@ void RFIDDeviceOpen(uint16_t deviceNum)
     
 	//连接串口
 	UartNs550Init(pinst->uartDeviceNum,uartRFIDIntrHandler);
-    UartNs550Recv(deviceNum, &rfidUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+    UartNs550Recv(deviceNum, rfidUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 }
 
 /*****************************************************************************
@@ -478,10 +478,10 @@ void RFIDProcess(uint16_t deviceNum)
 
 static void uartRFIDIntrHandler(void *callBackRef, u32 event, unsigned int eventData)
 {
-	u8 Errors;
+//	u8 Errors;
 	u16 UartDeviceNum = *((u16 *)callBackRef);
 	u16 RFIDDeviceNum;
-    u8 *NextBuffer;
+//    u8 *NextBuffer;
     RFID_instance_t * pinst;
 
 
@@ -496,11 +496,11 @@ static void uartRFIDIntrHandler(void *callBackRef, u32 event, unsigned int event
 	if (event == XUN_EVENT_RECV_DATA || event == XUN_EVENT_RECV_TIMEOUT) {
         rfidUartDataObj.length = eventData;
         Mailbox_post(pinst->recvMbox, (Ptr *)&rfidUartDataObj, BIOS_NO_WAIT);
-        UartNs550Recv(UartDeviceNum, &rfidUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+        UartNs550Recv(UartDeviceNum, rfidUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 	}
 
 	if (event == XUN_EVENT_RECV_ERROR) {
-		Errors = UartNs550GetLastErrors(UartDeviceNum);
+//		Errors = UartNs550GetLastErrors(UartDeviceNum);
 	}
 }
 

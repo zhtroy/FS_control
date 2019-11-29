@@ -291,7 +291,7 @@ int32_t sja1000Open(void * obj)
 	/*设置工作于peli or basic 模式并且只激活tx0和rx0*/
 	sja1000RegWrite(sja1000Obj,(uint32_t)&sja1000Regs->regs_p.cdr_p,0xc0);
 	/*初始化定时器既波特率*/
-	if ((sja1000Obj->sja1000_params_table.bandRate>=  BAUDTATE_20K) && (sja1000Obj->sja1000_params_table.bandRate<= BAUDTATE_1000K))
+	if((sja1000Obj->sja1000_params_table.bandRate > BAUDTATE_20K) && (sja1000Obj->sja1000_params_table.bandRate<= BAUDTATE_1000K))
 	{
 		index=sja1000Obj->sja1000_params_table.bandRate;
 	}
@@ -301,6 +301,7 @@ int32_t sja1000Open(void * obj)
 		sja1000Obj->sja1000_params_table.bandRate=BAUDTATE_20K;
 		SJA1000_DEBUG_LOG(DEBUG_WARNING,"波特率%d不支持,默认配置成20K",sja1000Obj->sja1000_params_table.bandRate,0,0,0,0);
 	}
+
 	sja1000RegWrite(sja1000Obj,(uint32_t)&sja1000Regs->regs_p.btr0_p,sja1000_timing_table_sample[index][0]);
 	sja1000RegWrite(sja1000Obj,(uint32_t)&sja1000Regs->regs_p.btr1_p,sja1000_timing_table_sample[index][1]);
 	/*初始化滤波器acr*/
@@ -516,7 +517,7 @@ int32_t sja1000State(sja1000Obj_t * sja1000Obj)
 {
 	sja1000Reg_t* sja1000Regs = (sja1000Reg_t*)SJA1000_MODULE_BASE_ADDR;	
 	int8_t regValue;
-	uint32_t cnt = 0;
+//	uint32_t cnt = 0;
 	sja1000RegRead(sja1000Obj,(uint32_t)&sja1000Regs->regs_p.status_p,&regValue);
 	if((regValue&0x80) == 0x80)	/*总线关闭:发送错误次数255*/
 	{
@@ -536,6 +537,7 @@ int32_t sja1000State(sja1000Obj_t * sja1000Obj)
 			return DEV_EXIT_RESET_FAIL;
 		}	
 	}
+
 	sja1000RegRead(sja1000Obj,(uint32_t)&sja1000Regs->regs_p.status_p,&regValue);
 	if((regValue&0x40) == 0x40)	/*计数器超过阀门值*/
 	{
@@ -555,7 +557,9 @@ int32_t sja1000State(sja1000Obj_t * sja1000Obj)
 			SJA1000_DEBUG_LOG(DEBUG_ERROR,"sja1000退出复位模式失败",DEV_EXIT_RESET_FAIL,0,0,0,0);
 			return DEV_EXIT_RESET_FAIL;
 		}	
-	}	
+	}
+
+	return 0;
 }
 
 /*****************************************************************************
@@ -575,7 +579,7 @@ int32_t sja1000Write(void * obj,void * data)
 	sja1000Reg_t* sja1000Regs = (sja1000Reg_t*)SJA1000_MODULE_BASE_ADDR;
 	uint32_t i;
 	int8_t regValue;
-	uint32_t timeOut=0;
+//	uint32_t timeOut=0;
 	uint32_t idTmp=0;
 	if(sja1000Obj == NULL)
 	{
@@ -799,7 +803,7 @@ int32_t sja1000IoCtl(void * obj,uint8_t funcNo,uint32_t *arg)
     {
         case CAN_BAUD_SET: 
 			tmp=*arg;
-            if ((tmp>=  BAUDTATE_20K) && (tmp<= BAUDTATE_1000K))
+            if ((tmp > BAUDTATE_20K) && (tmp<= BAUDTATE_1000K))
             {
             	/*进入复位工作模式*/
 				if(sja1000EnterReset(sja1000Obj)!=0)
@@ -996,7 +1000,7 @@ int32_t sja1000IoCtl(void * obj,uint8_t funcNo,uint32_t *arg)
 			}
             break;
         case CAN_FILER:/*SELECT处理*/
-			if((*arg)<0||(*arg)>1)
+			if((*arg)>1)
 			{
 				SJA1000_DEBUG_LOG(DEBUG_ERROR,"滤波参数错误",DEV_FILTER_PARAM_ERROR,0,0,0,0);
 				return DEV_FILTER_PARAM_ERROR;
@@ -1020,7 +1024,7 @@ int32_t sja1000IoCtl(void * obj,uint8_t funcNo,uint32_t *arg)
             break;
 		case CAN_MODE:
 			tmp=*arg;
-			if(tmp>SJA100_OPERATION_LOOPBACK||tmp<SJA100_OPERATION_NORMAL)
+			if(tmp>SJA100_OPERATION_LOOPBACK)
 			{
 				SJA1000_DEBUG_LOG(DEBUG_ERROR,"sja1000不支持的工作模式",DEV_WORK_MODE_NONSUPPORT,0,0,0,0);
 				return DEV_WORK_MODE_NONSUPPORT;

@@ -25,7 +25,7 @@ int16_t EncoderGetDeltaPoint()
 
     dco = EMIFAReadWord(FPGA_DCO_LOW,0);
     dco += (EMIFAReadWord(FPGA_DCO_HIGH,0) << 8);
-    dptr = &dco;
+    dptr = (int16_t*)&dco;
 
     return *dptr;
 }
@@ -37,7 +37,7 @@ int16_t EncoderGetPointsIn50ms()
 
     sco = EMIFAReadWord(FPGA_SCO_LOW,0);
 	sco += (EMIFAReadWord(FPGA_SCO_HIGH,0) << 8);
-	sptr = &sco;
+	sptr = (int16_t *)&sco;
 
 	return *sptr;
 }
@@ -123,7 +123,7 @@ void EncoderInit()
 	Task_Params_init(&taskParams);
 	taskParams.priority = 5;
 	taskParams.stackSize = 2048;
-	task = Task_create(TaskCheckEncoderStatus, &taskParams, NULL);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)&TaskCheckEncoderStatus, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);

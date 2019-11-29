@@ -92,4 +92,4 @@ double  ml_acos(double);
 #endif
 
 /*---------------------------*/
-#endif /* !_ML_MATH_H_ */
+#endif/* !_ML_MATH_H_ */

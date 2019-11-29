@@ -11,6 +11,7 @@
 #include "Moto/task_moto.h"
 #include "Message/Message.h"
 
+#include <string.h>
 #include "stdint.h"
 #include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/knl/Semaphore.h>
@@ -53,7 +54,7 @@ static uint8_t isSameAdjustArea = 0;
 /*
  * task
  */
-static Task_Handle m_task_handshakefrontcar = NULL;
+//static Task_Handle m_task_handshakefrontcar = NULL;
 
 /*
  * sems
@@ -99,7 +100,6 @@ static void V2VSendTask(UArg arg0, UArg arg1)
 
 	uint32_t distanceDiff;
 	uint16_t backCarId = 0;
-	uint8_t backCarIndex = 0;
 
 	int backIdx = 0;
 

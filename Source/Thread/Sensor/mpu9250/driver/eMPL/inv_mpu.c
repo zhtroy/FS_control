@@ -911,7 +911,7 @@ int mpu_get_gyro_reg(short *data, unsigned long *timestamp)
     data[1] = (tmp[2] << 8) | tmp[3];
     data[2] = (tmp[4] << 8) | tmp[5];
     if (timestamp)
-        get_ms(timestamp);
+        get_ms((uint32_t *)timestamp);
     return 0;
 }
 
@@ -934,7 +934,7 @@ int mpu_get_accel_reg(short *data, unsigned long *timestamp)
     data[1] = (tmp[2] << 8) | tmp[3];
     data[2] = (tmp[4] << 8) | tmp[5];
     if (timestamp)
-        get_ms(timestamp);
+        get_ms((uint32_t *)timestamp);
     return 0;
 }
 
@@ -956,7 +956,7 @@ int mpu_get_temperature(long *data, unsigned long *timestamp)
         return -1;
     raw = (tmp[0] << 8) | tmp[1];
     if (timestamp)
-        get_ms(timestamp);
+        get_ms((uint32_t *)timestamp);
 
     data[0] = (long)((35 + ((raw - (float)st.hw->temp_offset) / st.hw->temp_sens)) * 65536L);
     return 0;
@@ -1777,7 +1777,9 @@ int mpu_read_fifo(short *gyro, short *accel, unsigned long *timestamp,
             return -2;
         }
     }
-    get_ms((unsigned long*)timestamp);
+//    get_ms((unsigned long*)timestamp);
+    get_ms((uint32_t *)timestamp);
+
 
     if (i2c_read(st.hw->addr, st.reg->fifo_r_w, packet_size, data))
         return -1;
@@ -3087,7 +3089,7 @@ int mpu_get_compass_reg(short *data, unsigned long *timestamp)
     data[2] = ((long)data[2] * st.chip_cfg.mag_sens_adj[2]) >> 8;
 
     if (timestamp)
-        get_ms(timestamp);
+        get_ms((uint32_t *)timestamp);
     return 0;
 #else
     return -1;

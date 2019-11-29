@@ -5,21 +5,26 @@
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/knl/Task.h>
 #include "fpga_periph_def.h"
+#include "emifa_app.h"
 
-static int32_t vc = 0;
-static int32_t ve = 0;
-static int32_t te = 0;
+
+//static int32_t vc = 0;
+//static int32_t ve = 0;
+//static int32_t te = 0;
 
 void speedSet(int32_t slVc,int32_t slVe,int32_t slTe)
 {
+#if 0
     vc = slVc;
     ve = slVe;
     te = slTe;
+#endif
 }
+
 
 void taskTestSpeed(void)
 {
-    int32_t vg = 0,vgR = 0;
+//    int32_t vg = 0,vgR = 0;
     uint16_t dco = 0;
     uint16_t sco = 0;
     uint16_t tmp = 0;
@@ -30,12 +35,12 @@ void taskTestSpeed(void)
         Task_sleep(100);
         dco = EMIFAReadWord(FPGA_DCO_LOW,0);
         dco += (EMIFAReadWord(FPGA_DCO_HIGH,0) << 8);
-        dptr = &dco;
+        dptr = (int16_t *)&dco;
 
 
         sco = EMIFAReadWord(FPGA_SCO_LOW,0);
         sco += (EMIFAReadWord(FPGA_SCO_HIGH,0) << 8);
-        sptr = &sco;
+        sptr = (int16_t *)&sco;
 
         if(dco != tmp)
         {
@@ -67,7 +72,7 @@ void testSpeedControlTask(void)
     Task_Params_init(&taskParams);
     taskParams.priority = 5;
     taskParams.stackSize = 2048;
-    task = Task_create(taskTestSpeed, &taskParams, &eb);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)taskTestSpeed, &taskParams, &eb);
     if (task == NULL) {
         System_printf("Task_create() failed!\n");
         BIOS_exit(0);

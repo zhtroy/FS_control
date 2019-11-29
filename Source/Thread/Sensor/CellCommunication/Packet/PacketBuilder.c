@@ -29,7 +29,7 @@ void PacketBuildCabStateChange(cell_packet_t * packet,uint32_t reqid, uint32_t s
 	statechange.ps = htonl(statechange.ps);
 	statechange.nid = htonll(statechange.nid);
 
-	CellPacketCtor(packet, flag,CELL_CMD_CABSTATECHANGE,reqid,srcid,dstid,&statechange,sizeof(statechange));
+	CellPacketCtor(packet, flag,CELL_CMD_CABSTATECHANGE,reqid,srcid,dstid,(char *)&statechange,sizeof(statechange));
 }
 
 void PacketBuildCabPulse(cell_packet_t * packet, uint32_t reqid, uint32_t srcid, uint32_t dstid)
@@ -46,6 +46,5 @@ void PacketBuildCabStatus(cell_packet_t * packet, uint32_t reqid, uint32_t srcid
 	cabstatus.state = htonl(cabstatus.state);
 	cabstatus.ts = htonll(cabstatus.ts);
 
-	CellPacketCtor(packet, CELL_TYPE_REQ, CELL_CMD_CABSTATUS, reqid, srcid, dstid, &cabstatus,sizeof(cabstatus)	);
-
+	CellPacketCtor(packet, CELL_TYPE_REQ, CELL_CMD_CABSTATUS, reqid, srcid, dstid, (char *)&cabstatus,sizeof(cabstatus)	);
 }

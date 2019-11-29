@@ -59,8 +59,8 @@ void Message_init(){
 	Int i;
 	p_msg_t msg;
 	Error_Block eb;
-	Task_Handle task;
-	Task_Params taskParams;
+//	Task_Handle task;
+//	Task_Params taskParams;
 
     // 创建一个信号量
     Semaphore_Params semParams;

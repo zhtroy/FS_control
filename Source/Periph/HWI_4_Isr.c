@@ -14,7 +14,7 @@
 #include "gpio.h"
 #include "soc_C6748.h"
 #include "canModule.h"
-#include "signal.h"
+#include "signal_.h"
 
 #define GPIO_UART_INT (1)
 #define GPIO_CAN_INT  (2)

@@ -30,4 +30,5 @@ void MototaskInit();
 
 void testMPU9250TaskInit(void);
 
+void testZigbeeControlHSM_init();
 #endif /* TESTS_H_ */

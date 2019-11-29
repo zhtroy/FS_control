@@ -47,7 +47,7 @@ void testPhotoElectric_init()
 	taskParams.priority = 3;
 	taskParams.stackSize = 2048;
 	taskParams.arg0 = 0;
-	task = Task_create(taskPhotoElectric, &taskParams, &eb);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)taskPhotoElectric, &taskParams, &eb);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
@@ -55,7 +55,7 @@ void testPhotoElectric_init()
 
 	taskParams.priority = 3;
 	taskParams.stackSize = 2048;
-	task = Task_create(testPhotoTask, &taskParams, &eb);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)testPhotoTask, &taskParams, &eb);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);

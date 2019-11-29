@@ -185,7 +185,7 @@ static CanHardWareReset(uint8_t devsNum);
  * 输入参数: void
  * 输出参数: 无
  * 返 回 值: 0(成功)/负数(失败)
- * 备注: 
+ * 备注:
 *****************************************************************************/
 int32_t CanTableInit(void)
 {
@@ -201,13 +201,13 @@ int32_t CanTableInit(void)
 /*****************************************************************************
  * 函数名称: int32_t canOpen(uint8_t devsNum,void * canIsrCall,int32_t arg)
  * 函数说明: 打开并初始化模块化中的设备 该接口会对设备资源表中定义的模块进行初始化操作
- * 输入参数: 
+ * 输入参数:
  *			devsNum:需要打开的设备设备号
  *			canIsrCall:中断回调函数
  *			arg:中断回调函数参数
  * 输出参数: 无
  * 返 回 值: 0(成功)/负数(失败)
- * 备注: 
+ * 备注:
 *****************************************************************************/
 int32_t CanOpen(uint8_t devsNum,isrFuncPtr_t canIsrCall,int32_t arg)
 {
@@ -222,7 +222,7 @@ int32_t CanOpen(uint8_t devsNum,isrFuncPtr_t canIsrCall,int32_t arg)
 	/*实例与驱动匹配(同一个驱动可以匹配多个实例)*/
 	for(i=0;i<CAN_DEV_NUM;i++)
 	{
-		if(strcmp(can_cfg_table[devsNum].hwName,can_func_table[i].hwName)==0)
+		if(strcmp((const char *)can_cfg_table[devsNum].hwName,(const char *)can_func_table[i].hwName)==0)
 		{
 			drvIndex=i;
 			paramIndex=devsNum;
@@ -249,7 +249,7 @@ int32_t CanOpen(uint8_t devsNum,isrFuncPtr_t canIsrCall,int32_t arg)
 	can_dev_table[devsNum].drvIndex=drvIndex;
 	can_dev_table[devsNum].paramIndex=paramIndex;
 	/*获取设备名 格式:/设备名/设备单元*/
-	sprintf(can_dev_table[devsNum].hwName,"%s%d",can_cfg_table[devsNum].hwName,can_cfg_table[devsNum].devsNum);
+	sprintf((char*)can_dev_table[devsNum].hwName,"%s%d",can_cfg_table[devsNum].hwName,can_cfg_table[devsNum].devsNum);
 
     /*硬件复位CAN控制器*/
     CanHardWareReset(devsNum);
@@ -266,11 +266,11 @@ int32_t CanOpen(uint8_t devsNum,isrFuncPtr_t canIsrCall,int32_t arg)
 /*****************************************************************************
  * 函数名称: int32_t canClose(uint8_t devsNum)
  * 函数说明: 关闭并释放模块的资源 该接口会对设备资源表中定义的模块进行初始化操作
- * 输入参数: 
+ * 输入参数:
  *			devsNum:需要打开的设备设备号
  * 输出参数: 无
  * 返 回 值: 0(成功)/负数(失败)
- * 备注: 
+ * 备注:
 *****************************************************************************/
 int32_t CanClose(uint8_t devsNum)
 {
@@ -297,12 +297,12 @@ int32_t CanClose(uint8_t devsNum)
 /*****************************************************************************
  * 函数名称: int32_t canWrite(uint8_t devsNum,canDataObj_t * canData)
  * 函数说明: 设备发送数据接口
- * 输入参数: 
+ * 输入参数:
  *			devsNum:需要打开的设备设备号
  *			canData:数据
  * 输出参数: 无
  * 返 回 值: 正数(实际发送的长度)/负数(失败)
- * 备注: 
+ * 备注:
 *****************************************************************************/
 int32_t CanWrite(uint8_t devsNum,canDataObj_t * canData)
 {
@@ -327,12 +327,12 @@ int32_t CanWrite(uint8_t devsNum,canDataObj_t * canData)
 /*****************************************************************************
  * 函数名称: int32_t canRead(uint8_t devsNum,canDataObj_t * canData)
  * 函数说明: 设备接收数据接口
- * 输入参数: 
+ * 输入参数:
  *			devsNum:需要打开的设备设备号
  *			canData:数据
  * 输出参数: 无
  * 返 回 值: 正数(实际接收的长度)/负数(失败)
- * 备注: 
+ * 备注:
 *****************************************************************************/
 int32_t CanRead(uint8_t devsNum,canDataObj_t * canData)
 {
@@ -357,13 +357,13 @@ int32_t CanRead(uint8_t devsNum,canDataObj_t * canData)
 /*****************************************************************************
  * 函数名称: int32_t canIoCtl(uint8_t devsNum,uint32_t funcNo,uint32_t *arg)
  * 函数说明: 设备发送数据接口
- * 输入参数: 
+ * 输入参数:
  *			devsNum:设备号
  *			funcNo:控制选项
  *			arg:控制参数
  * 输出参数: 无
  * 返 回 值: 0(成功)/负数(失败)
- * 备注: 
+ * 备注:
 *****************************************************************************/
 int32_t CanIoCtl(uint8_t devsNum,uint8_t funcNo,uint32_t *arg)
 {
@@ -388,11 +388,11 @@ int32_t CanIoCtl(uint8_t devsNum,uint8_t funcNo,uint32_t *arg)
 /*****************************************************************************
  * 函数名称: canIsr
  * 函数说明: CAN设备中断回调函数
- * 输入参数: 
+ * 输入参数:
  *			devsNum:CAN设备号
  * 输出参数: 无
  * 返 回 值: 无
- * 备注: 
+ * 备注:
 *****************************************************************************/
 
 void CanIsr(int32_t devsNum)

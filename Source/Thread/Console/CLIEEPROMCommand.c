@@ -16,6 +16,8 @@
 #include "mpu9250/mpu9250_drv.h"
 #include <ti/sysbios/knl/Task.h>
 
+#include "CLICommon.h"
+
 BaseType_t prvSetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
@@ -112,7 +114,7 @@ BaseType_t prvSetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char 
         {
             usValue = autoStrtol(pcParameter);
             memset( pcWriteBuffer, 0x00, xWriteBufferLen );
-            if(mpu9250WriteBytes(EEPROM_SLV_ADDR,0,2,&usValue) == -1)
+            if(mpu9250WriteBytes(EEPROM_SLV_ADDR,0,2,(uint8_t*)&usValue) == -1)
             {
 
                 strncpy( pcWriteBuffer, "\r\nCar ID Set Failed\r\n", xWriteBufferLen );
@@ -130,9 +132,10 @@ BaseType_t prvSetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char 
 
 BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
 {
-    const char *pcParameter;
-    BaseType_t xParameterStringLength, xReturn;
-    static UBaseType_t uxParameterNumber = 0;
+//    const char *pcParameter;
+//    BaseType_t xParameterStringLength;
+    BaseType_t xReturn;
+//    static UBaseType_t uxParameterNumber = 0;
     static uint16_t usValue = 0;
 
     /* Remove compile time warnings about unused parameters, and check the
@@ -144,7 +147,7 @@ BaseType_t prvGetCarID( char *pcWriteBuffer, size_t xWriteBufferLen, const char 
 
     /* Command Process*/
     memset( pcWriteBuffer, 0x00, xWriteBufferLen );
-    if(mpu9250ReadBytes(EEPROM_SLV_ADDR,128,2,&usValue) == -1)
+    if(mpu9250ReadBytes(EEPROM_SLV_ADDR,128,2,(uint8_t*)&usValue) == -1)
     {
         strncpy( pcWriteBuffer, "\r\nCar ID Get Failed\r\n", xWriteBufferLen );
     }
@@ -214,7 +217,7 @@ BaseType_t prvEEPROMClear( char *pcWriteBuffer, size_t xWriteBufferLen, const ch
                     len = ucLen;
                     ucLen = 0;
                 }
-                mpu9250WriteBytes(EEPROM_SLV_ADDR,ucAddr,len,pcWriteBuffer);
+                mpu9250WriteBytes(EEPROM_SLV_ADDR,ucAddr,len,(uint8_t *)pcWriteBuffer);
                 Task_sleep(10);
                 ucAddr += len;
             }
@@ -378,6 +381,6 @@ BaseType_t prvEEPROMRead( char *pcWriteBuffer, size_t xWriteBufferLen, const cha
 uint16_t GetLocalCarID()
 {
     uint16_t usValue;
-    mpu9250ReadBytes(EEPROM_SLV_ADDR,0,2,&usValue);
+    mpu9250ReadBytes(EEPROM_SLV_ADDR,0,2,(uint8_t *)&usValue);
     return usValue;
 }

@@ -38,11 +38,11 @@
 #define RFID_DEVICENUM  0  //TODO: 放入一个配置表中
 
 extern fbdata_t g_fbData;
-static Clock_Handle clock_rfid_heart;
-static uint8_t timeout_flag = 0;
+//static Clock_Handle clock_rfid_heart;
+//static uint8_t timeout_flag = 0;
 static uint32_t circleNum = 0;
-static uint8_t lastrfid;
-static uint8_t rfidOnline = 0;
+//static uint8_t lastrfid;
+//static uint8_t rfidOnline = 0;
 static Mailbox_Handle RFIDV2vMbox;
 static Semaphore_Handle checkEpcSem;
 static Semaphore_Handle checkEpcCoroutineSem;
@@ -58,6 +58,7 @@ static epc_t m_scanEpc = {0};
 
 Mailbox_Handle bSecMbox;
 
+#if 0
 static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
 {
 #if 0
@@ -78,7 +79,9 @@ static xdc_Void RFIDConnectionClosed(xdc_UArg arg)
     //RFIDStartLoopCheckEpc(RFID_DEVICENUM);
     //setErrorCode(ERROR_CONNECT_TIMEOUT);
 }
+#endif
 
+#if 0
 static void InitTimer()
 {
 	Clock_Params clockParams;
@@ -90,6 +93,7 @@ static void InitTimer()
 
 	clock_rfid_heart = Clock_create(RFIDConnectionClosed, 10000, &clockParams, NULL);
 }
+#endif
 
 int32_t GetMs()
 {
@@ -109,7 +113,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 {
 	p_msg_t msg;
 	epc_t epc;
-	int32_t timeMs;
+//	int32_t timeMs;
 	car_mode_t mode = Manual;
 
 	switch(type)
@@ -141,7 +145,7 @@ static void RFIDcallBack(uint16_t deviceNum, uint8_t type, uint8_t data[], uint3
 			 * 1.非自动模式
 			 * 2.出轨点
 			 */
-			mode = MotoGetCarMode();
+			mode = (car_mode_t)MotoGetCarMode();
 			if(mode == Auto )
 			{
 				//启动检查线程
@@ -337,12 +341,12 @@ Void taskRFID(UArg a0, UArg a1)
     Task_Params_init(&taskParams);
 	taskParams.priority = 5;
 	taskParams.stackSize = 2048;
-	task = Task_create(taskCheckScanEPC, &taskParams, &eb);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)taskCheckScanEPC, &taskParams, &eb);
 	if (task == NULL) {
 		BIOS_exit(0);
 	}
 
-	task = Task_create(taskCheckScanEPCcoroutine, &taskParams, &eb);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)taskCheckScanEPCcoroutine, &taskParams, &eb);
 	if (task == NULL) {
 		BIOS_exit(0);
 	}
@@ -381,8 +385,8 @@ void taskCreateRFID(UArg a0, UArg a1)
     uint32_t carPos = 0;
     uint32_t lastPos = 0;
     uint32_t rfidDist = 0;
-    car_mode_t mode = Manual;
-    enum motoGear gear = GEAR_NONE;
+//    car_mode_t mode = Manual;
+//    enum motoGear gear = GEAR_NONE;
     rfidPoint_t virtualRfid;
     epc_t epc;
     p_msg_t msg;
@@ -420,7 +424,7 @@ void taskCreateRFID(UArg a0, UArg a1)
                 (rfidQueue[0].byte[9] << 8) +
                 rfidQueue[0].byte[10];
 
-        gear = MotoGetGear();
+//        gear = MotoGetGear();
 
         //特殊处理用于0点翻转
         if( (lastPos <= rfidDist && rfidDist <= carPos) || (lastPos>carPos && (rfidDist <= 10 || rfidDist >=TOTAL_DISTANCE-10)) )

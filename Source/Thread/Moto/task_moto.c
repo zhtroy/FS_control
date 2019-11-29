@@ -90,12 +90,12 @@ static void MotoCanIntrHandler(int32_t devsNum,int32_t event)
 {
     canDataObj_t rxData;
 	
-	if (event == 1)         /* 收到一帧数据 */ 
+	if (event == 1)         /* 收到一帧数据 */
     {
         CanRead(devsNum, &rxData);
         Mailbox_post(rxDataMbox, (Ptr *)&rxData, BIOS_NO_WAIT);
 	}
-    else if (event == 2)    /* 一帧数据发送完成 */ 
+    else if (event == 2)    /* 一帧数据发送完成 */
     {
         /* 发送中断 */
         Semaphore_post(txReadySem);
@@ -243,16 +243,16 @@ static rfidPoint_t *calibrationQueue;
 
 static void MotoUpdateDistanceTask(void)
 {
-    uint16_t lastCircleNum = 0;
-    uint16_t curCircleNum = 0;
-    uint16_t circleDiff = 0;
+//    uint16_t lastCircleNum = 0;
+//    uint16_t curCircleNum = 0;
+//    uint16_t circleDiff = 0;
     p_msg_t msg;
     uint8_t size = 0;
     uint32_t calibrationPoint = 0;
     uint32_t calibrationPointMin = 0;
 
-    uint8_t lastbSection = 0;
-    uint8_t bSection = 0;
+//    uint8_t lastbSection = 0;
+//    uint8_t bSection = 0;
     int32_t deltaDist = 0;
     rfidPoint_t calibRfid;
     car_mode_t mode = Manual;
@@ -291,7 +291,7 @@ static void MotoUpdateDistanceTask(void)
 		m_disIncrement += step;
 
 #if 1
-        mode = MotoGetCarMode();
+        mode = (car_mode_t)MotoGetCarMode();
         /*
          * 非Auto模式下，采用物理RFID校准距离
          */
@@ -319,7 +319,7 @@ static void MotoUpdateDistanceTask(void)
                 }
 
                 //校正距离
-                lastCircleNum = MotoGetCircles();
+//                lastCircleNum = MotoGetCircles();
                 m_distance = epc.distance;
 
                 lastEpc = epc;
@@ -464,13 +464,13 @@ static void MotoRecvTask(void)
     uint16_t frontRpm = 0;
     uint16_t rearRpm = 0;
     uint16_t frontCircle = 0;
-    uint16_t rearCircle = 0;
+//    uint16_t rearCircle = 0;
     uint16_t calcRpm = 0;
     uint32_t canID;
     uint32_t maxThrottle = 0;
     canDataObj_t canRecvData;
     uint16_t vg = 0;
-    p_msg_t msg;
+//    p_msg_t msg;
     uint8_t pidMode = 0;
     uint8_t pidModeOld = 0;
     int volLowCount = 0;
@@ -478,13 +478,12 @@ static void MotoRecvTask(void)
 	int RPMzeroCount = 0;
 	int8_t brakeClearDelayCount = 0;
 	uint8_t stopCarPhase = 0;
-	float balanceThrottle = 0;
 
-	int frontReverseStartDistance = 0;
-	int rearReverseStartDistance = 0;
-	int distanceDiff = 0;
+//	int frontReverseStartDistance = 0;
+//	int rearReverseStartDistance = 0;
+//	int distanceDiff = 0;
 
-	const int REVERSE_THR = 10;  //1m
+//	const int REVERSE_THR = 10;  //1m
 
 	g_fbData.motorDataF.MotoId = MOTO_FRONT;
 	g_fbData.motorDataR.MotoId = MOTO_REAR;
@@ -592,7 +591,7 @@ static void MotoRecvTask(void)
     			g_fbData.motorDataR.DistanceH      = (uint8_t)canRecvData.Data[5];
     			g_fbData.motorDataR.ErrCodeL       = (uint8_t)canRecvData.Data[6];
     			g_fbData.motorDataR.ErrCodeH       = (uint8_t)canRecvData.Data[7];
-    			rearCircle = (g_fbData.motorDataR.DistanceH << 8) + g_fbData.motorDataR.DistanceL;
+//    			rearCircle = (g_fbData.motorDataR.DistanceH << 8) + g_fbData.motorDataR.DistanceL;
     			/* 收到心跳，重启定时器 */
     			Clock_setTimeout(clockMotoRearHeart,MOTO_CONNECT_TIMEOUT);
     			Clock_start(clockMotoRearHeart);
@@ -970,16 +969,16 @@ static uint16_t MotoGoalSpeedGen(uint16_t vc, float ksp, float ksi)
 static uint16_t MotoGoalSpeedGen(int16_t vc, float ksp, float ksi)
 {
     uint16_t ds;
-    uint16_t vf;
+//    uint16_t vf;
     uint32_t di;
     uint16_t vgs;
     static int16_t vg;
     static int32_t dis = 0;
     static int32_t disOld = 0;
     int32_t disDelta = 0;
-    int32_t vt;
+//    int32_t vt;
     float vd = 0;
-    static float vdTmp = 0;
+//    static float vdTmp = 0;
     const float KS = 0.2;
 
     /*
@@ -1007,7 +1006,7 @@ static uint16_t MotoGoalSpeedGen(int16_t vc, float ksp, float ksi)
      * vgs: 设定的目标速度
      * vt: 临时速度变量
      */
-    vf = V2VGetFrontCarSpeed();
+//    vf = V2VGetFrontCarSpeed();
     di = V2VGetDistanceToFrontCar();
     vgs = MotoGetGoalRPM();
 
@@ -1115,19 +1114,19 @@ void MototaskInit()
 	taskParams.priority = 5;
 	taskParams.stackSize = 2048;
     
-	task = Task_create(MotoSendTask, &taskParams, NULL);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)MotoSendTask, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
 
-    task = Task_create(MotoRecvTask, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)MotoRecvTask, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
 
-    task = Task_create(MotoUpdateDistanceTask, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)MotoUpdateDistanceTask, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
@@ -1136,7 +1135,7 @@ void MototaskInit()
 
 
 	taskParams.priority = 2;
-    task = Task_create(MotoSendFdbkToCellTask, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)MotoSendFdbkToCellTask, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
@@ -1254,7 +1253,7 @@ float MotoPidCalc(int16_t expRpm,int16_t realRpm,float kp,float ki, float ku,uin
     return adjThrottle;
 }
 
-uint8_t MotoSetErrorCode(uint8_t code)
+void MotoSetErrorCode(uint8_t code)
 {
     g_fbData.ErrorCode = code;
 }

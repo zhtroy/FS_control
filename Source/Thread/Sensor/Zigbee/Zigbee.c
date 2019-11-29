@@ -29,7 +29,7 @@ static uartDataObj_t recvDataObj;
 
 static void UartZigbeeIntrHandler(void *CallBackRef, u32 Event, unsigned int EventData)
 {
-	u8 Errors;
+//	u8 Errors;
 	u16 UartDeviceNum = *((u16 *)CallBackRef);
 	/*
 	 * All of the data has been sent.
@@ -49,7 +49,7 @@ static void UartZigbeeIntrHandler(void *CallBackRef, u32 Event, unsigned int Eve
 	if (Event == XUN_EVENT_RECV_DATA || Event == XUN_EVENT_RECV_TIMEOUT) {
 	    recvDataObj.length = EventData;
         Mailbox_post(recvMbox, (Ptr *)&recvDataObj, BIOS_NO_WAIT);
-        UartNs550Recv(UartDeviceNum, &recvDataObj.buffer, UART_REC_BUFFER_SIZE);
+        UartNs550Recv(UartDeviceNum, recvDataObj.buffer, UART_REC_BUFFER_SIZE);
 	}
 
 	/*
@@ -59,7 +59,7 @@ static void UartZigbeeIntrHandler(void *CallBackRef, u32 Event, unsigned int Eve
 	if (Event == XUN_EVENT_RECV_ERROR) {
 //		TotalReceivedCount = EventData;
 //		TotalErrorCount++;
-		Errors = UartNs550GetLastErrors(UartDeviceNum);
+//		Errors = UartNs550GetLastErrors(UartDeviceNum);
 	}
 }
 

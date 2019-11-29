@@ -168,13 +168,13 @@ Msg const * TopManual(car_hsm_t * me, Msg* msg)
 
 		case REMOTE_SELECT_MOTOR_EVT:
 		{
-			MotoSetMotoSel( EVT_CAST(msg, evt_remote_sel_motor_t)->mode );
+			MotoSetMotoSel((enum motoSel)(EVT_CAST(msg, evt_remote_sel_motor_t)->mode));
 			return 0;
 		}
 
 		case REMOTE_SELECT_GEAR_EVT:
 		{
-			MotoSetGear(EVT_CAST(msg, evt_remote_sel_gear_t)->gear);
+			MotoSetGear((enum motoGear)(EVT_CAST(msg, evt_remote_sel_gear_t)->gear));
 			return 0;
 		}
 

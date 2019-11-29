@@ -37,7 +37,7 @@ typedef enum{
 
 static void CommandUartIntrHandler(void *callBackRef, u32 event, unsigned int eventData)
 {
-    uint8_t errors;
+//    uint8_t errors;
     uint16_t uartDeviceNum = *((uint16_t *)callBackRef);
 
     if (event == XUN_EVENT_SENT_DATA) {
@@ -61,7 +61,7 @@ static void CommandUartIntrHandler(void *callBackRef, u32 event, unsigned int ev
         /*
          * 暂不处理
          */
-        errors = UartNs550GetLastErrors(uartDeviceNum);
+//        errors = UartNs550GetLastErrors(uartDeviceNum);
     }
 }
 
@@ -206,7 +206,7 @@ void CommandSend(char* data, int datalen, uint8_t type)
 	}
 
 
-	UartNs550SendBlock(COMMAND_UART_NUM,&m_sendPacket,datalen+4);  //加上包头，len, type
+	UartNs550SendBlock(COMMAND_UART_NUM,(int8_t *)&m_sendPacket,datalen+4);  //加上包头，len, type
 }
 
 

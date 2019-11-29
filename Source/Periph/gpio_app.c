@@ -12,7 +12,7 @@ static void GPIOBankPinMuxSet(void);
 static void GPIOBankPinInit(void);
 static void GPIOBank6Pin0PinMuxSetup(void);
 static void GPIOBank6Pin15PinMuxSetup(void);
-static void GPIOBank6Pin14PinMuxSetup(void);
+//static void GPIOBank6Pin14PinMuxSetup(void);
 static void GPIOBank6Pin13PinMuxSetup(void);
 static void GPIOBank6Pin10PinMuxSetup(void);
 static void GPIOBank0Pin0PinMuxSetup(void);
@@ -160,6 +160,7 @@ static void GPIOBank6Pin13PinMuxSetup(void)
         (PINMUX13_GPIO6_13_ENABLE | savePinmux);
 }
 
+#if 0
 static void GPIOBank6Pin14PinMuxSetup(void)
 {
     unsigned int savePinmux = 0;
@@ -175,6 +176,7 @@ static void GPIOBank6Pin14PinMuxSetup(void)
     HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(13)) =
         (PINMUX13_GPIO6_14_ENABLE | savePinmux);
 }
+#endif
 
 static void GPIOBank6Pin10PinMuxSetup(void)
 {

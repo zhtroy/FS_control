@@ -5,6 +5,7 @@
 #include <xdc/runtime/System.h>
 #include <xdc/runtime/Error.h>
 #include <ti/sysbios/BIOS.h>
+#include <stdio.h>
 #include "uartStdio.h"
 #include "logLib.h"
 
@@ -54,7 +55,7 @@ int LogInit(void)
     Task_Params_init(&taskParams);
 	taskParams.priority = LOG_TASK_PRIORITY;
 	taskParams.stackSize = LOG_TASK_STACK_SIZE;
-    logTaskId = Task_create (LogTask, &taskParams, NULL);
+    logTaskId = Task_create((ti_sysbios_knl_Task_FuncPtr)LogTask, &taskParams, NULL);
 
     if (logTaskId == NULL)
     {
@@ -78,7 +79,7 @@ int LogInit(void)
 /*****************************************************************************
 * 函数名称: logMsg
 * 函数说明: 初始化log的任务、邮箱和信号量
-* 输入参数: 
+* 输入参数:
 *           fmt:参数格式化方式
 *           arg1-arg6:待格式化参数
 * 输出参数: 无
@@ -89,7 +90,7 @@ int LogMsg(const char *fmt, ...)
 {
 
 	va_list vp;
-	uint32_t strAddr;
+	char *strAddr;
     va_start(vp,fmt);
     vsprintf(strArray[strIndex],fmt,vp);
     strAddr = strArray[strIndex];
@@ -164,7 +165,7 @@ static void LogTask (void)
 /*****************************************************************************
 * 函数名称: void LogPuts(char *txBuffer, int numBytesToWrite)
 * 函数说明: 静态函数，通过串口打印字符串
-* 输入参数: 
+* 输入参数:
 *           txBuffer: 发送数据指针
 *           numBytesToWrite: 发送数据长度
 * 输出参数: 无

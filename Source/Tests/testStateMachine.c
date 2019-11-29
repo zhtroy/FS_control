@@ -83,7 +83,7 @@ void UARTInputTask(UArg a0, UArg a1)
 
 void rfidTask(UArg a0, UArg a1)
 {
-	uint8_t c;
+//	uint8_t c;
 	p_msg_t msg;
 	uint8_t rfidmsg[] = {"rfid epc field"};
 	while(1)
@@ -104,7 +104,7 @@ void rfidTask(UArg a0, UArg a1)
 
 void mmRadarTask(UArg a0, UArg a1)
 {
-	uint8_t c;
+//	uint8_t c;
 	p_msg_t msg;
 	uint8_t rfidmsg[] = {"mm radar field"};
 	while(1)

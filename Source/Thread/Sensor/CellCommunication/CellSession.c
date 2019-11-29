@@ -15,6 +15,7 @@
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/MailBox.h>
 #include <ti/sysbios/knl/Task.h>
+#include <string.h>
 
 
 /*
@@ -22,13 +23,12 @@
  */
 #define CELL_SESSION_NUM (16)
 static cell_session_t m_sessions[CELL_SESSION_NUM];
-static Mailbox_Handle m_mailbox = 0;
-
+//static Mailbox_Handle m_mailbox = 0;					//20191121wp
 
 static void CellSessionClose(cell_session_t * ps)
 {
 	ps->isOpen = 0;
-	Clock_delete(ps->clock);
+	Clock_delete(&ps->clock);							//20191121wp
 }
 /*
  * session超时
@@ -134,8 +134,7 @@ void CellSessionInit(Mailbox_Handle mb)
 	 */
 	memset(&m_sessions,0 , sizeof(m_sessions));
 
-	m_mailbox = mb;
-
+//	m_mailbox = mb;									//20191121wp
 }
 
 

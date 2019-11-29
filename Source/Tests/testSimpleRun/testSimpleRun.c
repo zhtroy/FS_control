@@ -9,7 +9,7 @@
  */
 
 
-
+#include <string.h>
 #include "Message/Message.h"
 #include <xdc/runtime/Error.h>
 #include <ti/sysbios/BIOS.h>
@@ -17,6 +17,7 @@
 #include <ti/sysbios/knl/Queue.h>
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/knl/Task.h>
+
 #include "uartStdio.h"
 #include "watch.h"
 #include "uart.h"
@@ -53,7 +54,7 @@ Void taskSimpleRun(UArg a0, UArg a1)
 		switch(state){
 		case init:
 			if(msg->type == cell){
-				if(strcmp(msg->data, "go") == 0)  //命令go
+				if(strcmp((const char *)msg->data, (const char *)"go") == 0)  //命令go
 				{
 					UARTPuts("state: into waitRFID\n", -1);
 					state = waitRFID;
@@ -81,8 +82,8 @@ Void taskSimpleRun(UArg a0, UArg a1)
 
 void taskTheMotor(UArg a0, UArg a1)
 {
-	uint8_t c;
-	p_msg_t msg;
+//	uint8_t c;
+//	p_msg_t msg;
 	char str[50];
 
 	memset(str,1,50);

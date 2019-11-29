@@ -30,7 +30,9 @@ extern "C" {
 typedef long BaseType_t;
 typedef unsigned long UBaseType_t;
 
-
+int32_t autoStrtol(const char *str);
+uint8_t strSplitToData(char *pcParameter, uint8_t *data);
+uint8_t UARTSemGetc(uint8_t * val,uint32_t timeout);
 #ifdef __cplusplus
 }
 #endif

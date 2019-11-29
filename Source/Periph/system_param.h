@@ -71,8 +71,8 @@ extern systemParameter_t g_sysParam;
 //一些全局变量
 extern parameter_t g_var;
 
-void ParmInit();
+//void ParmInit();
 void ParamSendBack();
 uint8_t ParamWriteToEEPROM();
-
+void ParamInit();
 #endif /* SYSTEM_PARAM_H_ */

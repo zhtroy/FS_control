@@ -23,8 +23,11 @@
 #include <ti/sysbios/knl/Clock.h>
 #include "task_moto.h"
 #include "logLib.h"
+#include "Test_.h"
 #include "Sensor/RFID/EPCdef.h"
-#include "Sensor/ZCP/v2v_communication.h"
+#include "Sensor/ZCP/V2V.h"
+#include "Sensor/ZCP/V2C.h"
+
 #include "Sensor/SonicRadar/SonicRadar.h"
 #include "stdio.h"
 #include "Sensor/CellCommunication/CellCommunication.h"
@@ -357,7 +360,7 @@ static Void taskZigbeeControlMain_hsm(UArg a0, UArg a1)
 			case timer:
 			{
 				EVT_SETTYPE(&hsmEvt, TIMER_EVT);
-				EVT_CAST(&hsmEvt, evt_timeout_t)->type = pMsg->data[0];
+				EVT_CAST(&hsmEvt, evt_timeout_t)->type = (timeout_type_t)pMsg->data[0];
 				break;
 			}/*	case timer:*/
 

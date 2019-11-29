@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <_lock.h>
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
 #include "dmpKey.h"
@@ -1347,7 +1348,7 @@ int dmp_read_fifo(short *gyro, short *accel, long *quat,
     if (dmp.feature_mask & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT))
         decode_gesture(fifo_data + ii);
 
-    get_ms(timestamp);
+    get_ms((uint32_t *)timestamp);
     return 0;
 }
 

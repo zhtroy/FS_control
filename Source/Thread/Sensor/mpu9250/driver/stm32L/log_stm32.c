@@ -27,6 +27,7 @@
 #include "packet.h"
 #include "log.h"
 #include "uart.h"
+#include "uartStdio.h"
 
 #define BUF_SIZE        (256)
 #define PACKET_LENGTH   (23)

@@ -19,7 +19,7 @@ extern Void taskCellCommunication(UArg a0, UArg a1);
 static Void taskCellComMain(UArg a0, UArg a1)
 {
 	p_msg_t msg;
-	float distance;
+//	float distance;
 	while(1){
 		msg= Message_pend();
 		if(msg->type==cell){

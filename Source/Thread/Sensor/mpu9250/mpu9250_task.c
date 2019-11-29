@@ -383,8 +383,8 @@ static void MPU9250DataUpdate(mpu9250DataObj_t *dataObj)
 static void MPU9250Task(void)
 {
 	mpu9250DataObj_t dataObj;
-	float test = 0;
-	int16_t cnt = 0;
+//	float test = 0;
+//	int16_t cnt = 0;
 
 	int32_t result;
 	/* 打开设备
@@ -432,7 +432,7 @@ void MPU9250TaskInit(void)
 	taskParams.priority = 5;
 	taskParams.stackSize = 4096;
     
-	task = Task_create(MPU9250Task, &taskParams, NULL);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)MPU9250Task, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);

@@ -34,6 +34,8 @@
 
 #include "emifa/emifa_app.h"
 
+#include "TL6748.h"
+
 /****************************************************************************/
 /*                                                                          */
 /*              全局变量                                                    */
@@ -609,7 +611,7 @@ Exit:
 void TaskNDKInit()
 {
 	//复位PHY芯片 R127
-	EMIFA_write(0x30, 1);
+//	EMIFA_write(0x30, 1);
 
     // NDK 任务
 	Task_Handle NDKTaskHandle;

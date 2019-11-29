@@ -9,6 +9,7 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/Timestamp.h>
 #include <ti/sysbios/BIOS.h>
+#include <string.h>
 #include "Message/Message.h"
 #include "common.h"
 #include "fpga_ttl.h"
@@ -29,24 +30,23 @@ extern uint16_t getRPM(void);
 /********************************************************************************/
 static Semaphore_Handle txReadySem;
 static Semaphore_Handle changeRailSem;
-static uint8_t uBrake,uLastBrake;	//刹车信号
-static int8_t  deltaBrake;
-static int16_t sDeltaRPM,sBrake;
-static uint8_t servoStep=0;			//标记伺服位置
-static int32_t pulseCount;			//刹车位置与伺服当前位置差
-static int16_t pulseE4;
-static int16_t pulseE0;
+//static uint8_t uBrake,uLastBrake;	//刹车信号
+//static int8_t  deltaBrake;
+//static int16_t sDeltaRPM,sBrake;
+//static uint8_t servoStep=0;			//标记伺服位置
+//static int32_t pulseCount;			//刹车位置与伺服当前位置差
+//static int16_t pulseE4;
+//static int16_t pulseE0;
 
-
-static uint8_t railState;
-static uint8_t keyState;
+//static uint8_t railState;
+//static uint8_t keyState;
 static uint8_t expectedRailState;    //预期的轨道状态
 static uint8_t shouldCheckRail = 1;
 
 
 static Semaphore_Handle sem_txData;
 static Semaphore_Handle sem_rxData;
-static Semaphore_Handle sem_modbus;
+//static Semaphore_Handle sem_modbus;
 static Semaphore_Handle sem_startChangeRail;
 static Semaphore_Handle sem_startStopStation;
 static Semaphore_Handle sem_startTempStop;
@@ -54,10 +54,8 @@ static Mailbox_Handle recvMbox;
 static uartDataObj_t brakeUartDataObj;
 static uartDataObj_t recvUartDataObj;
 static Mailbox_Handle rxDataMbox = NULL;
-
-static uint8_t ackStatus = MODBUS_ACK_OK;
-
-static uint8_t changeRail = 0;
+//static uint8_t ackStatus = MODBUS_ACK_OK;
+//static uint8_t changeRail = 0;
 
 static brake_ctrl_t m_brakeCtrl = {
 		.Brake = 0,
@@ -69,9 +67,9 @@ static rail_ctrl_t m_railCtrl = {
 
 static void ServorUartIntrHandler(void *callBackRef, u32 event, unsigned int eventData)
 {
-	uint8_t Errors;
+//	uint8_t Errors;
 	uint16_t UartDeviceNum = *((u16 *)callBackRef);
-    uint8_t *NextBuffer;
+//    uint8_t *NextBuffer;
     
 	/*
 	 * All of the data has been sent.
@@ -86,7 +84,7 @@ static void ServorUartIntrHandler(void *callBackRef, u32 event, unsigned int eve
 
         brakeUartDataObj.length = eventData;
         Mailbox_post(recvMbox, (Ptr *)&brakeUartDataObj, BIOS_NO_WAIT);
-        UartNs550Recv(UartDeviceNum, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+        UartNs550Recv(UartDeviceNum, brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 	}
 
 
@@ -96,7 +94,7 @@ static void ServorUartIntrHandler(void *callBackRef, u32 event, unsigned int eve
 	 */
 	if (event == XUN_EVENT_RECV_ERROR) {
 
-		Errors = UartNs550GetLastErrors(UartDeviceNum);
+//		Errors = UartNs550GetLastErrors(UartDeviceNum);
 	}
 }
 
@@ -115,15 +113,12 @@ static void ServoInitSem(void)
     semParams.mode = Semaphore_Mode_BINARY;
     sem_rxData = Semaphore_create(0, &semParams, NULL);
     sem_txData = Semaphore_create(0, &semParams, NULL);
-    sem_modbus = Semaphore_create(1, &semParams, NULL);
+//    sem_modbus = Semaphore_create(1, &semParams, NULL);
     sem_startChangeRail = Semaphore_create(0, &semParams, NULL);
     sem_startStopStation = Semaphore_create(0, &semParams, NULL);
     sem_startTempStop = Semaphore_create(0, &semParams, NULL);
     changeRailSem = Semaphore_create(0, &semParams, NULL);
 }
- 
-
-
 
 
 //u8 *data;//数据起始地址，用于计算 CRC 值
@@ -151,7 +146,7 @@ static uint16_t ServoCrcCheck(uint8_t *data, uint8_t length)
 	return crc_reg;
 }
 
-
+#if 0
 static uint8_t ServoModbusWriteReg(uint8_t id,uint16_t addr,uint16_t data)
 {
 	uint16_t udelay;
@@ -219,8 +214,9 @@ static uint8_t ServoModbusWriteReg(uint8_t id,uint16_t addr,uint16_t data)
     Semaphore_post(sem_modbus);
     return ackStatus;
 }
+#endif
 
-
+#if 0
 static uint8_t ServoModbusReadReg(uint8_t id,uint16_t addr,uint16_t *data)
 {
 	uint16_t udelay;
@@ -288,7 +284,7 @@ static uint8_t ServoModbusReadReg(uint8_t id,uint16_t addr,uint16_t *data)
     
     return ackStatus;
 }
-
+#endif
 
 static void ServoRecvDataTask(void)
 {
@@ -297,7 +293,7 @@ static void ServoRecvDataTask(void)
     uint16_t recvCrc;
     while(1)
     {
-        Mailbox_pend(recvMbox,(Ptr*) &recvUartDataObj, BIOS_WAIT_FOREVER);
+        Mailbox_pend(recvMbox,(Ptr*)&recvUartDataObj, BIOS_WAIT_FOREVER);
         
         if(recvUartDataObj.length == 8 || recvUartDataObj.length == 6 || recvUartDataObj.length == 5 || recvUartDataObj.length == 7)
         {
@@ -306,16 +302,20 @@ static void ServoRecvDataTask(void)
             if(recvCrc == calcCrc)
             {
                 if(recvUartDataObj.length == 8 || recvUartDataObj.length == 7)
-                    ackStatus = MODBUS_ACK_OK;
+//                    ackStatus = MODBUS_ACK_OK;
+                	;
                 else
-                    ackStatus = MODBUS_ACK_NOTOK;
+//                    ackStatus = MODBUS_ACK_NOTOK;
+                	;
             }
             else
-                ackStatus = MODBUS_ACK_CRC_ERR;
+//                ackStatus = MODBUS_ACK_CRC_ERR;
+            	;
         }
         else
         {
-            ackStatus = MODBUS_ACK_FRAME_ERR;
+//            ackStatus = MODBUS_ACK_FRAME_ERR;
+        	;
         }
 
         Semaphore_post(sem_rxData);
@@ -706,7 +706,7 @@ void ServoBrakeRecvTask()
 	Bool result;
 	uint8_t errorCode = 0;
 
-	int i;
+//	int i;
 
 	while(1)
 	{
@@ -1066,9 +1066,9 @@ static void TaskEnterStationStopRoutine()
 static void ServoChangeRailTask(void)
 {
 	uint8_t state;
-    uint16_t recvReg;
+//    uint16_t recvReg;
     p_msg_t sendmsg;
-	static uint8_t change_en=1;
+//	static uint8_t change_en=1;
 	uint16_t changerail_timeout_cnt = 0;
 
 
@@ -1354,7 +1354,7 @@ void ServoTaskInit()
 	UartNs550Init(SERVOR_MOTOR_UART,ServorUartIntrHandler);
 	UartNs550RS485TxDisable(SERVOR_MOTOR_UART);
 
-    UartNs550Recv(SERVOR_MOTOR_UART, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
+    UartNs550Recv(SERVOR_MOTOR_UART, brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 
 
     /* 初始化接收邮箱 */
@@ -1364,55 +1364,55 @@ void ServoTaskInit()
 	taskParams.priority = 5;
 	taskParams.stackSize = 2048;
     
-	task = Task_create(ServoRecvDataTask, &taskParams, NULL);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)ServoRecvDataTask, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
 
-    task = Task_create(ServoBrakeTask, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)ServoBrakeTask, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
 
-    task = Task_create(ServoBrakeRecvTask, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)ServoBrakeRecvTask, &taskParams, NULL);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);
 	}
 
-    task = Task_create(ServoChangeRailTask, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)ServoChangeRailTask, &taskParams, NULL);
     if (task == NULL) {
         System_printf("Task_create() failed!\n");
         BIOS_exit(0);
     }
 
-    task = Task_create(TaskChangeRailRoutine, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)TaskChangeRailRoutine, &taskParams, NULL);
 	if (task == NULL) {
 	   System_printf("Task_create() failed!\n");
 	   BIOS_exit(0);
 	}
 
-    task = Task_create(TaskEnterStationStopRoutine, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)TaskEnterStationStopRoutine, &taskParams, NULL);
 	if (task == NULL) {
 	   System_printf("Task_create() failed!\n");
 	   BIOS_exit(0);
 	}
 
-    task = Task_create(TaskTempStopRoutine, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)TaskTempStopRoutine, &taskParams, NULL);
 	if (task == NULL) {
 	   System_printf("Task_create() failed!\n");
 	   BIOS_exit(0);
 	}
 
-    task = Task_create(TaskCheckBrakeStatus, &taskParams, NULL);
+    task = Task_create((ti_sysbios_knl_Task_FuncPtr)TaskCheckBrakeStatus, &taskParams, NULL);
 	if (task == NULL) {
 	   System_printf("Task_create() failed!\n");
 	   BIOS_exit(0);
 	}
 
-	task = Task_create(TaskRailStateCheck, &taskParams, NULL);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)TaskRailStateCheck, &taskParams, NULL);
 	if (task == NULL) {
 	   System_printf("Task_create() failed!\n");
 	   BIOS_exit(0);

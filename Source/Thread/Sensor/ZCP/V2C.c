@@ -63,8 +63,8 @@ static Mailbox_Handle m_mb_leavestation;
 /*
  * tasks
  */
-static Task_Handle m_task_askForwardId = NULL;
-static Task_Handle m_task_enterStation = NULL;
+//static Task_Handle m_task_askForwardId = NULL;
+//static Task_Handle m_task_enterStation = NULL;
 
 static uint8_t m_isAskingFrontCar = 0;
 
@@ -231,7 +231,7 @@ static void V2CAskFrontIdTask(UArg arg0, UArg arg1)
     v2c_resp_forward_id_t resp;
     Bool pendResult;
     int retryNum;
-    int i;
+//    int i;
 
     while(1)
     {
@@ -314,7 +314,7 @@ static void V2CEnterStationTask(UArg arg0, UArg arg1)
     Bool pendResult;
     int retryNum;
     packet_routenode_t routeNode;
-    int i;
+//    int i;
     epc_t epc;
 
     while(1)
@@ -398,7 +398,7 @@ static void V2CLeaveStationTask(UArg arg0, UArg arg1)
     Bool pendResult;
     int retryNum;
     packet_routenode_t routeNode;
-    int i;
+//    int i;
 
     while(1)
     {

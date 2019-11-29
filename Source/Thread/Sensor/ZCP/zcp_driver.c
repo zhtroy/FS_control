@@ -67,7 +67,7 @@ static ZCPInstance_t * ZCPGetInstanceByUartDevNum(uint16_t uartDevNum)
 *****************************************************************************/
 static void ZCPUartIntrHandler(void *callBackRef, u32 event, unsigned int eventData)
 {
-    uint8_t errors;
+//    uint8_t errors;
     uint16_t uartDeviceNum = *((uint16_t *)callBackRef);
     ZCPInstance_t * pInst;
 
@@ -100,7 +100,7 @@ static void ZCPUartIntrHandler(void *callBackRef, u32 event, unsigned int eventD
         /*
          * 暂不处理
          */
-        errors = UartNs550GetLastErrors(uartDeviceNum);
+//        errors = UartNs550GetLastErrors(uartDeviceNum);
     }
 }
 

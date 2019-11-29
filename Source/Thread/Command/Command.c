@@ -173,13 +173,13 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 				uint16_t routeLen;
 				uint8_t success;
 				routeLen = packet.data[0] * 256 + packet.data[1];
-				uint8_t * rawRFID =0;
+//				uint8_t * rawRFID =0;
 				epc_t vmapFirstEPC;
 				int vmapFirstPosDiff;    //vmap第一个点与当前位置的差值
 
 				if(routeLen ==  vector_size(vmap))
 				{
-					rawRFID = RFIDGetRaw();
+//					rawRFID = RFIDGetRaw();
 
 					EPCfromByteArray(&vmapFirstEPC, vmap[0].byte);
 
@@ -217,7 +217,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 					LogMsg("Update map error recved :%d should be %d\n",vector_size(vmap),routeLen );
 				}
 
-				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_ROUTE_RESPONSE);
+				CommandSend((char *)&success, sizeof(uint8_t), COMMAND_TYPE_ROUTE_RESPONSE);
 				break;
 			}
 
@@ -288,7 +288,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
                     success = 0;
                     LogMsg("Update map error recved :%d should be %d\n",vector_size(vmap),routeLen );
                 }
-			    CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_CHANGE_ROUTE_RESPONSE);
+			    CommandSend((char *)&success, sizeof(uint8_t), COMMAND_TYPE_CHANGE_ROUTE_RESPONSE);
                 break;
 			}
 
@@ -328,7 +328,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 					LogMsg("Update calib error recved :%d should be %d\n",vector_size(vcalib),calibLen );
 				}
 
-				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_CALIB_RESPONSE);
+				CommandSend((char *)&success, sizeof(uint8_t), COMMAND_TYPE_CALIB_RESPONSE);
 
 				break;
 			}
@@ -351,7 +351,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 				LogMsg("COMMMAD: GO\t%d\n",success);
 
-				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_GO_RESPONSE);
+				CommandSend((char *)&success, sizeof(uint8_t), COMMAND_TYPE_GO_RESPONSE);
 
 				break;
 			}
@@ -371,7 +371,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 				MotoSetCarDistance(startDis);
 
-				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_SET_START_POINT_RESPONSE);
+				CommandSend((char *)&success, sizeof(uint8_t), COMMAND_TYPE_SET_START_POINT_RESPONSE);
 
 
 				break;
@@ -385,7 +385,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 
 				MotoSetCarDistance(RFIDGetEpc().distance);
 
-				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_SET_RFID_RESPONSE);
+				CommandSend((char *)&success, sizeof(uint8_t), COMMAND_TYPE_SET_RFID_RESPONSE);
 
 				LogMsg("COMMAND_TYPE_SET_RFID\n");
 
@@ -397,7 +397,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 				uint8_t success = 1;
 
 				g_var.cycleRoute = packet.data[0];
-				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_SETLOOP_RESPONSE);
+				CommandSend((char *)&success, sizeof(uint8_t), COMMAND_TYPE_SETLOOP_RESPONSE);
 				break;
 			}
 
@@ -405,7 +405,7 @@ static void CommandHandleTask(UArg arg0, UArg arg1)
 			{
 				uint8_t success = 0;
 
-				CommandSend(&success, sizeof(uint8_t), COMMAND_TYPE_DOOR_RESPONSE);
+				CommandSend((char *)&success, sizeof(uint8_t), COMMAND_TYPE_DOOR_RESPONSE);
 				break;
 			}
 

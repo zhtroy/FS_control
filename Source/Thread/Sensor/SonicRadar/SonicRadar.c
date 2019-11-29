@@ -103,7 +103,7 @@ uint16_t SonicGetDistance()
 
 void SonicRadarUartIntrHandler(void *callBackRef, u32 event, unsigned int eventData)
 {
-	u8 Errors;
+//	u8 Errors;
 	u16 DeviceNum = *((u16 *)callBackRef);
 
 	/*
@@ -131,6 +131,6 @@ void SonicRadarUartIntrHandler(void *callBackRef, u32 event, unsigned int eventD
 	if (event == XUN_EVENT_RECV_ERROR) {
 //		TotalReceivedCount = EventData;
 //		TotalErrorCount++;
-		Errors = UartNs550GetLastErrors(DeviceNum);
+//		Errors = UartNs550GetLastErrors(DeviceNum);
 	}
 }

@@ -16,7 +16,7 @@ extern Void taskSonicRadar(UArg a0, UArg a1);
 Void taskSonicRadarMain(UArg a0, UArg a1)
 {
 	p_msg_t msg;
-	float distance;
+//	float distance;
 	while(1){
 		msg= Message_pend();
 		if(msg->type==sonicradar){

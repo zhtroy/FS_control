@@ -74,7 +74,7 @@ void testWatchDogTaskInit()
     Task_Params_init(&taskParams);
 	taskParams.priority = 5;
 	taskParams.stackSize = 2048;
-	task = Task_create(timerWatchdogTask, &taskParams, &eb);
+	task = Task_create((ti_sysbios_knl_Task_FuncPtr)timerWatchdogTask, &taskParams, &eb);
 	if (task == NULL) {
 		System_printf("Task_create() failed!\n");
 		BIOS_exit(0);

@@ -27,7 +27,8 @@
 #include "TL6748.h"
 #include "fpga_periph_def.h"
 #include "mpu9250_drv.h"
-#include "signal.h"
+#include "system_param.h"
+#include "signal_.h"
 
 #include "Sensor/Encoder/Encoder.h"
 
@@ -84,7 +85,6 @@ void PeriphInit()
     TTLInit();
     SignalInit();
 	EncoderInit();
-
 }
 
 void ThreadInit()

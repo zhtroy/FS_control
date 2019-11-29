@@ -5,6 +5,7 @@
  *      Author: zhtro
  */
 
+#include <stdlib.h>
 #include "stdint.h"
 #include "Decision/route/Route.h"
 #include "Lib/vector.h"
@@ -20,7 +21,7 @@ static packet_routenode_t * m_vnode = 0;
 void RouteShow(packet_routenode_t * vnode)
 {
 #if 1
-	char outputbuff[100];
+//	char outputbuff[100];
 	/*
 	 * 将收到的路径打印出来
 	 */
@@ -91,8 +92,9 @@ void RouteUpdateCopy(packet_routenode_t * vnode)
  */
 packet_routenode_t RoutePop()
 {
+	packet_routenode_t tmp = {0};
 	if(!RouteHasOngoing())
-		return;
+		return tmp;
 
 	packet_routenode_t head = * (vector_begin(m_vnode));
 	vector_erase(m_vnode,0);
@@ -107,8 +109,9 @@ packet_routenode_t RoutePop()
  */
 packet_routenode_t RoutePeek()
 {
+	packet_routenode_t tmp = {0};
 	if(!RouteHasOngoing())
-		return;
+		return tmp;
 
 	return *(vector_begin(m_vnode));
 }
@@ -168,7 +171,7 @@ void RouteChangeDestination(packet_routenode_t node)
 {
 
 	if(!RouteHasOngoing())
-		return;
+		exit(0);
 
 	vector_pop_back(m_vnode);
 	vector_push_back(m_vnode,node);
@@ -181,8 +184,9 @@ void RouteChangeDestination(packet_routenode_t node)
  */
 packet_routenode_t RouteGetDestination()
 {
+	packet_routenode_t tmp = {0};
 	if(!RouteHasOngoing())
-		return;
+		return tmp;
 	return m_vnode[vector_size(m_vnode)-1];
 }
 

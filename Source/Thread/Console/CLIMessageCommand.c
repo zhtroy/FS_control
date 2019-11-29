@@ -2,13 +2,14 @@
 #include <stdint.h>
 #include <string.h>
 #include "FreeRTOS_CLI.h"
+#include "CLICommon.h"
 
 
 BaseType_t prvMessageSend( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 BaseType_t prvMessageStatus( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
 extern int32_t autoStrtol(const char *str);
-uint8_t strSplitToData(const char *pcParameter, uint8_t *data);
+//uint8_t strSplitToData(const char *pcParameter, uint8_t *data);
 
 
 const CLI_Command_Definition_t xMessageSend =
@@ -35,10 +36,11 @@ msgStatus:return message queue status. \r\n ",
 
 BaseType_t prvMessageStatus( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
 {
-    const char *pcParameter;
-    BaseType_t xParameterStringLength, xReturn;
-    static UBaseType_t uxParameterNumber = 0;
-    static uint16_t usValue = 0;
+//    const char *pcParameter;
+//    BaseType_t xParameterStringLength;
+    BaseType_t xReturn;
+//    static UBaseType_t uxParameterNumber = 0;
+//    static uint16_t usValue = 0;
 
     /* Remove compile time warnings about unused parameters, and check the
     write buffer is not NULL.  NOTE - for simplicity, this example assumes the

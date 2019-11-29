@@ -132,7 +132,7 @@ static Void taskCellReceive(UArg a0, UArg a1)
 	int8_t c;
 	cell_state_t state = cell_wait;
 	cell_packet_t packet;
-	int div_num = 0;
+//	int div_num = 0;
 	int recv_head_num = 0;
 	char headbuff[CELL_HEADER_LEN];
 	int recv_data_num = 0;
@@ -302,7 +302,7 @@ void CellSendPacket(cell_packet_t * packet)
 	//转换成网络字节序
 	CellPacketToNetOrder(packet);
 	//使用阻塞发送
-	UART2Send(packet, len);
+	UART2Send((char *)packet, len);
 	//在发送完成后，转回主机字节序
 	CellPacketToHostOrder(packet);
 }

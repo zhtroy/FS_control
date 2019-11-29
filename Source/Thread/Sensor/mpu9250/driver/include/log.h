@@ -369,4 +369,5 @@ static inline void __print_result_location(int result,
 #ifdef __cplusplus
 }
 #endif
+
 #endif				/* _LIBS_CUTILS_MPL_LOG_H */

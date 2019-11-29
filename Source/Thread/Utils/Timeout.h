@@ -21,7 +21,6 @@ typedef enum
 	seperate_wait_leave_station,
 	seperate_wait_pre_merge,
 	seperate_wait_merge
-
 }timeout_type_t;
 
 extern void TimeoutSet(timeout_type_t msg);
