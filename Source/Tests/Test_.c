@@ -88,4 +88,8 @@ testBrakeServoInit();
 #ifdef TEST_ZCP
     testZCPInit();
 #endif
+
+#ifdef TEST_ARRAY
+    test_array();
+#endif
 }

@@ -16,7 +16,7 @@ ARRAY_DEF (array_charp, char *)
 ARRAY_DEF(array_int, int)
 const int n = 6;
 
-void  array_test(void)
+void  test_array(void)
 {
 //	int n = 6;
 

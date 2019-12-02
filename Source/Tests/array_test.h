@@ -8,7 +8,6 @@
 #ifndef ARRAY_TEST_H_
 #define ARRAY_TEST_H_
 
-void  array_test(void);
-
+void  test_array(void);
 
 #endif /* ARRAY_TEST_H_ */

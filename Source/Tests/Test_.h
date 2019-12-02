@@ -30,4 +30,5 @@ void MototaskInit();
 
 void testMPU9250TaskInit(void);
 
+void  test_array(void);
 #endif /* TESTS_H_ */

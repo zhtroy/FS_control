@@ -1030,4 +1030,17 @@
                     (__VA_ARGS__ )))
 #endif
 
+
+char  *m_array_strcpy(char 		*__restrict dest, const char *__restrict 	src, size_t index);
+int   *m_array_intcpy(int 		*__restrict dest, const int *__restrict 	src, size_t index);
+float *m_array_floatcpy(float 	*__restrict dest, const float *__restrict 	src, size_t index);
+
+int   m_array_strcmp(const char 	*string1, const char 	*string2, size_t index);
+int   m_array_intcmp(const int 		*string1, const int 	*string2, size_t index);
+int   m_array_floatcmp(const float 	*string1, const float 	*string2, size_t index);
+
+int   m_array_strquery(char 	*value);
+int   m_array_intquery(int  	*value);
+int   m_array_floatquery(float 	*value);
+
 #endif

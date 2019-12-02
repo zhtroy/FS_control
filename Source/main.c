@@ -130,8 +130,6 @@ Int main()
 
 	TestEntry();
 
-	array_test();
-
     BIOS_start();    /* does not return */
     return(0);
 }
