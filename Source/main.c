@@ -31,6 +31,8 @@
 
 #include "Sensor/Encoder/Encoder.h"
 
+#include "array_test.h"
+
 void PeriphInit()
 {
     /*
@@ -127,6 +129,8 @@ Int main()
 	LogInit();
 
 	TestEntry();
+
+	array_test();
 
     BIOS_start();    /* does not return */
     return(0);
