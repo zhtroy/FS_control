@@ -270,7 +270,7 @@ static void MotoUpdateDistanceTask(void)
         Task_sleep(UPDATE_INTERVAL);
         lastDistance = m_distance;
 
-		step = (float) EncoderGetDeltaPoint() *(g_sysParam.encoderWheelPerimeter / 1000.0) / (float) ENCODER_POINTS_CYCLE ;
+		step = Encoder0GetDeltaDistance();
 
 		if(fabs(step) > 100/3.6 * UPDATE_INTERVAL/1000 * 10)   //帧与帧之间大于2.7m (速度大于100km/h)，认为编码器错误
 		{
@@ -685,7 +685,7 @@ static void MotoRecvTask(void)
              *  b)根据calcRPM，进行PID调节
              */
 
-            encoderRpm = RPMfromSpeed(EncoderGetSpeed());
+            encoderRpm = RPMfromSpeed(Encoder0GetSpeed());
             vg = MotoGoalSpeedGen(encoderRpm, g_sysParam.KSP, g_sysParam.KSI);
 
             pidModeOld = pidMode;
