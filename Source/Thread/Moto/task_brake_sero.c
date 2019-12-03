@@ -1350,10 +1350,8 @@ void ServoTaskInit()
 	ServoInitSem();
 
 	//初始化串口
-
 	UartNs550Init(SERVOR_MOTOR_UART,ServorUartIntrHandler);
 	UartNs550RS485TxDisable(SERVOR_MOTOR_UART);
-
     UartNs550Recv(SERVOR_MOTOR_UART, &brakeUartDataObj.buffer, UART_REC_BUFFER_SIZE);
 
 

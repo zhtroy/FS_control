@@ -90,12 +90,12 @@ static void MotoCanIntrHandler(int32_t devsNum,int32_t event)
 {
     canDataObj_t rxData;
 	
-	if (event == 1)         /* 收到一帧数据 */ 
+	if (event == 1)         /* 收到一帧数据 */
     {
         CanRead(devsNum, &rxData);
         Mailbox_post(rxDataMbox, (Ptr *)&rxData, BIOS_NO_WAIT);
 	}
-    else if (event == 2)    /* 一帧数据发送完成 */ 
+    else if (event == 2)    /* 一帧数据发送完成 */
     {
         /* 发送中断 */
         Semaphore_post(txReadySem);
@@ -283,7 +283,7 @@ static void MotoUpdateDistanceTask(void)
 		{
 			m_distance += TOTAL_DISTANCE;
 		}
-		else if(m_distance >TOTAL_DISTANCE )
+		else if(m_distance >TOTAL_DISTANCE)
 		{
 			m_distance -= TOTAL_DISTANCE;
 		}

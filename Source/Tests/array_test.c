@@ -56,7 +56,7 @@ void  test_array(void)
 	  r_int2_clear(array);
 #endif
 
-#if 1
+#if 0
 	  M_LET (al, array_charp_t)
 	  {
 	    // add elements to the array list
@@ -125,6 +125,48 @@ void  test_array(void)
 
 	  // Clear the array
 	  array_int_clear(x);
+#endif
+
+#if 0
+	  int a[10] = {0};
+	  int b[10] = {1,2,3,4,5,6,7,8};
+//	  m_array_strcpy(a, b, 0, 7);
+
+	  m_array_intcpy(a, b, 2, 6);
+
+	  m_array_floatcpy(a, b, 3, 8);
+
+#endif
+
+#if 1
+	  unsigned char a[6] = {'a', 'b', 'c', 'd', 'e'};
+	  unsigned char b[6] = {'a', 'b', 'e', 'd', 'e'};
+	  unsigned char c[6] = {0};
+
+//	  int a[6] = {12,23,34,45,56,67};
+//	  int b[6] = {12,23,34,45,34,78};
+//	  int a[6] = {12,23,34,45,56,67};
+//	  int b[6] = {12,23,34,45,34,78};
+//	  int c[6] = {0};
+	  int tmp = 2;
+//	  tmp = m_array_intcmp(a, b, 2, 5);
+	  tmp = m_array_ustrcmp(a, b, 4, 5);
+//	  tmp = m_array_floatcmp(a, b, 1, 3);
+	  tmp = m_array_ustrcmp(a, b, 1, 2);
+	  tmp = m_array_ustrcmp(a, b, 3, 5);
+//	  tmp = m_array_intcmp(a, b, 2, 6);
+
+//	  tmp = m_array_uintcmp(a, b, 2, 5);
+//	  tmp = m_array_ustrcmp(a, b, 4, 5);
+
+	  m_array_ustrcpy(c, b, 1, 7);
+	  m_array_ustrcpy(c, b, 3, 4);
+	  m_array_ustrcpy(c, b, 2, 5);
+//	  m_array_intcpy(c, b, 2, 6);
+#endif
+
+#if 0
+
 #endif
 }
 

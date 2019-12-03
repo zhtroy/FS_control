@@ -231,7 +231,7 @@ static void taskCheckScanEPC()
 
         if(m_scanEpc.ab == virtualEpc.ab && EPCinSameRoad(&m_scanEpc, &virtualEpc))  //虚拟EPC和扫码EPC的道路信息一致
         {
-        	if(EPC_AB_A==lastScanEpc.ab && EPC_AB_B == m_scanEpc.ab) //如果是刚扫到B段第一个点，忽略距离检查
+        	if(EPC_AB_A==lastScanEpc.ab && EPC_AB_B == m_scanEpc.ab) 				 //如果是刚扫到B段第一个点，忽略距离检查
         	{
         		continue;
         	}
@@ -245,7 +245,6 @@ static void taskCheckScanEPC()
         	}
         	else
         	{
-
         		//更新EPC
 				RFIDSetRaw(m_scanEpcRaw);
 
@@ -335,8 +334,6 @@ Void taskRFID(UArg a0, UArg a1)
 	RFIDDeviceOpen (RFID_DEVICENUM);
 	RFIDRegisterReadCallBack(RFID_DEVICENUM, RFIDcallBack);   //回调函数会在RFIDProcess里面调用
 
-
-
     RFIDV2vMbox = Mailbox_create (sizeof (epc_t),4, NULL, NULL);
 
     Semaphore_Params semParams;
@@ -344,7 +341,6 @@ Void taskRFID(UArg a0, UArg a1)
 	semParams.mode = Semaphore_Mode_BINARY;
     checkEpcCoroutineSem = Semaphore_create(0, &semParams, NULL);
     checkEpcSem =  Semaphore_create(0, &semParams, NULL);
-
 
     InitTimer();
 
@@ -354,7 +350,6 @@ Void taskRFID(UArg a0, UArg a1)
 	Task_Handle task;
 	Error_Block eb;
 	Task_Params taskParams;
-
 
 	Error_init(&eb);
     Task_Params_init(&taskParams);
@@ -422,7 +417,6 @@ void taskCreateRFID(UArg a0, UArg a1)
         lastPos = carPos;
         carPos = MotoGetCarDistance();
 
-
  	   /*
  		* 非自动模式不产生标签
  		*/
@@ -440,9 +434,6 @@ void taskCreateRFID(UArg a0, UArg a1)
         {
             continue;
         }
-
-
-
 
         /*
          * 获取队首的距离信息

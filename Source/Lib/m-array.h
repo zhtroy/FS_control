@@ -1031,13 +1031,17 @@
 #endif
 
 
-char  *m_array_strcpy(char 		*__restrict dest, const char *__restrict 	src, size_t index);
-int   *m_array_intcpy(int 		*__restrict dest, const int *__restrict 	src, size_t index);
-float *m_array_floatcpy(float 	*__restrict dest, const float *__restrict 	src, size_t index);
+char  			*m_array_strcpy(char 		*__restrict dest, const char *__restrict 	src, int start, int end);
+int   			*m_array_intcpy(int 		*__restrict dest, const int *__restrict 	src, int start, int end);
+float 			*m_array_floatcpy(float 	*__restrict dest, const float *__restrict 	src, int start, int end);
+unsigned char  	*m_array_ustrcpy(unsigned char 		*__restrict dest, const unsigned char *__restrict 	src, int start, int end);
+unsigned int   	*m_array_uintcpy(unsigned int 		*__restrict dest, const unsigned int *__restrict 	src, int start, int end);
 
-int   m_array_strcmp(const char 	*string1, const char 	*string2, size_t index);
-int   m_array_intcmp(const int 		*string1, const int 	*string2, size_t index);
-int   m_array_floatcmp(const float 	*string1, const float 	*string2, size_t index);
+int   m_array_strcmp(const char 			*string1, 	const char 			*string2, 	int start, int end);
+int   m_array_intcmp(const int 				*int1, 		const int 			*int2, 		int start, int end);
+int   m_array_floatcmp(const float 			*float1, 	const float 		*float2, 	int start, int end);
+int   m_array_ustrcmp(const unsigned char 	*string1, 	const unsigned char *string2, 	int start, int end);
+int   m_array_uintcmp(const unsigned int 	*int1, 		const unsigned int 	*int2, 		int start, int end);
 
 int   m_array_strquery(char 	*value);
 int   m_array_intquery(int  	*value);
