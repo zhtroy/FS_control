@@ -268,8 +268,8 @@ static void taskCheckScanEPC()
 
 }
 
-//在这个Task中，延迟3m后再检测一次道路信息
-#define SCAN_CHECK_DELAY_DISTANCE (30)  //3m
+//在这个Task中，延迟6m后再检测一次道路信息
+#define SCAN_CHECK_DELAY_DISTANCE (60)  //6m
 static void taskCheckScanEPCcoroutine()
 {
 	int32_t deltaDis = 0;
