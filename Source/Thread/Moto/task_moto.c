@@ -68,7 +68,7 @@ static Mailbox_Handle rxDataMbox = NULL;
 
 static canDataObj_t canSendData;
 
-static int32_t m_disIncrement;
+static float m_disIncrement;
 
 /*电机控制量*/
 static moto_ctrl_t m_motoCtrl = {
@@ -1370,7 +1370,7 @@ uint8_t MotoGetCarMode()
  */
 int32_t MotoGetCarDistanceIncrement()
 {
-	volatile int32_t temp = m_disIncrement;
+	volatile int32_t temp = (int32_t)m_disIncrement;
 	m_disIncrement = 0;
 	return temp;
 }
