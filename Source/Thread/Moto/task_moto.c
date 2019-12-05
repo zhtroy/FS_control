@@ -1368,9 +1368,9 @@ uint8_t MotoGetCarMode()
 /*
  * 返回两次调用该函数之间车辆跑过的距离
  */
-int32_t MotoGetCarDistanceIncrement()
+float MotoGetCarDistanceIncrement()
 {
-	volatile int32_t temp = (int32_t)m_disIncrement;
+	volatile float temp = m_disIncrement;
 	m_disIncrement = 0;
 	return temp;
 }

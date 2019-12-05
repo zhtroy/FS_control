@@ -315,7 +315,7 @@ uint16_t MotoGetCircles();
 uint16_t MotoGetRpm();
 uint8_t MotoGetCarMode();
 uint32_t MotoGetCarDistance();
-int32_t MotoGetCarDistanceIncrement();
+float MotoGetCarDistanceIncrement();
 float MotoGetSpeed();
 void MotoSetCarDistance(uint32_t dist);
 void MotoUpdateCalibrationPoint(rfidPoint_t * calib);
