@@ -272,7 +272,7 @@ static void taskCheckScanEPC()
 #define SCAN_CHECK_DELAY_DISTANCE (30)  //3m
 static void taskCheckScanEPCcoroutine()
 {
-	int32_t deltaDis = 0;
+	float deltaDis = 0;
 	epc_t virtualEpc;
 	uint32_t newDis = 0;
 
@@ -314,7 +314,7 @@ static void taskCheckScanEPCcoroutine()
 					virtualEpc.secondNo);
 
 			//更新距离
-			newDis = m_scanEpc.distance + deltaDis;
+			newDis = m_scanEpc.distance + (int32_t)deltaDis;
 			if(newDis > TOTAL_DISTANCE)
 			{
 				newDis -= TOTAL_DISTANCE;
