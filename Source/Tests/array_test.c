@@ -138,7 +138,7 @@ void  test_array(void)
 
 #endif
 
-#if 1
+#if 0
 	  unsigned char a[6] = {'a', 'b', 'c', 'd', 'e'};
 	  unsigned char b[6] = {'a', 'b', 'e', 'd', 'e'};
 	  unsigned char c[6] = {0};
@@ -165,8 +165,44 @@ void  test_array(void)
 //	  m_array_intcpy(c, b, 2, 6);
 #endif
 
-#if 0
+#if 1
+//	  char b = 0;
+//	  char a[20] = {12,23,34,45,56,67,78,89,90,1,2,3,4,5,6,7,8,9,10,11};
+//	  b = m_array_strquery(a, 56, 0);
+//	  b = m_array_strquery(a, 1, 0);
+//	  b = m_array_strquery(a, 11, 2);
+//	  b = m_array_strquery(a, 23, 0);
+//	  b = m_array_strquery(a, 56, 1);
+//	  b = m_array_strquery(a, 0, 12);
+//	  b = m_array_strquery(a, 0, 7);
+//	  b = m_array_strquery(a, 0, 3);
+//	  b = m_array_strquery(a, 1, 3);
 
+//	  int b = 0;
+	  char b = '0';
+//	  float b = 0.0;
+//	  int a[20] = {12,23,34,45,56,67,78,89,90,1,2,3,4,5,6,7,8,9,10,11};
+//	  char a[20] = {'a', 'b', 'c', 'd', 'e','a', 'b', 'c', 'd', 'e','a', 'b', 'c', 'd', 'e','a', 'b', 'c', 'd', 'e'};
+	  float a[20] = {12,23,34,45,56,67,78,89,90,1,2,3,4,5,6,7,8,9,10,11};
+//	  int c[30] = {0};
+	  int size = sizeof(a)/sizeof(a[0]);
+//	  b = m_array_intquery(a, size, 34, 0);
+//	  b = m_array_intquery(a, 67, 0);
+//	  b = m_array_intquery(a, 90, 0);
+//	  b = m_array_intquery(a, 0, 6);
+//	  b = m_array_intquery(a, 0, 10);
+//	  b = m_array_intquery(a, size, 0, 5);
+//	  b = m_array_intquery(a, size, 3, 3);
+//	  b = m_array_intquery(a, size, 0, 90);
+//	  b = m_array_intquery(a, size, 0, 9);
+//	  b = m_array_intquery(a, size, 0, 21);
+//	  b = m_array_intquery(a, size, 0, 22);
+//	  b = m_array_intquery(a, size, 0, 23);
+	  b = m_array_strquery(a, size, 0, 'd');
+	  b = m_array_strquery(a, size, 'd', 0);
+	  b = m_array_strquery(a, size, 0, 6);
+	  b = m_array_strquery(a, size, 0, 7);
+	  b = m_array_strquery(a, size, 'c', 2);
 #endif
 }
 
